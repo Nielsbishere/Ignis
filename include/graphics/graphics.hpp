@@ -14,6 +14,14 @@ namespace ignis {
 	using Features = Bitset<usz(Feature::COUNT)>;
 	using Extensions = Bitset<usz(Extension::COUNT)>;
 
+	enum class CommandOp : u32;
+
+	enum class CommandAvailability : u32 {
+		SUPPORTED,
+		PERFORMANCE,
+		UNSUPPORTED
+	};
+
 	class SurfaceManager;
 	class ResourceManager;
 
@@ -37,6 +45,8 @@ namespace ignis {
 
 		const bool hasFeature(Feature) const;
 		const bool hasExtension(Extension) const;
+
+		virtual CommandAvailability getCommandAvailability(CommandOp op) = 0;
 
 	private:
 
