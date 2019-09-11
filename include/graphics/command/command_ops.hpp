@@ -12,7 +12,7 @@ namespace ignis {
 	//	Performance: It runs slower but still works
 	//	Unsupported: It won't be able to run
 	//Suffixes:
-	//	_0: Always available, either by hardware or software (performance impact when software)
+	//	_0: Rarely unavailable, often available either by hardware or software (performance impact when software)
 	//  _1: Often available on desktop
 	//  _2: Rarely available on desktop
 	//  _3: Only available for certain vendors
@@ -21,8 +21,8 @@ namespace ignis {
 		//Core commands
 
 		CMD_BIND_PIPELINE,
-		CMD_BIND_SHADER_REGISTERS,
-		CMD_BIND_PRIMITIVE_BUFFERS,
+		CMD_BIND_SHADER_REGISTER,
+		CMD_BIND_PRIMITIVE_BUFFER,
 
 		CMD_BEGIN_SURFACE,
 		CMD_END_SURFACE,
@@ -30,6 +30,8 @@ namespace ignis {
 		CMD_END_QUERY,
 
 		CMD_SET_CLEAR_COLOR,
+		CMD_SET_CLEAR_DEPTH,
+		CMD_SET_CLEAR_STENCIL,
 		CMD_SET_VIEWPORT,
 		CMD_SET_SCISSOR,
 		CMD_SET_BLEND_CONSTANTS,

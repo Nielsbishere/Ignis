@@ -1,20 +1,22 @@
 #include "graphics/graphics.hpp"
+#include "graphics/graphics_object.hpp"
 
 namespace ignis {
-
-	Graphics::Graphics(
-		SurfaceManager *surfaces, ResourceManager *resources, 
-		const Features &features, const Extensions &extensions
-	):
-		surfaces(surfaces), resources(resources),
-		features(features), extensions(extensions) {}
-
-	SurfaceManager *Graphics::getSurfaceManager() { return surfaces; }
-	ResourceManager *Graphics::getResourceManager() { return resources; }
 
 	const Features &Graphics::getFeatures() const { return features; }
 	const Extensions &Graphics::getExtensions() const { return extensions; }
 
 	const bool Graphics::hasFeature(Feature f) const { return features[usz(f)]; }
 	const bool Graphics::hasExtension(Extension e) const { return extensions[usz(e)]; }
+
+	GraphicsObject *const *Graphics::begin() const { return graphicsObjects.data(); }
+	GraphicsObject *const *Graphics::end() const { return graphicsObjects.data() + graphicsObjects.size(); }
+
+	void Graphics::clean() {
+
+		for (GraphicsObject *go : graphicsObjects)
+			delete go;
+
+		graphicsObjects.clear();
+	}
 }

@@ -14,24 +14,22 @@ set(CMAKE_SUPPRESS_REGENERATION true)
 include_directories(include)
 include_directories(core2/include)
 
-file(GLOB_RECURSE ignisHpp
-	"include/*.hpp"
-)
-
-file(GLOB_RECURSE ignisCpp
-	"src/*.cpp"
-)
+file(GLOB_RECURSE ignisHpp "include/*.hpp")
+file(GLOB_RECURSE ignisCpp "src/*.cpp")
 
 add_subdirectory(core2)
 
-set(graphicApi opengl CACHE STRING "Graphics API")
+set(graphicsApi opengl CACHE STRING "Graphics API")
 
 set(graphicsApis vulkan opengl directx)
-set_property(CACHE graphicApi PROPERTY STRINGS ${graphicsApis})
+set_property(CACHE graphicsApi PROPERTY STRINGS ${graphicsApis})
+
+message("-- Enabling ${graphicsApi} support")
 
 # Setup graphics api
 
 include_directories(api/${graphicsApi}/include)
+include_directories(core2/platform/${platform}/include)
 	
 file(GLOB_RECURSE apiHpp "api/${graphicsApi}/include/*.hpp")
 file(GLOB_RECURSE apiCpp "api/${graphicsApi}/src/*.cpp")
@@ -59,12 +57,12 @@ add_library(
 
 target_link_libraries(ignis ocore)
 
-source_group("Header Files" FILES ${ignisHpp})
-source_group("Source Files" FILES ${ignisCpp})
-source_group("Platform Header Files" FILES ${platformHpp})
-source_group("Platform Source Files" FILES ${platformCpp})
-source_group("Graphics API Header Files" FILES ${apiHpp})
-source_group("Graphics API Source Files" FILES ${apiCpp})
+source_group("Headers" FILES ${ignisHpp})
+source_group("Source" FILES ${ignisCpp})
+source_group("Platform (${platform}) Headers" FILES ${platformHpp})
+source_group("Platform (${platform}) Source" FILES ${platformCpp})
+source_group("Graphics (${graphicsApi}) Headers" FILES ${apiHpp})
+source_group("Graphics (${graphicsApi}) Source" FILES ${apiCpp})
 
 if(MSVC)
     target_compile_options(ignis PRIVATE /W4 /WX /MD /MP)

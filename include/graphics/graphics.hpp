@@ -1,5 +1,6 @@
 #pragma once
 #include "types/types.hpp"
+#define __impl
 
 namespace ignis {
 
@@ -14,7 +15,7 @@ namespace ignis {
 	using Features = Bitset<usz(Feature::COUNT)>;
 	using Extensions = Bitset<usz(Extension::COUNT)>;
 
-	enum class CommandOp : u32;
+	enum CommandOp : u32;
 
 	enum class CommandAvailability : u32 {
 		SUPPORTED,
@@ -22,23 +23,19 @@ namespace ignis {
 		UNSUPPORTED
 	};
 
-	class SurfaceManager;
-	class ResourceManager;
+	class GraphicsObject;
+	class CommandList;
 
 	class Graphics {
 
+		friend class GraphicsObject;
+
 	public:
-		
-		Graphics(SurfaceManager*, ResourceManager*, const Features&, const Extensions&);
-		virtual ~Graphics() = default;
 
-		Graphics(const Graphics&) = delete;
-		Graphics(Graphics&&) = delete;
-		Graphics &operator=(const Graphics&) = delete;
-		Graphics &operator=(Graphics&&) = delete;
-
-		SurfaceManager *getSurfaceManager();
-		ResourceManager *getResourceManager();
+		Graphics(const Graphics &) = delete;
+		Graphics(Graphics &&) = delete;
+		Graphics &operator=(const Graphics &) = delete;
+		Graphics &operator=(Graphics &&) = delete;
 
 		const Features &getFeatures() const;
 		const Extensions &getExtensions() const;
@@ -46,15 +43,64 @@ namespace ignis {
 		const bool hasFeature(Feature) const;
 		const bool hasExtension(Extension) const;
 
-		virtual CommandAvailability getCommandAvailability(CommandOp op) = 0;
+		inline auto find(GraphicsObject *t) const;
+		inline bool contains(GraphicsObject *t) const;
+
+		GraphicsObject* const *begin() const;
+		GraphicsObject* const *end() const;
+
+		template<typename ...args>
+		inline void execute(args *...arg) {
+			List<CommandList*> commands{ arg... };
+			execute(commands);
+		}
+
+		__impl Graphics();
+		__impl ~Graphics();
+
+		__impl struct Data;
+
+		__impl CommandAvailability getCommandAvailability(CommandOp op);
+		__impl void execute(const List<CommandList*> &commands);
+
+		inline Data *getData() { return data; }
+
+	protected:
+
+		inline void erase(GraphicsObject *t);
+		inline void add(GraphicsObject *t);
+		void clean();
 
 	private:
 
 		Features features;
 		Extensions extensions;
-		SurfaceManager *surfaces;
-		ResourceManager *resources;
+		List<GraphicsObject*> graphicsObjects;
+		Data *data;
 
 	};
+	
+	inline auto Graphics::find(GraphicsObject *t) const {
+		return std::find(
+			graphicsObjects.begin(), graphicsObjects.end(), ( GraphicsObject *) t
+		);
+	}
+	
+	inline bool Graphics::contains(GraphicsObject *t) const {
+		return find(t) != graphicsObjects.end();
+	}
+	
+	inline void Graphics::add(GraphicsObject *t) {
+		if(!contains(t))
+			graphicsObjects.push_back(t);
+	}
+
+	inline void Graphics::erase(GraphicsObject *t) {
+
+		auto it = find(t);
+
+		if (it != graphicsObjects.end())
+			graphicsObjects.erase(it);
+	}
 
 }
