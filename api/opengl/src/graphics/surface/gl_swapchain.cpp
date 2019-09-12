@@ -12,20 +12,41 @@ namespace ignis {
 		/*if (getGraphics().getData()->currentSurface != *this)
 			glBindFramebuffer(0);*/
 
-		Vec4u copy = xywh;
+		Vec4u sc = xywh, vp = { 0, 0, info.size[0], info.size[1] };
 
-		if (!copy[2])
-			copy[2] = getInfo().size[0] - copy[0];
+		if (!sc[2])
+			sc[2] = vp[2] - sc[0];
 
-		if (!copy[3])
-			copy[3] = getInfo().size[1] - copy[1];
+		if (!sc[3])
+			sc[3] = vp[3] - sc[1];
 
-		if (getGraphics().getData()->xywh != xywh) {
-			getGraphics().getData()->xywh = xywh;
-			glViewport(xywh[0], xywh[1], xywh[2], xywh[3]);
+		Graphics::Data *gdata = getGraphics().getData();
+
+		if (gdata->viewport != vp) {
+			gdata->viewport = vp;
+			glViewport(vp[0], vp[1], vp[2], vp[3]);
+		}
+
+		if (sc == vp) {
+			if (gdata->scissorEnable) {
+				glDisable(GL_SCISSOR_TEST);
+				gdata->scissorEnable = false;
+			}
+		} else if (!gdata->scissorEnable) {
+			glEnable(GL_SCISSOR_TEST);
+			gdata->scissorEnable = true;
+		}
+		
+		if (gdata->scissor != sc) {
+			gdata->scissor = sc;
+			glScissor(sc[0], sc[1], sc[2], sc[3]);
 		}
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+
+	void Swapchain::end() {
+
 	}
 
 }

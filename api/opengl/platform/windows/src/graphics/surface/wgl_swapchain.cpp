@@ -51,7 +51,6 @@ namespace ignis {
 			0
 		);
 
-
 		data = new Swapchain::Data{};
 		data->dc = GetDC(tempWind);
 
@@ -98,6 +97,11 @@ namespace ignis {
 		g.getData()->minor = u32(minor);
 		g.getData()->maxSamples = u32(samples);
 
+		if (g.getData()->swapchain)
+			oic::System::log()->fatal("Each window can only have one swapchain");
+
+		g.getData()->swapchain = this;
+
 		//Get a non core context
 
 		const int pixelAttribs[] = {
@@ -111,6 +115,14 @@ namespace ignis {
 			WGL_STENCIL_BITS_ARB, 8,
 			0
 		};
+
+		for (auto &elem : glFunctionNames) {
+
+			*elem.second = wglGetProcAddress(elem.first.c_str());
+
+			if(!elem.second)
+				oic::System::log()->warn(String("GL Function not found ") + elem.first);
+		}
 
 		WGL_FUNC(wglChoosePixelFormatARB, WGLCHOOSEPIXELFORMATARB);
 		WGL_FUNC(wglCreateContextAttribsARB, WGLCREATECONTEXTATTRIBSARB);
@@ -175,7 +187,7 @@ namespace ignis {
 		delete data;
 	}
 
-	void Swapchain::end() {
+	void Swapchain::present() {
 		SwapBuffers(data->dc);
 	}
 }

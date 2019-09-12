@@ -7,7 +7,7 @@ namespace oic {
 
 namespace ignis {
 
-	struct Swapchain : public Surface {
+	class Swapchain : public Surface {
 
 	public:
 
@@ -28,6 +28,7 @@ namespace ignis {
 
 		__impl void begin(const Vec4u &xyzw) final override;
 		__impl void end() final override;
+		__impl void present();
 
 		inline const Info &getSwapchainInfo() const { return swapchainInfo; }
 		Data *getData() { return data; }

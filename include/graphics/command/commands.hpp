@@ -25,7 +25,9 @@ namespace ignis {
 		template<CommandOp opCode, typename BindObject>
 		struct GraphicsObjOp : public Command {
 			BindObject *bindObject;
-			GraphicsObjOp(BindObject *bindObject): Command(opCode, sizeof(*this)), bindObject(bindObject) {}
+			GraphicsObjOp(BindObject *bindObject, usz size = 0): 
+				Command(opCode, size == 0 ? sizeof(*this) : size), 
+				bindObject(bindObject) {}
 		};
 
 		using BindPipeline			= GraphicsObjOp<CMD_BIND_PIPELINE,			Pipeline>;
@@ -35,6 +37,7 @@ namespace ignis {
 		using BeginQuery			= GraphicsObjOp<CMD_BEGIN_SURFACE,			Query>;
 		using EndQuery				= NoParamOp<CMD_END_QUERY>;
 		using EndSurface			= NoParamOp<CMD_END_SURFACE>;
+		using Present				= NoParamOp<CMD_PRESENT>;
 
 		//Draw/dispatch commands
 
@@ -106,12 +109,36 @@ namespace ignis {
 			Vec4u renderArea;
 
 			BeginSurface(Surface *surface, Vec2u renderSize = {}, Vec2u renderOffset = {}):
-				GraphicsObjOp(surface),
+				GraphicsObjOp(surface, sizeof(*this)),
 				renderArea{ renderOffset[0], renderOffset[1], renderSize[0], renderSize[1] } {}
 		};
+		
+		//Debug calls
 
-		//CMD_SET_VIEWPORT,
-		//CMD_SET_SCISSOR,
+		template<CommandOp opCode, usz maxStringLength = 64>
+		struct DebugOp : public Command {
+
+			c8 string[maxStringLength];
+
+			DebugOp(const String &str): Command(opCode, sizeof(*this)), string{} {
+			
+				if (str.size() > maxStringLength)
+					oic::System::log()->fatal("Couldn't add debug operation; string is too big");
+
+				memcpy(string, str.data(), str.size());
+			}
+
+			usz size() const {
+				usz size = strlen(string);
+				return size >= maxStringLength ? maxStringLength : size;
+			}
+
+		};
+
+		using DebugStartRegion		= DebugOp<CMD_DEBUG_START_REGION>;
+		using DebugInsertMarker		= DebugOp<CMD_DEBUG_INSERT_MARKER>;
+		using DebugEndRegion		= NoParamOp<CMD_DEBUG_END_REGION>;
+
 		//CMD_SET_STENCIL_REFERENCE,
 
 		//CMD_UPDATE_REGISTER,
@@ -128,10 +155,6 @@ namespace ignis {
 		//CMD_COPY_IMAGE_TO_BUFFER,
 		//CMD_COPY_BUFFER_TO_IMAGE,
 		//CMD_COPY_QUERY_POOL,
-
-		//CMD_DEBUG_ADD_MARKER,
-		//CMD_DEBUG_START_MARKER,
-		//CMD_DEBUG_END_MARKER,
 
 		////Software or hardware backed commands
 

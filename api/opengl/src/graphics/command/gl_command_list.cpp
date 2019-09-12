@@ -1,7 +1,7 @@
 #include "graphics/command/command_list.hpp"
 #include "graphics/command/command_ops.hpp"
 #include "graphics/command/commands.hpp"
-#include "graphics/surface/surface.hpp"
+#include "graphics/surface/swapchain.hpp"
 #include "graphics/gl_graphics.hpp"
 
 namespace ignis {
@@ -27,6 +27,52 @@ namespace ignis {
 			case CMD_END_SURFACE:
 
 				gdata.currentSurface->end();
+				break;
+
+			case CMD_PRESENT:
+
+				gdata.swapchain->present();
+				break;
+
+			case CMD_DEBUG_START_REGION:
+
+				if (glPushDebugGroup) {
+
+					auto *sr = (DebugStartRegion*)c;
+
+					glPushDebugGroup(
+						GL_DEBUG_SOURCE_APPLICATION,
+						0,
+						GLsizei(sr->size()),
+						sr->string
+					);
+				}
+
+				break;
+
+			case CMD_DEBUG_END_REGION:
+
+				if (glPopDebugGroup)
+					glPopDebugGroup();
+
+				break;
+
+			case CMD_DEBUG_INSERT_MARKER:
+
+				if (glDebugMessageInsert) {
+
+					auto *im = (DebugInsertMarker*)c;
+
+					glDebugMessageInsert(
+						GL_DEBUG_SOURCE_APPLICATION,
+						GL_DEBUG_TYPE_MARKER,
+						0,
+						GL_DEBUG_SEVERITY_NOTIFICATION,
+						GLsizei(im->size()),
+						im->string
+					);
+				}
+
 				break;
 
 			//Clearing

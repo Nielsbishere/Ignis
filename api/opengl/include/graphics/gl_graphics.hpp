@@ -1,4 +1,5 @@
 #pragma once 
+#include "types/types.hpp"
 #include "graphics/graphics.hpp"
 
 #ifdef _WIN32
@@ -12,23 +13,27 @@
 namespace ignis {
 
 	class Surface;
+	class Swapchain;
 
 	struct Graphics::Data {
 
-		Surface *currentSurface;
+		Surface *currentSurface{};
+		Swapchain *swapchain{};
 
 		f32 depth{};
 		u32 stencil{};
 
-		Vec4u xywh{};
+		Vec4u viewport{}, scissor{};
 
 		Vec4f clearColor{};
 
 		u32 maxSamples;
 
 		u32 minor, major;
-		bool isES {};
+		bool isES{}, scissorEnable{};
 
 	};
 
 }
+
+#include "gl_header.hpp"
