@@ -14,8 +14,6 @@ namespace ignis {
 
 		switch (c->op) {
 
-			//Binding
-
 			case CMD_BEGIN_SURFACE:
 				{
 					auto *bs = (BeginSurface*)c;

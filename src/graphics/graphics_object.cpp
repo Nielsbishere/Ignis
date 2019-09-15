@@ -3,7 +3,7 @@
 
 namespace ignis {
 
-	GraphicsObject::GraphicsObject(Graphics &g): g(g) {
+	GraphicsObject::GraphicsObject(Graphics &g, const String &name): g(g), name(name) {
 		g.add(this);
 	}
 

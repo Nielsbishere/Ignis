@@ -9,12 +9,12 @@ namespace ignis {
 
 		__impl struct Data;
 
-		__impl Framebuffer(Graphics &g, const Info &info);
+		__impl Framebuffer(Graphics &g, const String &name, const Info &info);
 		__impl ~Framebuffer();
 
 		__impl void onResize(const Vec2u &size) final override;
 
-		__impl void begin() final override;
+		__impl void begin(const Vec4u &area) final override;
 		__impl void end() final override;
 
 		Data *getData() { return data; }

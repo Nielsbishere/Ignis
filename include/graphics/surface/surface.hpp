@@ -20,13 +20,15 @@ namespace ignis {
 			DepthFormat depthFormat;		//The depth format (DepthFormat::NONE or DepthFormat::AUTO generally)
 			bool keepDepth;					//If the depth should be maintained after the surface is unbound
 
+			u32 samples;					//If using multisampling; normally set to 1
+
 			Info(
 				const Vec2u &size, const List<GPUFormat> &colorFormats,
-				DepthFormat depthFormat, bool keepDepth
+				DepthFormat depthFormat, bool keepDepth, u32 samples = 1
 			);
 		};
 
-		Surface(Graphics &g, const Info &info): GPUResource(g), info(info) {}
+		Surface(Graphics &g, const String &name, const Info &info): GPUResource(g, name), info(info) {}
 		~Surface() = default;
 
 		virtual void onResize(const Vec2u &size) = 0;

@@ -57,10 +57,11 @@ namespace ignis {
 		R32i,			RG32i,	RGB32i, RGBA32i,
 		R64i,			RG64i,	RGB64i, RGBA64i,
 
-		R32f = 0x78,	RG32f,	RGB32f,	RGBA32f,
+		R16f = 0x74,	RG16f,	RGB16f,	RGBA16f,
+		R32f,			RG32f,	RGB32f,	RGBA32f,
 		R64f,			RG64f,	RGB64f, RGBA64f,
 
-		sR8 = 0x100,	sRG8,	sRGB8,	sRGBA8,
+		sRGB8 = 0x102,	sRGBA8,
 		BGR8 = 0x202,	BGRA8,
 		BGR8s = 0x212,	BGRA8s,
 		BGR8u = 0x222,	BGRA8u,

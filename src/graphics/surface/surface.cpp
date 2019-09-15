@@ -7,10 +7,10 @@ namespace ignis {
 
 	Surface::Info::Info(
 		const Vec2u &size, const List<GPUFormat> &colorFormats,
-		DepthFormat depthFormat, bool keepDepth
+		DepthFormat depthFormat, bool keepDepth, u32 samples
 	):
 		size(size), colorFormats(colorFormats),
-		depthFormat(depthFormat), keepDepth(keepDepth)
+		depthFormat(depthFormat), keepDepth(keepDepth), samples(samples)
 	{
 
 		if (colorFormats.size() > 8)

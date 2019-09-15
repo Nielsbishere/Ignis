@@ -41,8 +41,8 @@ namespace ignis {
 			Data(const Info &info): commandBuffer(info.bufferSize) {}
 		};
 
-		CommandList(Graphics &g, const Info &info);		//Construct new command list
-		CommandList(Graphics &g, const Data &data);		//Copy old command list
+		CommandList(Graphics &g, const String &name, const Info &info);		//Construct new command list
+		CommandList(Graphics &g, const String &name, const Data &data);		//Copy old command list
 		~CommandList() = default;
 
 		const Info &getInfo() const;

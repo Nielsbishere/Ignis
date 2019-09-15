@@ -1,4 +1,5 @@
 #pragma once
+#include "types/types.hpp"
 
 namespace ignis {
 
@@ -8,7 +9,7 @@ namespace ignis {
 
 	public:
 
-		GraphicsObject(Graphics &g);
+		GraphicsObject(Graphics &g, const String &name);
 		~GraphicsObject();
 
 		GraphicsObject(const GraphicsObject&) = delete;
@@ -19,10 +20,12 @@ namespace ignis {
 	protected:
 
 		inline Graphics &getGraphics() { return g; }
+		inline const String &getName() { return name; }
 
 	private:
 
 		Graphics &g;
+		String name;
 
 	};
 

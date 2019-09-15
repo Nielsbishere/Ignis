@@ -20,8 +20,8 @@ if(!functionName) \
 namespace ignis {
 
 	//Create a swapchain
-	Swapchain::Swapchain(Graphics &g, const Info &info): 
-		Surface(g, Surface::Info(
+	Swapchain::Swapchain(Graphics &g, const String &name, const Info &info):
+		Surface(g, name, Surface::Info(
 			info.vi->size,
 			{ GPUFormat::RGBA8 },
 			DepthFormat::NONE,
@@ -116,6 +116,8 @@ namespace ignis {
 			0
 		};
 
+		//TODO: Depth stencil depends on swapchain::info
+
 		for (auto &elem : glFunctionNames) {
 
 			*elem.second = wglGetProcAddress(elem.first.c_str());
@@ -184,7 +186,7 @@ namespace ignis {
 		WWindow *win = ((WViewportManager*)System::viewportManager())->get(swapchainInfo.vi);
 		ReleaseDC(win->hwnd, data->dc);
 
-		delete data;
+		destroy(data);
 	}
 
 	void Swapchain::present() {

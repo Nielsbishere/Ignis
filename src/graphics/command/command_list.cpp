@@ -3,11 +3,11 @@
 
 namespace ignis {
 
-	CommandList::CommandList(Graphics &g, const Info &info):
-		GraphicsObject(g), info(info), data(info) {}
+	CommandList::CommandList(Graphics &g, const String &name, const Info &info):
+		GraphicsObject(g, name), info(info), data(info) {}
 
-	CommandList::CommandList(Graphics &g, const Data &data):
-		GraphicsObject(g), info(u32(data.commandBuffer.size())), data(data) {}
+	CommandList::CommandList(Graphics &g, const String &name, const Data &data):
+		GraphicsObject(g, name), info(u32(data.commandBuffer.size())), data(data) {}
 
 	const CommandList::Info &CommandList::getInfo() const { return info; }
 	CommandList::Data &CommandList::getData() { return data; }

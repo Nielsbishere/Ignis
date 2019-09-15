@@ -23,6 +23,8 @@ namespace ignis {
 		f32 depth{};
 		u32 stencil{};
 
+		GLuint framebuffer{};
+
 		Vec4u viewport{}, scissor{};
 
 		Vec4f clearColor{};

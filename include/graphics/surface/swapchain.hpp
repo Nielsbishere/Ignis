@@ -14,14 +14,16 @@ namespace ignis {
 		struct Info {
 
 			oic::ViewportInfo *vi;
+			DepthFormat format;
 			bool useVSync;
 
-			Info(oic::ViewportInfo *vi, bool useVSync): vi(vi), useVSync(useVSync) {}
+			Info(oic::ViewportInfo *vi, bool useVSync, DepthFormat format): 
+				vi(vi), useVSync(useVSync), format(format) {}
 		};
 
 		__impl struct Data;
 
-		__impl Swapchain(Graphics &g, const Info &info);
+		__impl Swapchain(Graphics &g, const String &name, const Info &info);
 		__impl ~Swapchain();
 
 		__impl void onResize(const Vec2u &size) final override;
