@@ -21,8 +21,8 @@ void ::glBeginRenderPass(
 	ignis::Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
 ) {
 
-	if (gdata.framebuffer != framebuffer)
-		glBindFramebuffer(GL_FRAMEBUFFER, gdata.framebuffer = framebuffer);
+	if (gdata.readFramebuffer != framebuffer || gdata.drawFramebuffer != framebuffer)
+		glBindFramebuffer(GL_FRAMEBUFFER, gdata.readFramebuffer = gdata.drawFramebuffer = framebuffer);
 
 	Vec4u sc = xywh;
 

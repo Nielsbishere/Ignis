@@ -7,15 +7,15 @@ namespace ignis {
 
 	public:
 
-		__impl struct Data;
+		apimpl struct Data;
 
-		__impl Framebuffer(Graphics &g, const String &name, const Info &info);
-		__impl ~Framebuffer();
+		apimpl Framebuffer(Graphics &g, const String &name, const Info &info);
+		apimpl ~Framebuffer();
 
-		__impl void onResize(const Vec2u &size) final override;
+		apimpl void onResize(const Vec2u &size) final override;
 
-		__impl void begin(const Vec4u &area) final override;
-		__impl void end() final override;
+		apimpl void begin(const Vec4u &area) final override;
+		apimpl void end() final override;
 
 		Data *getData() { return data; }
 

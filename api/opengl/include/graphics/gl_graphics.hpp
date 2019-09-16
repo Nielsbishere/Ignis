@@ -6,6 +6,7 @@
 	#define WIN32_LEAN_AND_MEAN
 	#include <Windows.h>
 	#include <gl/GL.h>
+	#include "graphics/wglext.h"
 #endif
 
 #include "glext.h"
@@ -15,6 +16,8 @@ namespace ignis {
 	class Surface;
 	class Swapchain;
 
+	//Graphics data
+
 	struct Graphics::Data {
 
 		Surface *currentSurface{};
@@ -23,7 +26,7 @@ namespace ignis {
 		f32 depth{};
 		u32 stencil{};
 
-		GLuint framebuffer{};
+		GLuint readFramebuffer{}, drawFramebuffer{};
 
 		Vec4u viewport{}, scissor{};
 

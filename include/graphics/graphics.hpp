@@ -1,6 +1,7 @@
 #pragma once
 #include "types/types.hpp"
-#define __impl
+#define apimpl
+#define plimpl
 
 namespace ignis {
 
@@ -55,13 +56,15 @@ namespace ignis {
 			execute(commands);
 		}
 
-		__impl Graphics();
-		__impl ~Graphics();
+		apimpl Graphics();
+		apimpl ~Graphics();
 
-		__impl struct Data;
+		plimpl void init();
 
-		__impl CommandAvailability getCommandAvailability(CommandOp op);
-		__impl void execute(const List<CommandList*> &commands);
+		apimpl struct Data;
+
+		apimpl CommandAvailability getCommandAvailability(CommandOp op);
+		apimpl void execute(const List<CommandList*> &commands);
 
 		inline Data *getData() { return data; }
 

@@ -1,17 +1,10 @@
 #include "utils/hash.hpp"
 #include "system/system.hpp"
 #include "system/log.hpp"
-#include "graphics/surface/framebuffer.hpp"
-#include "graphics/gl_graphics.hpp"
+#include "graphics/surface/gl_framebuffer.hpp"
 #include "graphics/format.hpp"
 
 namespace ignis {
-
-	struct Framebuffer::Data {
-		GLuint index{};
-		GLuint depth{};
-		List<GLuint> renderTextures;
-	};
 
 	Framebuffer::Framebuffer(Graphics &g, const String &name, const Info &info): Surface(g, name, info) {
 		data = new Data();

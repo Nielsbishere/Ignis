@@ -3,7 +3,7 @@
 #include "system/system.hpp"
 #include "system/log.hpp"
 #include "graphics/graphics_object.hpp"
-#define __impl
+#define apimpl
 
 namespace ignis {
 
@@ -70,7 +70,7 @@ namespace ignis {
 	protected:
 
 		void addInternal(const Command *c);
-		__impl void execute(Command *c);
+		apimpl void execute(Command *c);
 
 	private:
 

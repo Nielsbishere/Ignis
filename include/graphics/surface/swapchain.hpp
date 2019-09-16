@@ -21,16 +21,16 @@ namespace ignis {
 				vi(vi), useVSync(useVSync), format(format) {}
 		};
 
-		__impl struct Data;
+		plimpl struct Data;
 
-		__impl Swapchain(Graphics &g, const String &name, const Info &info);
-		__impl ~Swapchain();
+		plimpl Swapchain(Graphics &g, const String &name, const Info &info);
+		plimpl ~Swapchain();
 
-		__impl void onResize(const Vec2u &size) final override;
+		apimpl void onResize(const Vec2u &size) final override;
 
-		__impl void begin(const Vec4u &xyzw) final override;
-		__impl void end() final override;
-		__impl void present();
+		apimpl void begin(const Vec4u &xyzw) final override;
+		apimpl void end() final override;
+		plimpl void present();
 
 		inline const Info &getSwapchainInfo() const { return swapchainInfo; }
 		Data *getData() { return data; }

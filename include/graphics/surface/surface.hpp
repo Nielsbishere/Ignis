@@ -1,7 +1,8 @@
 #pragma once
 #include "types/types.hpp"
 #include "graphics/resource.hpp"
-#define __impl
+#define apimpl
+#define plimpl
 
 namespace ignis {
 

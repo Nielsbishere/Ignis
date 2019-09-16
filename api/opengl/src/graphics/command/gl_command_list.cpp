@@ -2,6 +2,7 @@
 #include "graphics/command/command_ops.hpp"
 #include "graphics/command/commands.hpp"
 #include "graphics/surface/swapchain.hpp"
+#include "graphics/surface/gl_framebuffer.hpp"
 #include "graphics/gl_graphics.hpp"
 
 namespace ignis {
@@ -73,8 +74,6 @@ namespace ignis {
 
 				break;
 
-			//Clearing
-
 			case CMD_SET_CLEAR_COLOR:
 
 				{
@@ -121,6 +120,54 @@ namespace ignis {
 
 					if (cd->dataObject != gdata.stencil)
 						glClearDepth(gdata.stencil = cd->dataObject);
+				}
+				break;
+
+			case CMD_BLIT_SURFACE:
+
+				{
+					BlitSurface *bs = (BlitSurface*) c;
+
+					GLenum mask{};
+					GLenum filter = bs->filter == BlitSurface::NEAREST ? GL_NEAREST : GL_LINEAR;
+
+					if (bs->mask & BlitSurface::COLOR)
+						mask |= GL_COLOR_BUFFER_BIT;
+					else if (bs->mask & BlitSurface::DEPTH)
+						mask |= GL_DEPTH_BUFFER_BIT;
+					else
+						mask |= GL_STENCIL_BUFFER_BIT;
+
+					GLuint index = 0; 
+
+					if (bs->src->canCast<Framebuffer>())
+						((Framebuffer*) bs->src)->getData()->index;
+
+					if (gdata.readFramebuffer != index)
+						glBindFramebuffer(GL_READ_FRAMEBUFFER, index);
+
+					index = 0;
+
+					if (bs->dst->canCast<Framebuffer>())
+						index = ((Framebuffer*) bs->dst)->getData()->index;
+
+					if (gdata.drawFramebuffer != index)
+						glBindFramebuffer(GL_DRAW_FRAMEBUFFER, index);
+
+					Vec4u srcArea = bs->srcArea, dstArea = bs->dstArea;
+
+					if (!srcArea[2]) srcArea[2] = bs->src->getInfo().size[0];
+					if (!srcArea[3]) srcArea[3] = bs->src->getInfo().size[1];
+					if (!dstArea[2]) dstArea[2] = bs->dst->getInfo().size[0];
+					if (!dstArea[3]) dstArea[3] = bs->dst->getInfo().size[1];
+
+					glBlitFramebuffer(
+						srcArea[0], srcArea[1], srcArea[2], srcArea[3],
+						dstArea[0], dstArea[1], dstArea[2], dstArea[3],
+						mask,
+						filter
+					);
+
 				}
 				break;
 

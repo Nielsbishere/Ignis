@@ -10,12 +10,18 @@ namespace ignis {
 	public:
 
 		GraphicsObject(Graphics &g, const String &name);
-		~GraphicsObject();
+		virtual ~GraphicsObject();
 
 		GraphicsObject(const GraphicsObject&) = delete;
 		GraphicsObject(GraphicsObject&&) = delete;
 		GraphicsObject &operator=(const GraphicsObject&) = delete;
 		GraphicsObject &operator=(GraphicsObject&&) = delete;
+
+		template<typename T>
+		bool canCast() { return dynamic_cast<T*>(this); }
+
+		template<typename T>
+		bool cast() { return dynamic_cast<T*>(this); }
 
 	protected:
 

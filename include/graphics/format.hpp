@@ -90,7 +90,9 @@ namespace ignis {
 		static constexpr GPUFormatType getType(GPUFormat gf);
 
 		static constexpr usz getDepthBits(DepthFormat df);
+		static constexpr usz getStencilBits(DepthFormat df);
 		static constexpr usz getDepthBytes(DepthFormat df);
+		static constexpr usz getStencilBytes(DepthFormat df);
 
 		static constexpr bool isSRGB(GPUFormat gf);
 		static constexpr bool flipRGB(GPUFormat gf);
@@ -121,8 +123,10 @@ namespace ignis {
 	constexpr bool FormatHelper::isNone(GPUFormat gf) { return u16(gf) & 0x400; }
 	constexpr GPUFormatType FormatHelper::getType(GPUFormat gf) { return GPUFormatType(u8(gf) >> 4); }
 
-	constexpr usz FormatHelper::getDepthBits(DepthFormat df) { return 16_usz + ((u8(df) & 0x6) << 2); }
-	constexpr usz FormatHelper::getDepthBytes(DepthFormat df) { return 2_usz + ((u8(df) & 0x6) >> 1); }
+	constexpr usz FormatHelper::getDepthBits(DepthFormat df) { return df == DepthFormat::NONE ? 0 : 16_usz + ((u8(df) & 0x6) << 2); }
+	constexpr usz FormatHelper::getDepthBytes(DepthFormat df) { return df == DepthFormat::NONE ? 0 : 2_usz + ((u8(df) & 0x6) >> 1); }
+	constexpr usz FormatHelper::getStencilBytes(DepthFormat df) { return hasStencil(df); }
+	constexpr usz FormatHelper::getStencilBits(DepthFormat df) { return getStencilBytes(df) << 3; }
 
 	constexpr bool FormatHelper::isSRGB(GPUFormat gf) { return u16(gf) & 0x100; }
 	constexpr bool FormatHelper::flipRGB(GPUFormat gf) { return u16(gf) & 0x200; }

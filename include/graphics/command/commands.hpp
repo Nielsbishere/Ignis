@@ -112,6 +112,28 @@ namespace ignis {
 				GraphicsObjOp(surface, sizeof(*this)),
 				renderArea{ renderOffset[0], renderOffset[1], renderSize[0], renderSize[1] } {}
 		};
+
+		struct BlitSurface : Command {
+
+			Surface *src, *dst;
+			Vec4u srcArea, dstArea;
+
+			enum BlitMask : u8 {
+				COLOR = 1, DEPTH = 2, STENCIL = 4,
+				COLOR_DEPTH = 3, COLOR_STENCIL = 5,
+				DEPTH_STENCIL = 6, ALL = 7
+			} mask;
+
+			enum BlitFilter : u8 {
+				NEAREST, LINEAR
+			} filter;
+
+			BlitSurface(
+				Surface *src, Surface *dst, Vec4u srcArea, Vec4u dstArea, BlitMask mask, BlitFilter filter
+			): Command(CMD_BLIT_SURFACE, sizeof(*this)), src(src), dst(dst), 
+				srcArea(srcArea), dstArea(dstArea), mask(mask), filter(filter) {}
+
+		};
 		
 		//Debug calls
 
