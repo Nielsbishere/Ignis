@@ -14,6 +14,7 @@ static T appendGlFunc(const String &s, T &t) {
 #define GL_FUNC(x, y) PFN##y##PROC x = appendGlFunc(#x, x)
 
 #include "graphics/gl_functions.hpp"
+#include "..\..\include\graphics\gl_header.hpp"
 
 using namespace ignis;
 
@@ -55,6 +56,58 @@ void ::glBeginRenderPass(
 	}
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void glDebugMessage(
+	GLenum source, GLenum type, GLuint, GLenum severity,
+	GLsizei, const GLchar *message, const void *
+) {
+
+	oic::LogLevel logLevel = oic::LogLevel::DEBUG;
+
+	switch (severity) {
+
+		case GL_DEBUG_SEVERITY_HIGH:
+			logLevel = oic::LogLevel::FATAL;
+			break;
+
+		case GL_DEBUG_SEVERITY_MEDIUM:
+			logLevel = oic::LogLevel::ERROR;
+			break;
+
+		case GL_DEBUG_SEVERITY_LOW:
+			logLevel = oic::LogLevel::WARN;
+			break;
+	}
+
+	if (type == GL_DEBUG_TYPE_PERFORMANCE)
+		logLevel = oic::LogLevel::PERFORMANCE;
+
+	static const HashMap<GLenum, String> sources = {
+		{ GL_DEBUG_SOURCE_API, "API" },
+		{ GL_DEBUG_SOURCE_WINDOW_SYSTEM, "Windows system" },
+		{ GL_DEBUG_SOURCE_SHADER_COMPILER, "Shader compiler" },
+		{ GL_DEBUG_SOURCE_THIRD_PARTY, "Third party" },
+		{ GL_DEBUG_SOURCE_APPLICATION, "App" },
+		{ GL_DEBUG_SOURCE_OTHER, "Other" }
+	};
+
+	static const HashMap<GLenum, const c8 *> types = {
+		{ GL_DEBUG_TYPE_ERROR, "Error" },
+		{ GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, "Deprecated behavior" },
+		{ GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, "Undefined behavior" },
+		{ GL_DEBUG_TYPE_PORTABILITY, "Portability" },
+		{ GL_DEBUG_TYPE_PERFORMANCE, "Performance" },
+		{ GL_DEBUG_TYPE_OTHER, "Other" }
+	};
+
+	auto it = types.find(type);
+	auto itt = sources.find(source);
+
+	if (it == types.end() || itt == sources.end())
+		return;
+
+	oic::System::log()->println(logLevel, "OpenGL (", itt->second, ") ", it->second, ": ", message);
 }
 
 GLenum glDepthFormat(ignis::DepthFormat format) {

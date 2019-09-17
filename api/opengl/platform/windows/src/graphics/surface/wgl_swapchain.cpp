@@ -65,10 +65,17 @@ namespace ignis {
 		if (!SetPixelFormat(data->dc, pixelFormatId, &pfd))
 			oic::System::log()->fatal(errors::surface::contextError);
 
+		#ifndef NO_DEBUG
+			constexpr int enableDebug = WGL_CONTEXT_DEBUG_BIT_ARB;
+		#else
+			constexpr int enableDebug{};
+		#endif
+
 		int contextAttribs[] = {
 			WGL_CONTEXT_MAJOR_VERSION_ARB, int(g.getData()->major),
 			WGL_CONTEXT_MINOR_VERSION_ARB, int(g.getData()->minor),
 			WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+			WGL_CONTEXT_FLAGS_ARB, enableDebug,
 			0
 		};
 
@@ -77,6 +84,13 @@ namespace ignis {
 
 		if (!data->rc || !wglMakeCurrent(data->dc, data->rc))
 			oic::System::log()->fatal(errors::surface::contextError);
+
+		//Enable debug callbacks
+
+		#ifndef NO_DEBUG
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			glDebugMessageCallback(glDebugMessage, nullptr);
+		#endif
 
 		onResize(getInfo().size);
 	}

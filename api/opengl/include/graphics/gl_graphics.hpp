@@ -3,10 +3,18 @@
 #include "graphics/graphics.hpp"
 
 #ifdef _WIN32
+
 	#define WIN32_LEAN_AND_MEAN
+
 	#include <Windows.h>
 	#include <gl/GL.h>
 	#include "graphics/wglext.h"
+
+	#undef ERROR
+	#undef far
+	#undef near
+	#undef min
+	#undef max
 #endif
 
 #include "glext.h"

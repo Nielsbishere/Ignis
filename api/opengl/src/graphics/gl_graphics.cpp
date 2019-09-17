@@ -3,8 +3,12 @@
 
 namespace ignis {
 
-	Graphics::Graphics() { data = new Graphics::Data(); init(); }
 	Graphics::~Graphics() { delete data; }
+
+	Graphics::Graphics() { 
+		data = new Graphics::Data(); 
+		init();
+	}
 
 	CommandAvailability Graphics::getCommandAvailability(CommandOp) {
 

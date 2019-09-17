@@ -16,5 +16,10 @@ extern void glBeginRenderPass(
 	ignis::Graphics::Data &data, const Vec4u &renderArea, const Vec2u &size, GLuint framebuffer
 );
 
+extern void APIENTRY glDebugMessage(
+	GLenum, GLenum, GLuint, GLenum,
+	GLsizei, const GLchar*, const void*
+);
+
 extern GLenum glDepthFormat(ignis::DepthFormat format);
 extern GLenum glColorFormat(ignis::GPUFormat format);

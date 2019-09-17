@@ -1,4 +1,5 @@
 #include "utils/hash.hpp"
+#include "utils/math.hpp"
 #include "system/system.hpp"
 #include "system/log.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
@@ -8,7 +9,7 @@ namespace ignis {
 
 	Framebuffer::Framebuffer(Graphics &g, const String &name, const Info &info): Surface(g, name, info) {
 		data = new Data();
-		this->info.samples = min(g.getData()->maxSamples, info.samples);
+		this->info.samples = oic::Math::min(g.getData()->maxSamples, info.samples);
 	}
 
 	Framebuffer::~Framebuffer() {
@@ -97,14 +98,14 @@ namespace ignis {
 			glGenTextures(1, data->renderTextures.data() + i);
 			GLuint tex = data->renderTextures[i];
 
-			String hashed = NAME(getName() + NAME(" buffer ") + std::to_string(i));
-			glObjectLabel(GL_TEXTURE, tex, GLsizei(hashed.size()), hashed.c_str());
-
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex);
 			glTexImage2DMultisample(
 				GL_TEXTURE_2D_MULTISAMPLE, GLsizei(info.samples),
 				glColorFormat(info.colorFormats[i]), info.size[0], info.size[1], GL_FALSE
 			);
+
+			String hashed = NAME(getName() + NAME(" buffer ") + std::to_string(i));
+			glObjectLabel(GL_TEXTURE, tex, GLsizei(hashed.size()), hashed.c_str());
 
 			glFramebufferTexture(GL_FRAMEBUFFER, drawBuffers[i] = GL_COLOR_ATTACHMENT0 + GLenum(i), tex, 0);
 		}
