@@ -7,8 +7,8 @@ namespace ignis {
 	//Framebuffer definition
 
 	struct Framebuffer::Data {
-		GLuint index {};
-		GLuint depth {};
+		GLuint index{};
+		GLuint depth{};
 		List<GLuint> renderTextures;
 	};
 

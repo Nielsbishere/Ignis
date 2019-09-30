@@ -9,7 +9,10 @@ namespace ignis {
 	extern HashMap<String, void**> glFunctionNames;
 
 	enum class DepthFormat : u8;
+	enum class GPUBufferType : u8;
+	enum class GPUBufferUsage : u8;
 	enum class GPUFormat : u16;
+	enum class GPUFormatType : u8;
 }
 
 extern void glBeginRenderPass(
@@ -23,3 +26,7 @@ extern void APIENTRY glDebugMessage(
 
 extern GLenum glDepthFormat(ignis::DepthFormat format);
 extern GLenum glColorFormat(ignis::GPUFormat format);
+extern GLenum glBufferType(ignis::GPUBufferType format);
+extern GLenum glBufferUsage(ignis::GPUBufferUsage usage, bool isPersistent);
+extern GLenum glBufferHint(ignis::GPUBufferUsage usage);
+extern GLenum glPrimive(ignis::GPUFormatType type);

@@ -3,7 +3,7 @@
 
 namespace ignis {
 
-	struct Framebuffer : public Surface {
+	class Framebuffer : public Surface {
 
 	public:
 

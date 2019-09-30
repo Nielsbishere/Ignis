@@ -3,7 +3,6 @@
 #include "system/system.hpp"
 #include "system/log.hpp"
 #include "graphics/graphics_object.hpp"
-#define apimpl
 
 namespace ignis {
 

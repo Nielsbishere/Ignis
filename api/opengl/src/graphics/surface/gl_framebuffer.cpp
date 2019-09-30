@@ -7,7 +7,9 @@
 
 namespace ignis {
 
-	Framebuffer::Framebuffer(Graphics &g, const String &name, const Info &info): Surface(g, name, info) {
+	Framebuffer::Framebuffer(Graphics &g, const String &name, const Info &info): 
+		Surface(g, name, info) {
+		
 		data = new Data();
 		this->info.samples = oic::Math::min(g.getData()->maxSamples, info.samples);
 	}
@@ -43,7 +45,9 @@ namespace ignis {
 
 		glGenFramebuffers(1, &data->index);
 		glBindFramebuffer(GL_FRAMEBUFFER, data->index);
-		glObjectLabel(GL_FRAMEBUFFER, data->index, GLsizei(getName().size()), getName().c_str());
+		glObjectLabel(
+			GL_FRAMEBUFFER, data->index, GLsizei(getName().size()), getName().c_str()
+		);
 
 		if (info.depthFormat != DepthFormat::NONE) {
 
@@ -52,13 +56,14 @@ namespace ignis {
 				glGenTextures(1, &data->depth);
 				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, data->depth);
 
-				String hashed = NAME(getName() + NAME(" depth texture"));
-				glObjectLabel(GL_TEXTURE, data->depth, GLsizei(hashed.size()), hashed.c_str());
+				String hashed = NAME(getName() + " depth texture");
+				glObjectLabel(
+					GL_TEXTURE, data->depth, GLsizei(hashed.size()), hashed.c_str()
+				);
 
-				//TODO:
 				glTexImage2DMultisample(
 					GL_TEXTURE_2D_MULTISAMPLE, GLsizei(info.samples),
-					GL_DEPTH_COMPONENT32, info.size[0], info.size[1], GL_FALSE
+					glDepthFormat(info.depthFormat), info.size[0], info.size[1], GL_FALSE
 				);
 
 				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, data->depth, 0);
@@ -68,7 +73,7 @@ namespace ignis {
 				glGenRenderbuffers(1, &data->depth);
 				glBindRenderBuffer(GL_RENDERBUFFER, data->depth);
 
-				String hashed = NAME(getName() + NAME(" depth buffer"));
+				String hashed = NAME(getName() + " depth buffer");
 				glObjectLabel(
 					GL_RENDERBUFFER, data->depth, GLsizei(hashed.size()), hashed.c_str()
 				);
@@ -88,8 +93,6 @@ namespace ignis {
 			}
 		}
 
-		//TODO: Create stencil
-
 		data->renderTextures.resize(info.colorFormats.size());
 		List<GLenum> drawBuffers(info.colorFormats.size());
 
@@ -104,7 +107,7 @@ namespace ignis {
 				glColorFormat(info.colorFormats[i]), info.size[0], info.size[1], GL_FALSE
 			);
 
-			String hashed = NAME(getName() + NAME(" buffer ") + std::to_string(i));
+			String hashed = NAME(getName() + " buffer " + std::to_string(i));
 			glObjectLabel(GL_TEXTURE, tex, GLsizei(hashed.size()), hashed.c_str());
 
 			glFramebufferTexture(GL_FRAMEBUFFER, drawBuffers[i] = GL_COLOR_ATTACHMENT0 + GLenum(i), tex, 0);

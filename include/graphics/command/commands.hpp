@@ -41,29 +41,19 @@ namespace ignis {
 
 		//Draw/dispatch commands
 
+		//Indexed or non-indexed; instanced draw call
+		//DrawInstanced(...) for non-indexed
+		//DrawInstanced::indexed() for indexed
 		struct DrawInstanced : public Command {
 
-			u32 vertexStart, vertexCount, instanceStart, instanceCount;
+			u32 start, count, instanceCount;
+			bool isIndexed;
 
 			DrawInstanced(
-				u32 vertexCount, u32 instanceCount = 1, u32 vertexStart = 0, u32 instanceStart = 0
+				u32 count, u32 instanceCount = 1, u32 start = 0
 			): 
-				Command(CMD_DRAW_INSTANCED, sizeof(*this)),
-				vertexStart(vertexStart), vertexCount(vertexCount), 
-				instanceStart(instanceStart), instanceCount(instanceCount) {}
-		};
-
-		struct DrawIndexedInstanced : public Command {
-
-			u32 indexStart, indexCount, vertexStart, instanceStart, instanceCount;
-
-			DrawIndexedInstanced(
-				u32 indexCount, u32 instanceCount = 1, u32 indexStart = 0,
-				u32 instanceStart = 0, u32 vertexStart = 0
-			): 
-				Command(CMD_DRAW_INDEXED_INSTANCED, sizeof(*this)),
-				indexStart(indexStart), indexCount(indexCount), vertexStart(vertexStart),
-				instanceStart(instanceStart), instanceCount(instanceCount) {}
+				Command(CMD_DRAW_INSTANCED, sizeof(*this)), isIndexed(false),
+				start(start), count(count), instanceCount(instanceCount) {}
 		};
 
 		//Setting values
@@ -74,7 +64,6 @@ namespace ignis {
 			DataOp(DataObject dataObject): Command(opCode, sizeof(*this)), dataObject(dataObject) {}
 		};
 
-		//using SetClearColor		= DataOp<CMD_SET_CLEAR_COLOR,		Vec4f
 		using SetClearStencil		= DataOp<CMD_SET_CLEAR_STENCIL,			u32>;
 		using SetClearDepth			= DataOp<CMD_SET_CLEAR_DEPTH,			f32>;
 		using SetLineWidth			= DataOp<CMD_SET_LINE_WIDTH,			f32>;
@@ -84,7 +73,7 @@ namespace ignis {
 
 		struct SetClearColor : public Command {
 
-			enum Type : u8 {
+			enum class Type : u8 {
 				FLOAT, UNSIGNED_INT, SIGNED_INT
 			} type;
 
@@ -95,13 +84,13 @@ namespace ignis {
 			};
 
 			SetClearColor(const Vec4f &rgba): 
-				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbaf(rgba), type(FLOAT) {}
+				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbaf(rgba), type(Type::FLOAT) {}
 
 			SetClearColor(const Vec4u &rgba): 
-				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbau(rgba), type(UNSIGNED_INT) {}
+				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbau(rgba), type(Type::UNSIGNED_INT) {}
 
 			SetClearColor(const Vec4i &rgba): 
-				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbai(rgba), type(SIGNED_INT) {}
+				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbai(rgba), type(Type::SIGNED_INT) {}
 		};
 
 		struct BeginSurface : GraphicsObjOp<CMD_BEGIN_SURFACE, Surface> {
@@ -160,52 +149,6 @@ namespace ignis {
 		using DebugStartRegion		= DebugOp<CMD_DEBUG_START_REGION>;
 		using DebugInsertMarker		= DebugOp<CMD_DEBUG_INSERT_MARKER>;
 		using DebugEndRegion		= NoParamOp<CMD_DEBUG_END_REGION>;
-
-		//CMD_SET_STENCIL_REFERENCE,
-
-		//CMD_UPDATE_REGISTER,
-		//CMD_UPDATE_CONSTANT,
-		//CMD_UPDATE_BUFFER,
-		//CMD_UPDATE_TEXTURE,
-
-		//CMD_CLEAR_SURFACE,
-		//CMD_CLEAR_IMAGE,
-		//CMD_CLEAR_QUERY_POOL,
-
-		//CMD_BLIT_IMAGE,
-		//CMD_COPY_BUFFER,
-		//CMD_COPY_IMAGE_TO_BUFFER,
-		//CMD_COPY_BUFFER_TO_IMAGE,
-		//CMD_COPY_QUERY_POOL,
-
-		////Software or hardware backed commands
-
-		//CMD_DRAW_INDIRECT_EXT_0,
-		//CMD_DRAW_INDEXED_INDIRECT_EXT_0,
-		//CMD_BEGIN_QUERY_INDIRECT_EXT_0,
-		//CMD_END_QUERY_INDIRECT_EXT_0,
-		//CMD_BEGIN_CONDITIONAL_EXT_0,
-		//CMD_END_CONDITIONAL_EXT_0,
-
-		////API specific commands
-
-		//CMD_DISPATCH_FT_1,
-		//CMD_DISPATCH_INDIRECT_FT_EXT_1,
-
-		////Common commands
-
-		//CMD_DRAW_INDIRECT_COUNT_EXT_2,
-		//CMD_DRAW_INDEXED_INDIRECT_COUNT_EXT_2,
-
-		////Vendor commands
-
-		//CMD_TRACE_RAYS_FT_3,
-		//CMD_BUILD_ACCELERATION_STRUCTURE_FT_3,
-		//CMD_COPY_ACCELERATION_STRUCTURE_FT_3,
-		//CMD_WRITE_ACCELERATION_STRUCTURE_PROPERTIES_FT_3,
-		//CMD_DRAW_MESH_TASKS_FT_3,
-		//CMD_DRAW_MESH_TASKS_INDIRECT_FT_3,
-		//CMD_DRAW_MESH_TASKS_INDIRECT_COUNT_FT_3,
 
 	};
 	

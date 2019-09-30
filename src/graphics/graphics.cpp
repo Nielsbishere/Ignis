@@ -19,4 +19,12 @@ namespace ignis {
 
 		graphicsObjects.clear();
 	}
+
+	void Graphics::setFeature(Feature f, bool b) {
+		features[usz(f)] = b;
+	}
+
+	void Graphics::setExtension(Extension e, bool b) {
+		extensions[usz(e)] = b;
+	}
 }

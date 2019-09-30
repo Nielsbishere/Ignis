@@ -1,4 +1,4 @@
-#include "graphics/format.hpp"
+#include "graphics/enums.hpp"
 #include "system/log.hpp"
 #include "system/system.hpp"
 #include "graphics/gl_graphics.hpp"
@@ -22,8 +22,8 @@ void ::glBeginRenderPass(
 	ignis::Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
 ) {
 
-	if (gdata.readFramebuffer != framebuffer || gdata.drawFramebuffer != framebuffer)
-		glBindFramebuffer(GL_FRAMEBUFFER, gdata.readFramebuffer = gdata.drawFramebuffer = framebuffer);
+	if (gdata.bound[GL_READ_FRAMEBUFFER] != framebuffer || gdata.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
+		glBindFramebuffer(GL_FRAMEBUFFER, gdata.bound[GL_READ_FRAMEBUFFER] = gdata.bound[GL_DRAW_FRAMEBUFFER] = framebuffer);
 
 	Vec4u sc = xywh;
 
@@ -114,16 +114,14 @@ GLenum glDepthFormat(ignis::DepthFormat format) {
 
 	switch (format) {
 
-		case DepthFormat::D16: return GL_DEPTH_COMPONENT16;
-		case DepthFormat::D32: return GL_DEPTH_COMPONENT32;
+		case DepthFormat::D16:		return GL_DEPTH_COMPONENT16;
+		case DepthFormat::D32:		return GL_DEPTH_COMPONENT32;
 
-		case DepthFormat::D24_S8:
-		case DepthFormat::D24: 
-			return GL_DEPTH_COMPONENT24;
+		case DepthFormat::D24_S8:	return GL_DEPTH24_STENCIL8;
+		case DepthFormat::D24:		return GL_DEPTH_COMPONENT24;
 
-		case DepthFormat::D32F:
-		case DepthFormat::D32F_S8:
-			return GL_DEPTH_COMPONENT32F;
+		case DepthFormat::D32F:		return GL_DEPTH_COMPONENT32F;
+		case DepthFormat::D32F_S8:	return GL_DEPTH32F_STENCIL8;
 
 		default:
 			oic::System::log()->fatal("Invalid depth format");
@@ -222,4 +220,72 @@ GLenum glColorFormat(ignis::GPUFormat format){
 
 	}
 
+}
+
+GLenum glBufferType(ignis::GPUBufferType format) {
+
+	switch (format) {
+
+		case GPUBufferType::UNIFORM:				return GL_UNIFORM_BUFFER;
+		case GPUBufferType::VERTEX:					return GL_ARRAY_BUFFER;
+		case GPUBufferType::INDEX:					return GL_ELEMENT_ARRAY_BUFFER;
+		case GPUBufferType::TEXTURE:				return GL_TEXTURE_BUFFER;
+
+		case GPUBufferType::STRUCTURED_FT:
+		case GPUBufferType::STORAGE_FT:				return GL_SHADER_STORAGE_BUFFER;
+
+		case GPUBufferType::INDIRECT_DRAW_EXT:		return GL_DRAW_INDIRECT_BUFFER;
+		case GPUBufferType::INDIRECT_DISPATCH_EXT:	return GL_DISPATCH_INDIRECT_BUFFER;
+
+		default:
+			oic::System::log()->fatal("Invalid buffer type");
+			return GL_UNIFORM_BUFFER;
+	}
+}
+
+GLenum glBufferUsage(ignis::GPUBufferUsage usage, bool isPersistent) {
+
+	GLenum res{};
+
+	if (u8(usage) & u8(GPUBufferUsage::CPU_WRITE)) {
+		res |= GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT;
+		if(isPersistent) res |= GL_MAP_PERSISTENT_BIT;
+	}
+
+	if (u8(usage) & u8(GPUBufferUsage::SHARED))
+		res |= GL_CLIENT_STORAGE_BIT;
+
+	return res;
+}
+
+GLenum glBufferHint(ignis::GPUBufferUsage usage) {
+
+	//& 1 = isStatic
+	//& 2 = isCopy
+	constexpr GLenum type[] = {
+		GL_DYNAMIC_DRAW, GL_STATIC_DRAW,
+		GL_DYNAMIC_COPY, GL_STATIC_COPY
+	};
+
+	usz id{};
+
+	if (!(u8(usage) & u8(GPUBufferUsage::CPU_WRITE))) {
+
+		id |= 2;		//If CPU doesn't write; it's draw
+
+		if (!(u8(usage) & u8(GPUBufferUsage::GPU_WRITE)))
+			id |= 1;	//If GPU also doesn't write; it's static
+	}
+
+	return type[id];
+}
+
+GLenum glPrimive(ignis::GPUFormatType type) {
+
+	if (type == GPUFormatType::SINT)
+		return GL_INT;
+	else if (type == GPUFormatType::UINT)
+		return GL_UNSIGNED_INT;
+		
+	return GL_FLOAT;
 }

@@ -1,5 +1,7 @@
 #pragma once
 #include "types/types.hpp"
+#define apimpl
+#define plimpl
 
 namespace ignis {
 

@@ -2,6 +2,7 @@
 #include "graphics/command/command_ops.hpp"
 #include "graphics/command/commands.hpp"
 #include "graphics/surface/swapchain.hpp"
+#include "graphics/memory/gl_primitive_buffer.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
 #include "graphics/gl_graphics.hpp"
 
@@ -80,7 +81,7 @@ namespace ignis {
 					SetClearColor *cc = (SetClearColor*)c;
 					Vec4f color = cc->rgbaf;
 
-					if (cc->type == SetClearColor::UNSIGNED_INT)
+					if (cc->type == SetClearColor::Type::UNSIGNED_INT)
 						color = Vec4f{ 
 							f32(cc->rgbau[0]), 
 							f32(cc->rgbau[1]),
@@ -88,7 +89,7 @@ namespace ignis {
 							f32(cc->rgbau[3]) 
 						};
 
-					else if(cc->type == SetClearColor::SIGNED_INT)
+					else if(cc->type == SetClearColor::Type::SIGNED_INT)
 						color = Vec4f {
 							f32(cc->rgbai[0]),
 							f32(cc->rgbai[1]),
@@ -129,7 +130,7 @@ namespace ignis {
 					BlitSurface *bs = (BlitSurface*) c;
 
 					GLenum mask{};
-					GLenum filter = bs->filter == BlitSurface::NEAREST ? GL_NEAREST : GL_LINEAR;
+					GLenum filter = bs->filter == BlitSurface::BlitFilter::NEAREST ? GL_NEAREST : GL_LINEAR;
 
 					if (bs->mask & BlitSurface::COLOR)
 						mask |= GL_COLOR_BUFFER_BIT;
@@ -141,18 +142,16 @@ namespace ignis {
 					GLuint index = 0; 
 
 					if (bs->src->canCast<Framebuffer>())
-						((Framebuffer*) bs->src)->getData()->index;
+						index = ((Framebuffer*) bs->src)->getData()->index;
 
-					if (gdata.readFramebuffer != index)
-						glBindFramebuffer(GL_READ_FRAMEBUFFER, index);
+					gdata.bind(glBindFramebuffer, GL_READ_FRAMEBUFFER, index);
 
 					index = 0;
 
 					if (bs->dst->canCast<Framebuffer>())
 						index = ((Framebuffer*) bs->dst)->getData()->index;
 
-					if (gdata.drawFramebuffer != index)
-						glBindFramebuffer(GL_DRAW_FRAMEBUFFER, index);
+					gdata.bind(glBindFramebuffer, GL_DRAW_FRAMEBUFFER, index);
 
 					Vec4u srcArea = bs->srcArea, dstArea = bs->dstArea;
 
@@ -169,6 +168,49 @@ namespace ignis {
 					);
 
 				}
+				break;
+
+			case CMD_BIND_PRIMITIVE_BUFFER:
+				
+				{
+					auto *pbuffer = ((BindPrimitiveBuffer*) c)->bindObject;
+
+					if (pbuffer != gdata.primitiveBuffer) {
+						gdata.primitiveBuffer = pbuffer;
+						glBindVertexArray(pbuffer->getData()->handle);
+					}
+				}
+				break;
+
+			case CMD_DRAW_INSTANCED:
+
+				if (!gdata.primitiveBuffer)
+					oic::System::log()->fatal("No primitive buffer bound!");
+
+				if (gdata.primitiveBuffer->indices()) {
+
+					auto *di = (DrawInstanced*) c;
+
+					glDrawElementsInstanced(
+						GL_TRIANGLES,	//TODO:
+						di->count,
+						GL_UNSIGNED_BYTE /* TODO: */,
+						(void*) usz(di->start),
+						di->instanceCount
+					);
+
+				} else {
+
+					auto *di = (DrawInstanced*) c;
+
+					glDrawArraysInstanced(
+						GL_TRIANGLES,	//TODO:
+						di->start,
+						di->count,
+						di->instanceCount
+					);
+				}
+
 				break;
 
 			default:

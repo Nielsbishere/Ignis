@@ -1,17 +1,13 @@
 #pragma once
-#include "types/types.hpp"
-#define apimpl
-#define plimpl
+#include "graphics_object.hpp"
 
 namespace ignis {
 
 	//A feature that's dependent on the current platform
-	//E.g. compute, vr
-	enum class Feature : u32 { COMPUTE, COUNT };
+	enum class Feature : u32 { COMPUTE, STORAGE_BUFFER, COUNT };
 
 	//An extension that's dependent on the current gpu
-	//E.g. multi draw indirect
-	enum class Extension : u32 { COUNT };
+	enum class Extension : u32 { DRAW_INDIRECT, DISPATCH_INDIRECT, COUNT };
 
 	using Features = Bitset<usz(Feature::COUNT)>;
 	using Extensions = Bitset<usz(Extension::COUNT)>;
@@ -73,6 +69,9 @@ namespace ignis {
 		inline void erase(GraphicsObject *t);
 		inline void add(GraphicsObject *t);
 		void clean();
+
+		void setFeature(Feature, bool);
+		void setExtension(Extension, bool);
 
 	private:
 
