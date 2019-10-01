@@ -61,6 +61,9 @@ namespace ignis {
 
 			if (!info.indexLayout.buffer) {
 
+				if(info.indexLayout.formats.size() != 1)
+					oic::System::log()->fatal("Index buffer requires one format");
+
 				info.indexLayout.buffer = new GPUBuffer(g, NAME(name + " ibo"),
 					GPUBuffer::Info(
 						info.indexLayout.initData,

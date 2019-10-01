@@ -29,4 +29,4 @@ extern GLenum glColorFormat(ignis::GPUFormat format);
 extern GLenum glBufferType(ignis::GPUBufferType format);
 extern GLenum glBufferUsage(ignis::GPUBufferUsage usage, bool isPersistent);
 extern GLenum glBufferHint(ignis::GPUBufferUsage usage);
-extern GLenum glPrimive(ignis::GPUFormatType type);
+extern GLenum glGpuFormat(ignis::GPUFormat type);

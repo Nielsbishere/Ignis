@@ -280,12 +280,38 @@ GLenum glBufferHint(ignis::GPUBufferUsage usage) {
 	return type[id];
 }
 
-GLenum glPrimive(ignis::GPUFormatType type) {
+GLenum glGpuFormat(ignis::GPUFormat type) {
 
-	if (type == GPUFormatType::SINT)
-		return GL_INT;
-	else if (type == GPUFormatType::UINT)
-		return GL_UNSIGNED_INT;
-		
-	return GL_FLOAT;
+	const GPUFormatType t = FormatHelper::getType(type);
+	const usz stride = FormatHelper::getStrideBits(type);
+	
+	if (t == GPUFormatType::FLOAT) {
+
+		if (stride == 16)
+			return GL_HALF_FLOAT;
+
+		else if (stride == 32)
+			return GL_FLOAT;
+
+		else goto error;
+	}
+
+	const bool isSigned = FormatHelper::isSigned(type);
+
+	switch (stride) {
+
+		case 8:
+			return isSigned ? GL_BYTE : GL_UNSIGNED_BYTE;
+
+		case 16:
+			return isSigned ? GL_SHORT : GL_UNSIGNED_SHORT;
+
+		case 32:
+			return isSigned ? GL_INT : GL_UNSIGNED_INT;
+	}
+
+error:
+
+	oic::System::log()->fatal("Unsupported GPU format");
+	return {};
 }

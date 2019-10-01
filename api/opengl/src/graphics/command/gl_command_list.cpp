@@ -194,7 +194,7 @@ namespace ignis {
 					glDrawElementsInstanced(
 						GL_TRIANGLES,	//TODO:
 						di->count,
-						GL_UNSIGNED_BYTE /* TODO: */,
+						glGpuFormat(gdata.primitiveBuffer->getInfo().indexLayout.formats[0].format),
 						(void*) usz(di->start),
 						di->instanceCount
 					);

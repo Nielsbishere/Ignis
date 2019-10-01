@@ -20,7 +20,7 @@ namespace ignis {
 				glVertexAttribPointer(
 					elem.index, 
 					GLint(FormatHelper::getChannelCount(elem.format)),
-					glPrimive(FormatHelper::getType(elem.format)),	//TODO: use something else; GL_UNSIGNED_BYTE, GL_BYTE, etc.
+					glGpuFormat(elem.format),
 					!FormatHelper::isUnnormalized(elem.format), 
 					GLsizei(v.stride),
 					(void*)usz(elem.offset)
