@@ -22,11 +22,11 @@ namespace ignis {
 					GLint(FormatHelper::getChannelCount(elem.format)),
 					glGpuFormat(elem.format),
 					!FormatHelper::isUnnormalized(elem.format), 
-					GLsizei(v.stride),
+					GLsizei(v.stride()),
 					(void*)usz(elem.offset)
 				);
 
-				if (v.isInstanced)
+				if (v.instanced())
 					glVertexAttribDivisor(elem.index, 1);
 			}
 		}

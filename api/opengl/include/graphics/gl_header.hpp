@@ -13,6 +13,7 @@ namespace ignis {
 	enum class GPUBufferUsage : u8;
 	enum class GPUFormat : u16;
 	enum class GPUFormatType : u8;
+	enum class TopologyMode : u8;
 }
 
 extern void glBeginRenderPass(
@@ -30,3 +31,6 @@ extern GLenum glBufferType(ignis::GPUBufferType format);
 extern GLenum glBufferUsage(ignis::GPUBufferUsage usage, bool isPersistent);
 extern GLenum glBufferHint(ignis::GPUBufferUsage usage);
 extern GLenum glGpuFormat(ignis::GPUFormat type);
+extern GLenum glTopologyMode(ignis::TopologyMode topo);
+
+extern void glBindPipeline(ignis::Graphics::Data &data, ignis::Pipeline *pipeline);

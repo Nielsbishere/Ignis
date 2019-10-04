@@ -6,6 +6,9 @@
 
 namespace ignis {
 
+	BufferLayout::BufferLayout(GPUBuffer *b, const BufferAttributes &formats) :
+		buffer(b), formats(formats), elements(u32(b->size() / formats.getStride())) {}
+
 	PrimitiveBuffer::PrimitiveBuffer(
 		Graphics &g, const String &name, const Info &inf
 	):
@@ -48,7 +51,7 @@ namespace ignis {
 					oic::System::log()->fatal("Invalid predefined vertex buffer size");
 			}
 
-			if (it.buffer->getInfo().size != it.size())
+			if (it.buffer->size() != it.size())
 				oic::System::log()->fatal("Invalid primitive buffer size");
 
 			++i;
@@ -89,5 +92,17 @@ namespace ignis {
 			::destroy(elem.buffer);
 
 		::destroy(info.indexLayout.buffer);
+	}
+
+	const bool PrimitiveBuffer::matchLayout(const List<BufferAttributes> &layout) const {
+
+		if (layout.size() != info.vertexLayout.size())
+			return false;
+
+		for (usz i = 0, j = layout.size(); i < j; ++i)
+			if (layout[i] != info.vertexLayout[i].formats)
+				return false;
+
+		return true;
 	}
 }

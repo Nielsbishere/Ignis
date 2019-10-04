@@ -1,4 +1,5 @@
 #include "graphics/command/command_list.hpp"
+#include "graphics/command/command_ops.hpp"
 #include "graphics/gl_graphics.hpp"
 
 namespace ignis {
@@ -17,10 +18,12 @@ namespace ignis {
 		setExtension(Extension::DISPATCH_INDIRECT, !data->isES && data->version(4, 3));
 	}
 
+	GraphicsApi Graphics::getCurrentApi() const {
+		return GraphicsApi::OPENGL;
+	}
+
 	CommandAvailability Graphics::getCommandAvailability(CommandOp) {
-
 		//TODO:
-
 		return CommandAvailability::SUPPORTED;
 	}
 

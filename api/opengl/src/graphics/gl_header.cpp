@@ -18,8 +18,8 @@ static T appendGlFunc(const String &s, T &t) {
 
 using namespace ignis;
 
-void ::glBeginRenderPass(
-	ignis::Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
+void glBeginRenderPass(
+	Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
 ) {
 
 	if (gdata.bound[GL_READ_FRAMEBUFFER] != framebuffer || gdata.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
@@ -110,7 +110,7 @@ void glDebugMessage(
 	oic::System::log()->println(logLevel, "OpenGL (", itt->second, ") ", it->second, ": ", message);
 }
 
-GLenum glDepthFormat(ignis::DepthFormat format) {
+GLenum glDepthFormat(DepthFormat format) {
 
 	switch (format) {
 
@@ -130,7 +130,7 @@ GLenum glDepthFormat(ignis::DepthFormat format) {
 
 }
 
-GLenum glColorFormat(ignis::GPUFormat format){
+GLenum glColorFormat(GPUFormat format){
 
 	switch (format) {
 
@@ -222,7 +222,7 @@ GLenum glColorFormat(ignis::GPUFormat format){
 
 }
 
-GLenum glBufferType(ignis::GPUBufferType format) {
+GLenum glBufferType(GPUBufferType format) {
 
 	switch (format) {
 
@@ -243,7 +243,7 @@ GLenum glBufferType(ignis::GPUBufferType format) {
 	}
 }
 
-GLenum glBufferUsage(ignis::GPUBufferUsage usage, bool isPersistent) {
+GLenum glBufferUsage(GPUBufferUsage usage, bool isPersistent) {
 
 	GLenum res{};
 
@@ -258,7 +258,7 @@ GLenum glBufferUsage(ignis::GPUBufferUsage usage, bool isPersistent) {
 	return res;
 }
 
-GLenum glBufferHint(ignis::GPUBufferUsage usage) {
+GLenum glBufferHint(GPUBufferUsage usage) {
 
 	//& 1 = isStatic
 	//& 2 = isCopy
@@ -280,7 +280,7 @@ GLenum glBufferHint(ignis::GPUBufferUsage usage) {
 	return type[id];
 }
 
-GLenum glGpuFormat(ignis::GPUFormat type) {
+GLenum glGpuFormat(GPUFormat type) {
 
 	const GPUFormatType t = FormatHelper::getType(type);
 	const usz stride = FormatHelper::getStrideBits(type);
@@ -314,4 +314,28 @@ error:
 
 	oic::System::log()->fatal("Unsupported GPU format");
 	return {};
+}
+
+GLenum glTopologyMode(TopologyMode topo) {
+
+	switch (topo) {
+
+		case TopologyMode::POINT_LIST:			return GL_POINTS;
+		case TopologyMode::LINE_LIST:			return GL_LINES;
+		case TopologyMode::LINE_STRIP:			return GL_LINE_STRIP;
+		case TopologyMode::TRIANGLE_LIST:		return GL_TRIANGLES;
+		case TopologyMode::TRIANGLE_STRIP:		return GL_TRIANGLE_STRIP;
+		case TopologyMode::TRIANGLE_FAN:		return GL_TRIANGLE_FAN;
+		case TopologyMode::LINE_LIST_ADJ:		return GL_LINES_ADJACENCY;
+		case TopologyMode::LINE_STRIP_ADJ:		return GL_LINE_STRIP_ADJACENCY;
+		case TopologyMode::TRIANGLE_LIST_ADJ:	return GL_TRIANGLES_ADJACENCY;
+		case TopologyMode::TRIANGLE_STRIP_ADJ:	return GL_TRIANGLE_STRIP_ADJACENCY;
+	}
+
+	oic::System::log()->fatal("Unsupported topology mode");
+	return {};
+}
+
+void glBindPipeline(Graphics::Data&, Pipeline*) {
+	//TODO:
 }

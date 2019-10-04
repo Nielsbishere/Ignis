@@ -24,6 +24,7 @@ namespace ignis {
 	class Surface;
 	class Swapchain;
 	class PrimitiveBuffer;
+	class Pipeline;
 
 	//Graphics data
 
@@ -32,6 +33,7 @@ namespace ignis {
 		Surface *currentSurface{};
 		Swapchain *swapchain{};
 		PrimitiveBuffer *primitiveBuffer{};
+		Pipeline *pipeline{};
 
 		f32 depth{};
 		u32 stencil{};

@@ -20,6 +20,23 @@ namespace ignis {
 		UNSUPPORTED
 	};
 
+	//A unique bitset specifying the apis (not necessarily implemented)
+	//& 1 = isLowLevel
+	//& 2 = isWindows (!isWindows; unix)
+	//& 4 = isWeb	  (!isWeb; local app)
+	//& 8 = isMac
+	//& 0xE = isPlatformSpecific
+	enum class GraphicsApi : u8 {
+
+		OPENGL	= 0b0000,
+		VULKAN	= 0b0001,
+		D3D11	= 0b0010,
+		D3D12	= 0b0011,
+		WEBGL2	= 0b0100,
+		GPUWEB	= 0b0101,
+		METAL	= 0b1001
+	};
+
 	class GraphicsObject;
 	class CommandList;
 
@@ -43,8 +60,8 @@ namespace ignis {
 		inline auto find(GraphicsObject *t) const;
 		inline bool contains(GraphicsObject *t) const;
 
-		GraphicsObject* const *begin() const;
-		GraphicsObject* const *end() const;
+		GraphicsObject *const *begin() const;
+		GraphicsObject *const *end() const;
 
 		template<typename ...args>
 		inline void execute(args *...arg) {
@@ -54,6 +71,8 @@ namespace ignis {
 
 		apimpl Graphics();
 		apimpl ~Graphics();
+
+		apimpl GraphicsApi getCurrentApi() const;
 
 		plimpl void init();
 

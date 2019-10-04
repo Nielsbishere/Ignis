@@ -16,6 +16,8 @@ namespace ignis {
 	//  _1: Often available on desktop
 	//  _2: Rarely available on desktop
 	//  _3: Only available for certain vendors
+
+	//TODO: Refactor into bitset; so you can immediately query important flags
 	enum CommandOp : u32 {
 
 		//Core commands

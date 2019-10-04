@@ -26,4 +26,31 @@ namespace ignis {
 		GPU_WRITE			= 0b00000100,
 		CPU_WRITE			= 0b00001000
 	};
+
+	//This is the topology that should be assembled
+	//Flags (& types):
+	//& 3 = list, strip, fan, invalid
+	//& 1 = isStrip
+	//& 2 = isFan
+	//(>> 2) & 3 = point, line, triangle, invalid
+	//& 4 = isLine
+	//& 8 = isTriangle
+	//& 16 = isAdjacent
+	enum class TopologyMode : u8 {
+
+		POINT_LIST			= 0b00000,
+
+		LINE_LIST			= 0b00100,
+		LINE_STRIP			= 0b00101,
+
+		TRIANGLE_LIST		= 0b01000,
+		TRIANGLE_STRIP		= 0b01001,
+		TRIANGLE_FAN		= 0b01010,
+
+		LINE_LIST_ADJ		= 0b10100,
+		LINE_STRIP_ADJ		= 0b10101,
+
+		TRIANGLE_LIST_ADJ	= 0b11000,
+		TRIANGLE_STRIP_ADJ	= 0b11001
+	};
 }

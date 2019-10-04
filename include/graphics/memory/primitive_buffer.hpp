@@ -1,68 +1,8 @@
 #pragma once
-#include "../enums.hpp"
 #include "../graphics_object.hpp"
+#include "buffer_layout.hpp"
 
 namespace ignis {
-
-	class GPUBuffer;
-
-	struct BufferLayout {
-
-		struct Attrib {
-
-			u32 offset, index;
-			GPUFormat format;
-
-			Attrib(u32 offset, u32 index, GPUFormat format) :
-				offset(offset), index(index), format(format) {}
-
-			Attrib(): offset{}, index{}, format{} {}
-		};
-
-	private:
-
-		inline void registerAttrib(u32 &i, u32 &j, const GPUFormat &f) {
-			formats[i] = Attrib(j, i, f);
-			j += u32(FormatHelper::getSizeBytes(f));
-		}
-
-		template<typename ...args>
-		inline void count(const usz size, u32 &i, u32 &j, const args &...arg) {
-			(registerAttrib(i, j, arg), ...);
-			stride = j;
-			elements = u32(size / stride);
-		}
-
-	public:
-
-		Buffer initData{};
-		List<Attrib> formats;
-
-		GPUBuffer *buffer{};
-		u32 elements, stride;
-
-		bool isInstanced{};
-
-		template<typename T, typename ...args>
-		BufferLayout(const List<T> &b, bool isInstanced, const GPUFormat &format, const args &...arg) : 
-			initData((const u8*) b.data(), (const u8*) (b.data() + b.size())), 
-			formats(1 + sizeof...(arg)), isInstanced(isInstanced)
-		{
-			u32 i{}, j{};
-			count(initData.size(), i, j, format, arg...);
-		}
-
-		template<typename T, typename ...args>
-		BufferLayout(const List<T> &b, const GPUFormat &format, const args &...arg) :
-			BufferLayout(b, false, format, arg...) {}
-
-		BufferLayout(GPUBuffer *b, bool isInstanced, const List<Attrib> &formats, u32 elements, u32 stride) : 
-			buffer(b), formats(formats), elements(elements), stride(stride), isInstanced(isInstanced) {  }
-
-		BufferLayout() : formats{}, elements{}, stride{} {}
-
-		inline const usz size() const { return usz(elements) * stride; }
-	};
 
 	class PrimitiveBuffer : public GraphicsObject {
 
@@ -75,18 +15,18 @@ namespace ignis {
 			GPUBufferUsage usage;
 
 			Info(
-				List<BufferLayout> vertexLayout, 
-				BufferLayout indexLayout = {},
+				const List<BufferLayout> &vertexLayout, 
+				const BufferLayout &indexLayout = {},
 				GPUBufferUsage usage = GPUBufferUsage::LOCAL
 			):
 				vertexLayout(vertexLayout), indexLayout(indexLayout), usage(usage) { }
 
 			Info(
-				BufferLayout vertexLayout, 
-				BufferLayout indexLayout = {},
+				const BufferLayout &vertexLayout, 
+				const BufferLayout &indexLayout = {},
 				GPUBufferUsage usage = GPUBufferUsage::LOCAL
-			): 
-				vertexLayout({ vertexLayout }), indexLayout(indexLayout), usage(usage) {}
+			):
+				vertexLayout{ vertexLayout }, indexLayout(indexLayout), usage(usage) { }
 		};
 
 		apimpl struct Data;
@@ -94,36 +34,20 @@ namespace ignis {
 		PrimitiveBuffer(Graphics &g, const String &name, const Info &info);
 		~PrimitiveBuffer();
 
-		inline const BufferLayout &operator[](size_t i) const {
-			return info.vertexLayout[i];
-		}
-
-		inline const BufferLayout &getIndexBuffer() const {
-			return info.indexLayout;
-		}
-
-		inline const bool isIndexed() const {
-			return info.indexLayout.formats.size();
-		}
-
-		inline const GPUBufferUsage getUsage() const {
-			return info.usage;
-		}
-
-		inline const u32 indices() const {
-			return info.indexLayout.elements;
-		}
-
-		inline const u32 vertices() const {
-			return info.vertexLayout[0].elements;
-		}
-
-		inline const u32 elements() const {
-			return isIndexed() ? indices() : vertices();
-		}
+		inline const BufferLayout &operator[](size_t i) const;
+		inline const BufferLayout &getIndexBuffer() const;
+		inline const bool isIndexed() const;
+		inline const GPUBufferUsage getUsage() const;
+		inline const u32 indices() const;
+		inline const u32 vertices() const;
+		inline const u32 elements() const;
+		inline const GPUFormat getIndexFormat() const;
 
 		inline Data *getData() { return data; }
 		inline const Info &getInfo() const { return info; }
+
+		//Whether or not this primitive buffer matches a layout
+		const bool matchLayout(const List<BufferAttributes> &layout) const;
 
 	protected:
 
@@ -135,5 +59,37 @@ namespace ignis {
 		Info info;
 		Data *data;
 	};
+
+	inline const BufferLayout &PrimitiveBuffer::operator[](size_t i) const {
+		return info.vertexLayout[i];
+	}
+
+	inline const BufferLayout &PrimitiveBuffer::getIndexBuffer() const {
+		return info.indexLayout;
+	}
+
+	inline const bool PrimitiveBuffer::isIndexed() const {
+		return info.indexLayout.formats.size();
+	}
+
+	inline const GPUBufferUsage PrimitiveBuffer::getUsage() const {
+		return info.usage;
+	}
+
+	inline const u32 PrimitiveBuffer::indices() const {
+		return info.indexLayout.elements;
+	}
+
+	inline const u32 PrimitiveBuffer::vertices() const {
+		return info.vertexLayout[0].elements;
+	}
+
+	inline const u32 PrimitiveBuffer::elements() const {
+		return isIndexed() ? indices() : vertices();
+	}
+
+	inline const GPUFormat PrimitiveBuffer::getIndexFormat() const {
+		return isIndexed() ? info.indexLayout.formats[0].format : GPUFormat::NONE;
+	}
 
 }

@@ -4,6 +4,7 @@
 #include "graphics/surface/swapchain.hpp"
 #include "graphics/memory/gl_primitive_buffer.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
+#include "graphics/shader/pipeline.hpp"
 #include "graphics/gl_graphics.hpp"
 
 namespace ignis {
@@ -13,6 +14,8 @@ namespace ignis {
 		using namespace cmd;
 
 		Graphics::Data &gdata = *getGraphics().getData();
+
+		//TODO: Instead of doing validation here; do it whenever a command enters the command buffer!
 
 		switch (c->op) {
 
@@ -182,33 +185,48 @@ namespace ignis {
 				}
 				break;
 
+			case CMD_BIND_PIPELINE:
+				
+				{
+					auto *pipeline = ((BindPipeline*) c)->bindObject;
+
+					if (pipeline != gdata.pipeline) {
+						gdata.pipeline = pipeline;
+						glBindPipeline(gdata, pipeline);
+					}
+				}
+				break;
+
 			case CMD_DRAW_INSTANCED:
 
 				if (!gdata.primitiveBuffer)
 					oic::System::log()->fatal("No primitive buffer bound!");
 
-				if (gdata.primitiveBuffer->indices()) {
+				if (!gdata.pipeline)
+					oic::System::log()->fatal("No pipeline bound!");
 
+				if(!gdata.primitiveBuffer->matchLayout(gdata.pipeline->getInfo().attributeLayout))
+					oic::System::log()->fatal("Pipeline vertex layout doesn't match primitive buffer!");
+
+				{
+					auto topo = glTopologyMode(gdata.pipeline->getInfo().topology);
 					auto *di = (DrawInstanced*) c;
 
-					glDrawElementsInstanced(
-						GL_TRIANGLES,	//TODO:
-						di->count,
-						glGpuFormat(gdata.primitiveBuffer->getInfo().indexLayout.formats[0].format),
-						(void*) usz(di->start),
-						di->instanceCount
-					);
-
-				} else {
-
-					auto *di = (DrawInstanced*) c;
-
-					glDrawArraysInstanced(
-						GL_TRIANGLES,	//TODO:
-						di->start,
-						di->count,
-						di->instanceCount
-					);
+					if (gdata.primitiveBuffer->indices())
+						glDrawElementsInstanced(
+							topo,
+							di->count,
+							glGpuFormat(gdata.primitiveBuffer->getIndexFormat()),
+							(void*) usz(di->start),
+							di->instanceCount
+						);
+					else
+						glDrawArraysInstanced(
+							topo,
+							di->start,
+							di->count,
+							di->instanceCount
+						);
 				}
 
 				break;
