@@ -14,101 +14,11 @@ static T appendGlFunc(const String &s, T &t) {
 #define GL_FUNC(x, y) PFN##y##PROC x = appendGlFunc(#x, x)
 
 #include "graphics/gl_functions.hpp"
-#include "..\..\include\graphics\gl_header.hpp"
+#include "graphics/shader/gl_pipeline.hpp"
 
 using namespace ignis;
 
-void glBeginRenderPass(
-	Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
-) {
-
-	if (gdata.bound[GL_READ_FRAMEBUFFER] != framebuffer || gdata.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
-		glBindFramebuffer(GL_FRAMEBUFFER, gdata.bound[GL_READ_FRAMEBUFFER] = gdata.bound[GL_DRAW_FRAMEBUFFER] = framebuffer);
-
-	Vec4u sc = xywh;
-
-	if (!sc[2])
-		sc[2] = size[0] - sc[0];
-
-	if (!sc[3])
-		sc[3] = size[1] - sc[1];
-
-	Vec4u vp = { 0, 0, size[0] - sc[0], size[1] - sc[1] };
-
-	if (gdata.viewport != vp) {
-		gdata.viewport = vp;
-		glViewport(vp[0], vp[1], vp[2], vp[3]);
-	}
-
-	if (sc == vp) {
-		if (gdata.scissorEnable) {
-			glDisable(GL_SCISSOR_TEST);
-			gdata.scissorEnable = false;
-		}
-	} else if (!gdata.scissorEnable) {
-		glEnable(GL_SCISSOR_TEST);
-		gdata.scissorEnable = true;
-	}
-
-	if (gdata.scissor != sc) {
-		gdata.scissor = sc;
-		glScissor(sc[0], sc[1], sc[2], sc[3]);
-	}
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-void glDebugMessage(
-	GLenum source, GLenum type, GLuint, GLenum severity,
-	GLsizei, const GLchar *message, const void *
-) {
-
-	oic::LogLevel logLevel = oic::LogLevel::DEBUG;
-
-	switch (severity) {
-
-		case GL_DEBUG_SEVERITY_HIGH:
-			logLevel = oic::LogLevel::FATAL;
-			break;
-
-		case GL_DEBUG_SEVERITY_MEDIUM:
-			logLevel = oic::LogLevel::ERROR;
-			break;
-
-		case GL_DEBUG_SEVERITY_LOW:
-			logLevel = oic::LogLevel::WARN;
-			break;
-	}
-
-	if (type == GL_DEBUG_TYPE_PERFORMANCE)
-		logLevel = oic::LogLevel::PERFORMANCE;
-
-	static const HashMap<GLenum, String> sources = {
-		{ GL_DEBUG_SOURCE_API, "API" },
-		{ GL_DEBUG_SOURCE_WINDOW_SYSTEM, "Windows system" },
-		{ GL_DEBUG_SOURCE_SHADER_COMPILER, "Shader compiler" },
-		{ GL_DEBUG_SOURCE_THIRD_PARTY, "Third party" },
-		{ GL_DEBUG_SOURCE_APPLICATION, "App" },
-		{ GL_DEBUG_SOURCE_OTHER, "Other" }
-	};
-
-	static const HashMap<GLenum, const c8 *> types = {
-		{ GL_DEBUG_TYPE_ERROR, "Error" },
-		{ GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, "Deprecated behavior" },
-		{ GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, "Undefined behavior" },
-		{ GL_DEBUG_TYPE_PORTABILITY, "Portability" },
-		{ GL_DEBUG_TYPE_PERFORMANCE, "Performance" },
-		{ GL_DEBUG_TYPE_OTHER, "Other" }
-	};
-
-	auto it = types.find(type);
-	auto itt = sources.find(source);
-
-	if (it == types.end() || itt == sources.end())
-		return;
-
-	oic::System::log()->println(logLevel, "OpenGL (", itt->second, ") ", it->second, ": ", message);
-}
+//Enums
 
 GLenum glDepthFormat(DepthFormat format) {
 
@@ -231,11 +141,11 @@ GLenum glBufferType(GPUBufferType format) {
 		case GPUBufferType::INDEX:					return GL_ELEMENT_ARRAY_BUFFER;
 		case GPUBufferType::TEXTURE:				return GL_TEXTURE_BUFFER;
 
-		case GPUBufferType::STRUCTURED_FT:
-		case GPUBufferType::STORAGE_FT:				return GL_SHADER_STORAGE_BUFFER;
+		case GPUBufferType::STRUCTURED:
+		case GPUBufferType::STORAGE:				return GL_SHADER_STORAGE_BUFFER;
 
-		case GPUBufferType::INDIRECT_DRAW_EXT:		return GL_DRAW_INDIRECT_BUFFER;
-		case GPUBufferType::INDIRECT_DISPATCH_EXT:	return GL_DISPATCH_INDIRECT_BUFFER;
+		case GPUBufferType::INDIRECT_DRAW:			return GL_DRAW_INDIRECT_BUFFER;
+		case GPUBufferType::INDIRECT_DISPATCH:		return GL_DISPATCH_INDIRECT_BUFFER;
 
 		default:
 			oic::System::log()->fatal("Invalid buffer type");
@@ -336,6 +246,181 @@ GLenum glTopologyMode(TopologyMode topo) {
 	return {};
 }
 
-void glBindPipeline(Graphics::Data&, Pipeline*) {
-	//TODO:
+GLenum glShaderStage(ShaderStage stage) {
+
+	if (u8(stage) & 0x40)
+		oic::System::log()->fatal("OpenGL doesn't natively support raytracing");
+
+	switch (stage) {
+
+		case ignis::ShaderStage::VERTEX:					return GL_VERTEX_SHADER;
+		case ignis::ShaderStage::GEOMETRY:					return GL_GEOMETRY_SHADER;
+		case ignis::ShaderStage::TESSELATION_CONTROL:		return GL_TESS_CONTROL_SHADER;
+		case ignis::ShaderStage::TESSELATION_EVALUATION:	return GL_TESS_EVALUATION_SHADER;
+		case ignis::ShaderStage::FRAGMENT:					return GL_FRAGMENT_SHADER;
+		case ignis::ShaderStage::COMPUTE:					return GL_COMPUTE_SHADER;
+		case ignis::ShaderStage::TASK_FT:					return GL_TASK_SHADER_NV;
+		case ignis::ShaderStage::MESH_FT:					return GL_MESH_SHADER_NV;
+	}
+
+	oic::System::log()->fatal("Invalid shader stage");
+	return {};
+}
+
+//Functionality
+
+void glBeginRenderPass(
+	Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
+) {
+
+	if (gdata.bound[GL_READ_FRAMEBUFFER] != framebuffer || gdata.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
+		glBindFramebuffer(GL_FRAMEBUFFER, gdata.bound[GL_READ_FRAMEBUFFER] = gdata.bound[GL_DRAW_FRAMEBUFFER] = framebuffer);
+
+	Vec4u sc = xywh;
+
+	if (!sc[2])
+		sc[2] = size[0] - sc[0];
+
+	if (!sc[3])
+		sc[3] = size[1] - sc[1];
+
+	Vec4u vp = { 0, 0, size[0] - sc[0], size[1] - sc[1] };
+
+	if (gdata.viewport != vp) {
+		gdata.viewport = vp;
+		glViewport(vp[0], vp[1], vp[2], vp[3]);
+	}
+
+	if (sc == vp) {
+		if (gdata.scissorEnable) {
+			glDisable(GL_SCISSOR_TEST);
+			gdata.scissorEnable = false;
+		}
+	}
+	else if (!gdata.scissorEnable) {
+		glEnable(GL_SCISSOR_TEST);
+		gdata.scissorEnable = true;
+	}
+
+	if (gdata.scissor != sc) {
+		gdata.scissor = sc;
+		glScissor(sc[0], sc[1], sc[2], sc[3]);
+	}
+
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void glDebugMessage(
+	GLenum source, GLenum type, GLuint, GLenum severity,
+	GLsizei, const GLchar *message, const void *
+) {
+
+	oic::LogLevel logLevel = oic::LogLevel::DEBUG;
+
+	switch (severity) {
+
+	case GL_DEBUG_SEVERITY_HIGH:
+		logLevel = oic::LogLevel::FATAL;
+		break;
+
+	case GL_DEBUG_SEVERITY_MEDIUM:
+		logLevel = oic::LogLevel::ERROR;
+		break;
+
+	case GL_DEBUG_SEVERITY_LOW:
+		logLevel = oic::LogLevel::WARN;
+		break;
+	}
+
+	if (type == GL_DEBUG_TYPE_PERFORMANCE)
+		logLevel = oic::LogLevel::PERFORMANCE;
+
+	static const HashMap<GLenum, String> sources = {
+		{ GL_DEBUG_SOURCE_API, "API" },
+		{ GL_DEBUG_SOURCE_WINDOW_SYSTEM, "Windows system" },
+		{ GL_DEBUG_SOURCE_SHADER_COMPILER, "Shader compiler" },
+		{ GL_DEBUG_SOURCE_THIRD_PARTY, "Third party" },
+		{ GL_DEBUG_SOURCE_APPLICATION, "App" },
+		{ GL_DEBUG_SOURCE_OTHER, "Other" }
+	};
+
+	static const HashMap<GLenum, const c8 *> types = {
+		{ GL_DEBUG_TYPE_ERROR, "Error" },
+		{ GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR, "Deprecated behavior" },
+		{ GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR, "Undefined behavior" },
+		{ GL_DEBUG_TYPE_PORTABILITY, "Portability" },
+		{ GL_DEBUG_TYPE_PERFORMANCE, "Performance" },
+		{ GL_DEBUG_TYPE_OTHER, "Other" }
+	};
+
+	auto it = types.find(type);
+	auto itt = sources.find(source);
+
+	if (it == types.end() || itt == sources.end())
+		return;
+
+	oic::System::log()->println(logLevel, "OpenGL (", itt->second, ") ", it->second, ": ", message);
+}
+
+template<GLenum type, typename GlGetIv, typename GlGetInfoLog>
+bool glCheckLog(GlGetIv glGetIv, GlGetInfoLog glGetInfoLog, GLuint handle, String &str) {
+
+	GLint success{};
+
+	glGetIv(handle, type, &success);
+
+	if (!success) {
+
+		GLint logLength{};	//Including null terminator
+		glGetIv(handle, GL_INFO_LOG_LENGTH, &logLength);
+
+		if (logLength) {
+			str = String(usz(logLength) - 1, ' ');
+			glGetInfoLog(handle, logLength, &logLength, str.data());
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool glCheckShaderLog(GLuint shader, String &str) {
+	return glCheckLog<GL_COMPILE_STATUS>(glGetShaderiv, glGetShaderInfoLog, shader, str);
+}
+
+bool glCheckProgramLog(GLuint program, String &str) {
+	return glCheckLog<GL_LINK_STATUS>(glGetProgramiv, glGetProgramInfoLog, program, str);
+}
+
+void glBindPipeline(Graphics::Data &g, Pipeline *pipeline) {
+
+	glUseProgram(pipeline->getData()->handles[0]);
+
+	auto &r = pipeline->getInfo().rasterizer;
+
+	if (g.cullMode != r.cull) {
+
+		if (u8(g.cullMode) && !u8(r.cull))
+			glDisable(GL_CULL_FACE);
+
+		if (!u8(g.cullMode) && u8(r.cull))
+			glEnable(GL_CULL_FACE);
+
+		if (u8(r.cull))
+			glCullFace(r.cull == CullMode::BACK ? GL_BACK : GL_FRONT);
+
+		g.cullMode = r.cull;
+	}
+
+	if (g.windMode != r.winding && u8(r.cull)) {
+		glFrontFace(r.winding == WindMode::CCW ? GL_CCW : GL_CW);
+		g.windMode = r.winding;
+	}
+
+	if (g.fillMode != r.fill) {
+		glPolygonMode(GL_FRONT_AND_BACK, r.fill == FillMode::FILL ? GL_FILL : GL_LINE);
+		g.fillMode = r.fill;
+	}
+
 }

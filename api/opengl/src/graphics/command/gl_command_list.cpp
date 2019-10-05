@@ -39,7 +39,7 @@ namespace ignis {
 
 			case CMD_DEBUG_START_REGION:
 
-				if (glPushDebugGroup) {
+				{
 
 					auto *sr = (DebugStartRegion*)c;
 
@@ -55,14 +55,12 @@ namespace ignis {
 
 			case CMD_DEBUG_END_REGION:
 
-				if (glPopDebugGroup)
-					glPopDebugGroup();
-
+				glPopDebugGroup();
 				break;
 
 			case CMD_DEBUG_INSERT_MARKER:
 
-				if (glDebugMessageInsert) {
+				{
 
 					auto *im = (DebugInsertMarker*)c;
 
@@ -213,19 +211,22 @@ namespace ignis {
 					auto *di = (DrawInstanced*) c;
 
 					if (gdata.primitiveBuffer->indices())
-						glDrawElementsInstanced(
+						glDrawElementsInstancedBaseVertexBaseInstance(
 							topo,
 							di->count,
 							glGpuFormat(gdata.primitiveBuffer->getIndexFormat()),
-							(void*) usz(di->start),
-							di->instanceCount
+							(void*) (usz(di->start) * FormatHelper::getSizeBytes(gdata.primitiveBuffer->getIndexFormat())),
+							di->instanceCount,
+							di->vertexStart,
+							di->instanceStart
 						);
 					else
-						glDrawArraysInstanced(
+						glDrawArraysInstancedBaseInstance(
 							topo,
 							di->start,
 							di->count,
-							di->instanceCount
+							di->instanceCount,
+							di->instanceStart
 						);
 				}
 

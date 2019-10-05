@@ -4,10 +4,10 @@
 namespace ignis {
 
 	//A feature that's dependent on the current platform
-	enum class Feature : u32 { COMPUTE, STORAGE_BUFFER, COUNT };
+	enum class Feature : u32 { RAYTRACING, MESH_SHADERS, COUNT };
 
 	//An extension that's dependent on the current gpu
-	enum class Extension : u32 { DRAW_INDIRECT, DISPATCH_INDIRECT, COUNT };
+	enum class Extension : u32 { COUNT };
 
 	using Features = Bitset<usz(Feature::COUNT)>;
 	using Extensions = Bitset<usz(Extension::COUNT)>;
@@ -30,9 +30,7 @@ namespace ignis {
 
 		OPENGL	= 0b0000,
 		VULKAN	= 0b0001,
-		D3D11	= 0b0010,
 		D3D12	= 0b0011,
-		WEBGL2	= 0b0100,
 		GPUWEB	= 0b0101,
 		METAL	= 0b1001
 	};

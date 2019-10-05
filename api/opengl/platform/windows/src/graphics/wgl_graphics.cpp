@@ -74,8 +74,8 @@ namespace ignis {
 		data->minor = u32(minor);
 		data->maxSamples = u32(samples);
 
-		if (((u64(data->major) << 32) | data->minor) < (u64(0x3) << 32))
-			oic::System::log()->fatal("OpenGL version not supported; >= 3.0 required");
+		if (!data->version(4, 6))
+			oic::System::log()->fatal("OpenGL version not supported; >= 4.6 required");
 
 		for (auto &elem : glFunctionNames) {
 

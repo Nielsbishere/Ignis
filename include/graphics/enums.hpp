@@ -5,8 +5,8 @@ namespace ignis {
 
 	enum class GPUBufferType : u8 {
 		UNIFORM, TEXTURE, VERTEX, INDEX,
-		STORAGE_FT, STRUCTURED_FT,
-		INDIRECT_DRAW_EXT, INDIRECT_DISPATCH_EXT
+		STORAGE, STRUCTURED,
+		INDIRECT_DRAW, INDIRECT_DISPATCH
 	};
 
 	//This is a usage hint to how the GPU memory should behave:
@@ -53,4 +53,44 @@ namespace ignis {
 		TRIANGLE_LIST_ADJ	= 0b11000,
 		TRIANGLE_STRIP_ADJ	= 0b11001
 	};
+
+	//The shader stage type
+	//& 0x80 = isExt
+	//& 0x40 = isRaytracing
+	//& 0x20 = isCompute
+	enum class ShaderStage : u8 {
+
+		VERTEX						= 0x00,
+		GEOMETRY					= 0x01,
+		TESSELATION_CONTROL			= 0x02,
+		TESSELATION_EVALUATION		= 0x03,
+		FRAGMENT					= 0x04,
+
+		COMPUTE						= 0x20,
+
+		TASK_FT						= 0x80,
+		MESH_FT						= 0x81,
+
+		RAYGEN_FT					= 0xC0,
+		ANY_HIT_FT					= 0xC1,
+		CLOSEST_HIT_FT				= 0xC2,
+		MISS_FT						= 0xC3,
+		INTERSECTION_FT				= 0xC4,
+		CALLABLE_FT					= 0xC5
+	};
+
+	//Rasterizer enums
+
+	enum class FillMode : u8 {
+		FILL, WIREFRAME
+	};
+
+	enum class WindMode : u8 {
+		CCW, CW
+	};
+
+	enum class CullMode : u8 {
+		NONE, FRONT, BACK
+	};
+
 }

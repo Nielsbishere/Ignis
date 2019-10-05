@@ -39,19 +39,24 @@ include_directories(api/${graphicsApi}/platform/${platform}/include)
 file(GLOB_RECURSE platformHpp "api/${graphicsApi}/platform/${platform}/include/*.hpp")
 file(GLOB_RECURSE platformCpp "api/${graphicsApi}/platform/${platform}/src/*.cpp")
 
+file(GLOB_RECURSE shaders "res/shaders/*")
+
 # Link library
 
-add_library(
+add_executable(
 	ignis
-	STATIC
 	${ignisHpp}
 	${ignisCpp}
 	${platformHpp}
 	${platformCpp}
 	${apiHpp}
 	${apiCpp}
+	${shaders}
+	test/test.cpp
 	CMakeLists.txt
 )
+
+set_property(TARGET ignis PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/res")
 
 target_link_libraries(ignis ocore)
 
@@ -61,6 +66,7 @@ source_group("Platform (${platform}) Headers" FILES ${platformHpp})
 source_group("Platform (${platform}) Source" FILES ${platformCpp})
 source_group("Graphics (${graphicsApi}) Headers" FILES ${apiHpp})
 source_group("Graphics (${graphicsApi}) Source" FILES ${apiCpp})
+source_group("Shaders" FILES ${shaders})
 
 if(MSVC)
     target_compile_options(ignis PRIVATE /W4 /WX /MD /MP)

@@ -26,6 +26,10 @@ namespace ignis {
 	class PrimitiveBuffer;
 	class Pipeline;
 
+	enum class CullMode : u8;
+	enum class WindMode : u8;
+	enum class FillMode : u8;
+
 	//Graphics data
 
 	struct Graphics::Data {
@@ -37,6 +41,10 @@ namespace ignis {
 
 		f32 depth{};
 		u32 stencil{};
+
+		CullMode cullMode{};
+		WindMode windMode{};
+		FillMode fillMode{};
 
 		HashMap<GLenum, GLuint> bound;
 

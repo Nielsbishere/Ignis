@@ -5,6 +5,10 @@
 namespace ignis {
 
 	enum class TopologyMode : u8;
+	enum class FillMode : u8;
+	enum class WindMode : u8;
+	enum class CullMode : u8;
+	enum class ShaderStage : u8;
 
 	class Pipeline : public GraphicsObject {
 
@@ -14,14 +18,37 @@ namespace ignis {
 			OPTIMIZE = 1 << 0
 		};
 
+		struct Rasterizer {
+
+			FillMode fill;
+			CullMode cull;
+			WindMode winding;
+
+			Rasterizer(FillMode fill, CullMode cull, WindMode wind): 
+				fill(fill), cull(cull), winding(wind) {}
+
+		};
+
 		struct Info {
 
 			List<BufferAttributes> attributeLayout;
+			List<HashMap<ShaderStage, Buffer>> passes;
+
 			Flag flag;
 			TopologyMode topology;
+			Rasterizer rasterizer;
 
-			Info(Flag f, const List<BufferAttributes> &attributeLayout, TopologyMode topology) : 
-				flag(f), attributeLayout(attributeLayout), topology(topology) { }
+			Info(
+				Flag f, const List<BufferAttributes> &attributeLayout, TopologyMode topology, 
+				const HashMap<ShaderStage, Buffer> &passes, Rasterizer rasterizer
+			) : 
+				flag(f), attributeLayout(attributeLayout), topology(topology), passes{passes}, rasterizer(rasterizer) { }
+
+			Info(
+				Flag f, const List<BufferAttributes> &attributeLayout, TopologyMode topology, 
+				const List<HashMap<ShaderStage, Buffer>> &passes, Rasterizer rasterizer
+			) : 
+				flag(f), attributeLayout(attributeLayout), topology(topology), passes(passes), rasterizer(rasterizer) { }
 
 		};
 

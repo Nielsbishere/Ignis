@@ -6,12 +6,15 @@ namespace ignis {
 	//Command op codes
 
 	//Techniques (FT or EXT)
+	//	_FT: Feature (Requires a certain API)
+	//	_EXT: Extension (Requires a certain GPU)
 	//Their availability can be queried from the Graphics class
 	//When a FT or EXT is requested, it should return how available it is
 	//	Supported: It is fully supported by hardware
 	//	Performance: It runs slower but still works
 	//	Unsupported: It won't be able to run
 	//Suffixes:
+	//	none: Core standard
 	//	_0: Rarely unavailable, often available either by hardware or software (performance impact when software)
 	//  _1: Often available on desktop
 	//  _2: Rarely available on desktop
@@ -43,6 +46,9 @@ namespace ignis {
 		CMD_SET_STENCIL_WRITE_MASK,			//TODO:
 
 		CMD_DRAW_INSTANCED,
+		CMD_DRAW_INDIRECT,					//TODO:
+		CMD_DISPATCH,						//TODO:
+		CMD_DISPATCH_INDIRECT,				//TODO:
 
 		CMD_UPDATE_REGISTER,				//TODO:
 		CMD_UPDATE_CONSTANT,				//TODO:
@@ -66,17 +72,10 @@ namespace ignis {
 		//Software or hardware backed commands
 		//TODO:
 
-		CMD_DRAW_INDIRECT_EXT_0,
 		CMD_BEGIN_QUERY_INDIRECT_EXT_0,
 		CMD_END_QUERY_INDIRECT_EXT_0,
 		CMD_BEGIN_CONDITIONAL_EXT_0,
 		CMD_END_CONDITIONAL_EXT_0,
-
-		//API specific commands
-		//TODO:
-
-		CMD_DISPATCH_FT_1,
-		CMD_DISPATCH_INDIRECT_FT_EXT_1,
 
 		//Common commands
 		//TODO:

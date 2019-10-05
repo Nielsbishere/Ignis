@@ -14,7 +14,17 @@ namespace ignis {
 	enum class GPUFormat : u16;
 	enum class GPUFormatType : u8;
 	enum class TopologyMode : u8;
+	enum class ShaderStage : u8;
 }
+
+extern GLenum glDepthFormat(ignis::DepthFormat format);
+extern GLenum glColorFormat(ignis::GPUFormat format);
+extern GLenum glBufferType(ignis::GPUBufferType format);
+extern GLenum glBufferUsage(ignis::GPUBufferUsage usage, bool isPersistent);
+extern GLenum glBufferHint(ignis::GPUBufferUsage usage);
+extern GLenum glGpuFormat(ignis::GPUFormat type);
+extern GLenum glTopologyMode(ignis::TopologyMode topo);
+extern GLenum glShaderStage(ignis::ShaderStage stage);
 
 extern void glBeginRenderPass(
 	ignis::Graphics::Data &data, const Vec4u &renderArea, const Vec2u &size, GLuint framebuffer
@@ -25,12 +35,6 @@ extern void APIENTRY glDebugMessage(
 	GLsizei, const GLchar*, const void*
 );
 
-extern GLenum glDepthFormat(ignis::DepthFormat format);
-extern GLenum glColorFormat(ignis::GPUFormat format);
-extern GLenum glBufferType(ignis::GPUBufferType format);
-extern GLenum glBufferUsage(ignis::GPUBufferUsage usage, bool isPersistent);
-extern GLenum glBufferHint(ignis::GPUBufferUsage usage);
-extern GLenum glGpuFormat(ignis::GPUFormat type);
-extern GLenum glTopologyMode(ignis::TopologyMode topo);
-
 extern void glBindPipeline(ignis::Graphics::Data &data, ignis::Pipeline *pipeline);
+extern bool glCheckShaderLog(GLuint shader, String &str);
+extern bool glCheckProgramLog(GLuint program, String &str);

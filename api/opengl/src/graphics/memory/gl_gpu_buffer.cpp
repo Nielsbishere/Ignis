@@ -9,24 +9,6 @@ namespace ignis {
 	GPUBuffer::GPUBuffer(Graphics &g, const String &name, const Info &info):
 		GraphicsObject(g, name), info(info), data(new Data()) {
 
-		if(
-			((
-				info.type == GPUBufferType::STORAGE_FT || 
-				info.type == GPUBufferType::STRUCTURED_FT
-			) && !g.hasFeature(Feature::STORAGE_BUFFER)) ||
-			(
-				info.type == GPUBufferType::INDIRECT_DRAW_EXT && 
-				!g.hasExtension(Extension::DRAW_INDIRECT)
-			) ||
-			(
-				info.type == GPUBufferType::INDIRECT_DISPATCH_EXT && 
-				!g.hasExtension(Extension::DISPATCH_INDIRECT)
-			)
-		)
-			oic::System::log()->fatal("Couldn't create buffer, the type is not supported");
-
-		//TODO: Texture buffers are also not standard...
-
 		//Initialize buffer
 
 		auto t = data->t = glBufferType(info.type);
@@ -38,16 +20,10 @@ namespace ignis {
 
 		bool persistent = g.getData()->version(4, 4) && (u8(info.usage) & u8(GPUBufferUsage::SHARED));
 
-		if (glBufferStorage)
-			glBufferStorage(
-				t, info.size, info.initData.data(),
-				glBufferUsage(info.usage, persistent)
-			);
-		else
-			glBufferData(
-				t, info.size, info.initData.data(), 
-				glBufferHint(info.usage)
-			);
+		glBufferStorage(
+			t, info.size, info.initData.data(),
+			glBufferUsage(info.usage, persistent)
+		);
 
 		if (u8(info.usage) & u8(GPUBufferUsage::CPU_WRITE)) {
 
