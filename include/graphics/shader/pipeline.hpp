@@ -24,7 +24,7 @@ namespace ignis {
 			CullMode cull;
 			WindMode winding;
 
-			Rasterizer(FillMode fill, CullMode cull, WindMode wind): 
+			Rasterizer(FillMode fill = FillMode::FILL, CullMode cull = CullMode::BACK, WindMode wind = WindMode::CCW): 
 				fill(fill), cull(cull), winding(wind) {}
 
 		};
@@ -39,14 +39,20 @@ namespace ignis {
 			Rasterizer rasterizer;
 
 			Info(
-				Flag f, const List<BufferAttributes> &attributeLayout, TopologyMode topology, 
-				const HashMap<ShaderStage, Buffer> &passes, Rasterizer rasterizer
+				Flag f, 
+				const List<BufferAttributes> &attributeLayout, 
+				const HashMap<ShaderStage, Buffer> &passes, 
+				TopologyMode topology = TopologyMode::TRIANGLE_LIST, 
+				Rasterizer rasterizer = {}
 			) : 
 				flag(f), attributeLayout(attributeLayout), topology(topology), passes{passes}, rasterizer(rasterizer) { }
 
 			Info(
-				Flag f, const List<BufferAttributes> &attributeLayout, TopologyMode topology, 
-				const List<HashMap<ShaderStage, Buffer>> &passes, Rasterizer rasterizer
+				Flag f,
+				const List<BufferAttributes> &attributeLayout,
+				const List<HashMap<ShaderStage, Buffer>> &passes,
+				TopologyMode topology = TopologyMode::TRIANGLE_LIST,
+				Rasterizer rasterizer = {}
 			) : 
 				flag(f), attributeLayout(attributeLayout), topology(topology), passes(passes), rasterizer(rasterizer) { }
 

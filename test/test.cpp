@@ -37,7 +37,7 @@ struct TestViewportInterface : public ViewportInterface {
 			new Framebuffer(
 				g, NAME("Framebuffer"),
 				Surface::Info(
-					Vec2u(), { GPUFormat::RGBA16f }, DepthFormat::NONE, false, 8
+					{ GPUFormat::RGBA16f }, DepthFormat::NONE, false, .25, 8
 				)
 			);
 
@@ -61,20 +61,22 @@ struct TestViewportInterface : public ViewportInterface {
 
 		pipeline = new Pipeline(
 			g, NAME("Test pipeline"),
+
 			Pipeline::Info(
+
 				Pipeline::Flag::OPTIMIZE,
+
 				attrib,
-				TopologyMode::TRIANGLE_LIST,
-				{ { ShaderStage::VERTEX, vert }, { ShaderStage::FRAGMENT, frag } },
-				Pipeline::Rasterizer(FillMode::FILL, CullMode::BACK, WindMode::CCW)
+
+				{ 
+					{ ShaderStage::VERTEX, vert }, 
+					{ ShaderStage::FRAGMENT, frag } 
+				}
+
 				//DepthStencil()
 				//BlendState()
 				//MSAA
-					//DepthMode::NONE,
-					//BlendMode::OFF,
-				//Pipeline registers
 				//RenderPass
-				//Subpass id
 				//Shaders
 				//Parent pipeline / allow parenting (optional)
 				//Viewports/scissor (optional)
@@ -106,7 +108,7 @@ struct TestViewportInterface : public ViewportInterface {
 			//Present to surface
 
 			EndSurface(),
-			BlitSurface(intermediate, s, Vec4u(), Vec4u(), BlitSurface::COLOR, BlitSurface::NEAREST),
+			BlitSurface(intermediate, s, Vec4u(), Vec4u(), BlitSurface::COLOR, BlitSurface::LINEAR),
 			Present()
 		);
 	}

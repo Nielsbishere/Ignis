@@ -19,7 +19,12 @@ namespace ignis {
 		destroy(data);
 	}
 
-	void Framebuffer::onResize(const Vec2u &size) {
+	void Framebuffer::onResize(const Vec2u &siz) {
+
+		Vec2u size{ u32(siz[0] * info.viewportScale), u32(siz[1] * info.viewportScale) };
+
+		if (info.size == size || !info.isDynamic)
+			return;
 
 		info.size = size;
 
@@ -63,7 +68,7 @@ namespace ignis {
 
 				glTexImage2DMultisample(
 					GL_TEXTURE_2D_MULTISAMPLE, GLsizei(info.samples),
-					glDepthFormat(info.depthFormat), info.size[0], info.size[1], GL_FALSE
+					glDepthFormat(info.depthFormat), size[0], size[1], GL_FALSE
 				);
 
 				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, data->depth, 0);
@@ -80,7 +85,7 @@ namespace ignis {
 
 				glRenderbufferStorageMultisample(
 					GL_RENDERBUFFER, GLsizei(info.samples),
-					glDepthFormat(info.depthFormat), info.size[0], info.size[1]
+					glDepthFormat(info.depthFormat), size[0], size[1]
 				);
 
 				glFramebufferRenderbuffer(
@@ -104,7 +109,7 @@ namespace ignis {
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex);
 			glTexImage2DMultisample(
 				GL_TEXTURE_2D_MULTISAMPLE, GLsizei(info.samples),
-				glColorFormat(info.colorFormats[i]), info.size[0], info.size[1], GL_FALSE
+				glColorFormat(info.colorFormats[i]), size[0], size[1], GL_FALSE
 			);
 
 			String hashed = NAME(getName() + " buffer " + std::to_string(i));
