@@ -1,6 +1,7 @@
 #include "graphics/shader/gl_pipeline.hpp"
 #include "system/system.hpp"
 #include "system/log.hpp"
+#include "utils/hash.hpp"
 
 namespace ignis {
 
@@ -23,7 +24,8 @@ namespace ignis {
 
 			for (auto &stage : pass) {
 
-				GLuint shader = shaders[k] = glCreateShader(glShaderStage(stage.first));
+				GLenum type = glShaderStage(stage.first);
+				GLuint shader = shaders[k] = glCreateShader(type);
 
 				if ((u8(stage.first) & 0x80) && !g.hasFeature(Feature::MESH_SHADERS))
 					oic::System::log()->fatal("Driver doesn't support mesh shaders");	//TODO: Mesh shaders
@@ -31,6 +33,8 @@ namespace ignis {
 				if((u8(stage.first) & 0x20) && pass.size() != 1)
 					oic::System::log()->fatal("Can't create a shader with mixed compute and graphics stages");
 
+				String shaderName = NAME(name + " " + std::to_string(i) + " shader " + std::to_string(u8(stage.first)));
+				glObjectLabel(GL_SHADER, shader, GLsizei(shaderName.size()), shaderName.c_str());
 				glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, stage.second.data(), GLsizei(stage.second.size()));
 				glSpecializeShader(shader, "main", 0, nullptr, nullptr);
 

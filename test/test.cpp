@@ -37,7 +37,7 @@ struct TestViewportInterface : public ViewportInterface {
 			new Framebuffer(
 				g, NAME("Framebuffer"),
 				Surface::Info(
-					{ GPUFormat::RGBA16f }, DepthFormat::NONE, false, .25, 8
+					{ GPUFormat::RGBA16f }, DepthFormat::NONE, false, 1, 8
 				)
 			);
 

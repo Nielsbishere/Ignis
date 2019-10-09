@@ -1,4 +1,4 @@
-#version 450 core
+#version 450
 
 in layout(location=0) vec2 col;
 out layout(location=0) vec4 color;
