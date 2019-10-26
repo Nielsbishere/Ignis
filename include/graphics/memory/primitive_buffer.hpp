@@ -34,7 +34,7 @@ namespace ignis {
 		PrimitiveBuffer(Graphics &g, const String &name, const Info &info);
 		~PrimitiveBuffer();
 
-		inline const BufferLayout &operator[](size_t i) const;
+		inline const BufferLayout &operator[](usz i) const;
 		inline const BufferLayout &getIndexBuffer() const;
 		inline const bool isIndexed() const;
 		inline const GPUBufferUsage getUsage() const;
@@ -60,7 +60,7 @@ namespace ignis {
 		Data *data;
 	};
 
-	inline const BufferLayout &PrimitiveBuffer::operator[](size_t i) const {
+	inline const BufferLayout &PrimitiveBuffer::operator[](usz i) const {
 		return info.vertexLayout[i];
 	}
 

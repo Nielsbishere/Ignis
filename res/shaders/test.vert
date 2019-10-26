@@ -7,7 +7,10 @@ uniform layout(binding=0, std140) Test {
 	vec2 mask;
 };
 
+//uniform layout(binding=0) sampler2D test;
+
 void main() {
-	col = (mask + 0.2) * (vpos * 0.5 + 0.5);
+	//col = mask * /*texture(test,*/ vpos * 0.5 + 0.5/*).xy*/;
+	col = mask * (vpos * 0.5 + 0.5);
     gl_Position = vec4(vpos, 0, 1);
 }

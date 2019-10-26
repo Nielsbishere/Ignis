@@ -1,6 +1,7 @@
 #pragma once
 #include "../graphics_object.hpp"
 #include "graphics/memory/buffer_layout.hpp"
+#include "graphics/shader/pipeline_layout.hpp"
 
 namespace ignis {
 
@@ -34,6 +35,8 @@ namespace ignis {
 			List<BufferAttributes> attributeLayout;
 			List<HashMap<ShaderStage, Buffer>> passes;
 
+			PipelineLayout pipelineLayout;
+
 			Flag flag;
 			TopologyMode topology;
 			Rasterizer rasterizer;
@@ -41,20 +44,24 @@ namespace ignis {
 			Info(
 				Flag f, 
 				const List<BufferAttributes> &attributeLayout, 
-				const HashMap<ShaderStage, Buffer> &passes, 
+				const HashMap<ShaderStage, Buffer> &passes,
+				const PipelineLayout &pipelineLayout,
 				TopologyMode topology = TopologyMode::TRIANGLE_LIST, 
 				Rasterizer rasterizer = {}
 			) : 
-				flag(f), attributeLayout(attributeLayout), topology(topology), passes{passes}, rasterizer(rasterizer) { }
+				flag(f), attributeLayout(attributeLayout), topology(topology), passes{ passes },
+				pipelineLayout(pipelineLayout), rasterizer(rasterizer) { }
 
 			Info(
 				Flag f,
 				const List<BufferAttributes> &attributeLayout,
 				const List<HashMap<ShaderStage, Buffer>> &passes,
+				const PipelineLayout &pipelineLayout,
 				TopologyMode topology = TopologyMode::TRIANGLE_LIST,
 				Rasterizer rasterizer = {}
 			) : 
-				flag(f), attributeLayout(attributeLayout), topology(topology), passes(passes), rasterizer(rasterizer) { }
+				flag(f), attributeLayout(attributeLayout), topology(topology), passes(passes), 
+				pipelineLayout(pipelineLayout), rasterizer(rasterizer) { }
 
 		};
 

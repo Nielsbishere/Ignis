@@ -9,7 +9,7 @@ namespace ignis {
 
 	class Pipeline;
 	class Surface;
-	class ShaderRegister;
+	class Descriptors;
 	class PrimitiveBuffer;
 	class Query;
 
@@ -31,8 +31,8 @@ namespace ignis {
 		};
 
 		using BindPipeline			= GraphicsObjOp<CMD_BIND_PIPELINE,			Pipeline>;
+		using BindDescriptors		= GraphicsObjOp<CMD_BIND_DESCRIPTORS,		Descriptors>;
 		using BindPrimitiveBuffer	= GraphicsObjOp<CMD_BIND_PRIMITIVE_BUFFER,  PrimitiveBuffer>;
-		using BindShaderRegister	= GraphicsObjOp<CMD_BIND_SHADER_REGISTER,	ShaderRegister>;
 
 		using BeginQuery			= GraphicsObjOp<CMD_BEGIN_SURFACE,			Query>;
 		using EndQuery				= NoParamOp<CMD_END_QUERY>;
@@ -126,7 +126,8 @@ namespace ignis {
 
 			BlitSurface(
 				Surface *src, Surface *dst, Vec4u srcArea, Vec4u dstArea, BlitMask mask, BlitFilter filter
-			): Command(CMD_BLIT_SURFACE, sizeof(*this)), src(src), dst(dst), 
+			): 
+				Command(CMD_BLIT_SURFACE, sizeof(*this)), src(src), dst(dst), 
 				srcArea(srcArea), dstArea(dstArea), mask(mask), filter(filter) {}
 
 		};

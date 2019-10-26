@@ -1,12 +1,12 @@
 #pragma once
-#include "graphics/graphics_object.hpp"
+#include "graphics/gpu_resource.hpp"
 
 namespace ignis {
 
 	enum class GPUBufferType : u8;
 	enum class GPUBufferUsage : u8;
 
-	class GPUBuffer : public GraphicsObject {
+	class GPUBuffer : public GPUResource {
 
 	public:
 
@@ -18,11 +18,9 @@ namespace ignis {
 			GPUBufferType type;
 			GPUBufferUsage usage;
 
-			Info(usz bufferSize, GPUBufferType type, GPUBufferUsage usage):
-				type(type), usage(usage), size(bufferSize), initData(bufferSize) {}
+			Info(usz bufferSize, GPUBufferType type, GPUBufferUsage usage);
 
-			Info(const Buffer &initData, GPUBufferType type, GPUBufferUsage usage):
-				type(type), usage(usage), size(initData.size()), initData(initData) {}
+			Info(const Buffer &initData, GPUBufferType type, GPUBufferUsage usage);
 		};
 
 		apimpl struct Data;
@@ -32,6 +30,8 @@ namespace ignis {
 
 		//Flush the updates from the CPU to the GPU
 		apimpl void flush(usz offset, usz size);
+
+		bool isCompatible(const RegisterLayout &reg) final override;
 
 		inline const usz size() const { return info.size; }
 

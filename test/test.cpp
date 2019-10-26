@@ -2,7 +2,9 @@
 #include "graphics/surface/swapchain.hpp"
 #include "graphics/surface/framebuffer.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
+#include "graphics/memory/shader_buffer.hpp"
 #include "graphics/shader/pipeline.hpp"
+#include "graphics/shader/descriptors.hpp"
 #include "graphics/enums.hpp"
 #include "graphics/graphics.hpp"
 #include "system/viewport_manager.hpp"
@@ -17,29 +19,27 @@ using namespace cmd;
 struct TestViewportInterface : public ViewportInterface {
 
 	Graphics g;
-	CommandList *cl{};
 	Surface *s{}, *intermediate{};
+	CommandList *cl{};
 	PrimitiveBuffer *mesh{};
+	Descriptors *descriptors{};
 	Pipeline *pipeline{};
+	GPUBuffer *uniforms{};
 
 	~TestViewportInterface() {
-		destroy(mesh);
-		destroy(cl);
-		destroy(intermediate);
-		destroy(s);
+		destroy(uniforms, pipeline, descriptors, mesh, cl, intermediate, s);
 	}
 
 	void init(ViewportInfo *vp) final override {
 
 		s = new Swapchain(g, NAME("Swapchain"), Swapchain::Info{ vp, false, DepthFormat::NONE });
 
-		intermediate = 
-			new Framebuffer(
-				g, NAME("Framebuffer"),
-				Surface::Info(
-					{ GPUFormat::RGBA16f }, DepthFormat::NONE, false, 1, 8
-				)
-			);
+		intermediate =  new Framebuffer(
+			g, NAME("Framebuffer"),
+			Surface::Info(
+				{ GPUFormat::RGBA16f }, DepthFormat::NONE, false, 8
+			)
+		);
 
 		const List<Vec2f> vboBuffer{
 			{ 0.5, -0.5 }, { -1, -1 },
@@ -59,6 +59,25 @@ struct TestViewportInterface : public ViewportInterface {
 		if (!success)
 			oic::System::log()->fatal("Couldn't find shaders");
 
+		const Vec2f mask = { 1, 1 };
+
+		uniforms = new ShaderBuffer(
+			g, NAME("Test pipeline uniform buffer"),
+			ShaderBuffer::Info(
+				HashMap<String, ShaderBuffer::Layout>{ { NAME("mask"), { 0, mask } } },
+				GPUBufferType::UNIFORM, GPUBufferUsage::LOCAL
+			)
+		);
+
+		PipelineLayout pipelineLayout(
+			RegisterLayout(NAME("Test"), 0, GPUBufferType::UNIFORM, 0, ACCESS_VERTEX, uniforms->size())
+		);
+
+		descriptors = new Descriptors(
+			g, NAME("Test descriptors"), 
+			Descriptors::Info(pipelineLayout, { { 0, uniforms } })
+		);
+
 		pipeline = new Pipeline(
 			g, NAME("Test pipeline"),
 
@@ -71,8 +90,11 @@ struct TestViewportInterface : public ViewportInterface {
 				{ 
 					{ ShaderStage::VERTEX, vert }, 
 					{ ShaderStage::FRAGMENT, frag } 
-				}
+				},
 
+				pipelineLayout
+
+				//TODO:
 				//DepthStencil()
 				//BlendState()
 				//MSAA
@@ -100,7 +122,7 @@ struct TestViewportInterface : public ViewportInterface {
 			BeginSurface(intermediate),
 
 			//Draw primitive
-			//TODO: Bind render pass
+			BindDescriptors(descriptors),
 			BindPipeline(pipeline),
 			BindPrimitiveBuffer(mesh),
 			DrawInstanced(mesh->elements()),

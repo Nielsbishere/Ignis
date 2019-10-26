@@ -1,6 +1,8 @@
 #include "graphics/enums.hpp"
 #include "system/log.hpp"
 #include "system/system.hpp"
+#include "graphics/shader/descriptors.hpp"
+#include "graphics/memory/gl_gpu_buffer.hpp"
 #include "graphics/gl_graphics.hpp"
 
 HashMap<String, void**> ignis::glFunctionNames = HashMap<String, void**>();
@@ -139,7 +141,6 @@ GLenum glBufferType(GPUBufferType format) {
 		case GPUBufferType::UNIFORM:				return GL_UNIFORM_BUFFER;
 		case GPUBufferType::VERTEX:					return GL_ARRAY_BUFFER;
 		case GPUBufferType::INDEX:					return GL_ELEMENT_ARRAY_BUFFER;
-		case GPUBufferType::TEXTURE:				return GL_TEXTURE_BUFFER;
 
 		case GPUBufferType::STRUCTURED:
 		case GPUBufferType::STORAGE:				return GL_SHADER_STORAGE_BUFFER;
@@ -235,7 +236,6 @@ GLenum glTopologyMode(TopologyMode topo) {
 		case TopologyMode::LINE_STRIP:			return GL_LINE_STRIP;
 		case TopologyMode::TRIANGLE_LIST:		return GL_TRIANGLES;
 		case TopologyMode::TRIANGLE_STRIP:		return GL_TRIANGLE_STRIP;
-		case TopologyMode::TRIANGLE_FAN:		return GL_TRIANGLE_FAN;
 		case TopologyMode::LINE_LIST_ADJ:		return GL_LINES_ADJACENCY;
 		case TopologyMode::LINE_STRIP_ADJ:		return GL_LINE_STRIP_ADJACENCY;
 		case TopologyMode::TRIANGLE_LIST_ADJ:	return GL_TRIANGLES_ADJACENCY;
@@ -253,14 +253,14 @@ GLenum glShaderStage(ShaderStage stage) {
 
 	switch (stage) {
 
-		case ignis::ShaderStage::VERTEX:					return GL_VERTEX_SHADER;
-		case ignis::ShaderStage::GEOMETRY:					return GL_GEOMETRY_SHADER;
-		case ignis::ShaderStage::TESSELATION_CONTROL:		return GL_TESS_CONTROL_SHADER;
-		case ignis::ShaderStage::TESSELATION_EVALUATION:	return GL_TESS_EVALUATION_SHADER;
-		case ignis::ShaderStage::FRAGMENT:					return GL_FRAGMENT_SHADER;
-		case ignis::ShaderStage::COMPUTE:					return GL_COMPUTE_SHADER;
-		case ignis::ShaderStage::TASK_FT:					return GL_TASK_SHADER_NV;
-		case ignis::ShaderStage::MESH_FT:					return GL_MESH_SHADER_NV;
+		case ignis::ShaderStage::VERTEX:			return GL_VERTEX_SHADER;
+		case ignis::ShaderStage::GEOMETRY:			return GL_GEOMETRY_SHADER;
+		case ignis::ShaderStage::TESS_CTRL:			return GL_TESS_CONTROL_SHADER;
+		case ignis::ShaderStage::TESS_EVAL:			return GL_TESS_EVALUATION_SHADER;
+		case ignis::ShaderStage::FRAGMENT:			return GL_FRAGMENT_SHADER;
+		case ignis::ShaderStage::COMPUTE:			return GL_COMPUTE_SHADER;
+		case ignis::ShaderStage::TASK_EXT:			return GL_TASK_SHADER_NV;
+		case ignis::ShaderStage::MESH_EXT:			return GL_MESH_SHADER_NV;
 	}
 
 	oic::System::log()->fatal("Invalid shader stage");
@@ -421,6 +421,35 @@ void glBindPipeline(Graphics::Data &g, Pipeline *pipeline) {
 	if (g.fillMode != r.fill) {
 		glPolygonMode(GL_FRONT_AND_BACK, r.fill == FillMode::FILL ? GL_FILL : GL_LINE);
 		g.fillMode = r.fill;
+	}
+
+}
+
+void glBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
+
+	for (auto &mapIt : descriptors->getInfo().pipelineLayout) {
+
+		auto resource = mapIt.second;
+		auto it = descriptors->getInfo().resources.find(resource.globalId);
+
+		if (it != descriptors->getInfo().resources.end()) {
+
+			auto *res = it->second;
+
+			if (GPUBuffer *buffer = res->cast<GPUBuffer>()) {
+
+				GLenum bindPoint = resource.type == ResourceType::CBUFFER ? GL_UNIFORM_BUFFER : GL_SHADER_STORAGE_BUFFER;
+				GLuint &bound = g.boundByBase[(u64(resource.localId) << 32) | bindPoint];
+
+				if (bound == buffer->getData()->handle)
+					continue;
+
+				glBindBufferBase(bindPoint, resource.localId, bound = buffer->getData()->handle);
+			}
+
+			//TODO: Textures, Samplers, etc.
+
+		}
 	}
 
 }

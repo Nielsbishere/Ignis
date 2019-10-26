@@ -1,5 +1,7 @@
 #include "error/ignis.hpp"
 #include "graphics/surface/surface.hpp"
+#include "graphics/shader/pipeline_layout.hpp"
+#include "graphics/enums.hpp"
 #include "system/log.hpp"
 #include "system/system.hpp"
 
@@ -21,11 +23,26 @@ namespace ignis {
 	Surface::Info::Info(
 		const List<GPUFormat> &colorFormats,
 		DepthFormat depthFormat, bool keepDepth,
-		f64 scale, u32 samples
+		u32 samples, f64 scale
 	): 
 		Info(Vec2u(), colorFormats, depthFormat, keepDepth, samples)
 	{
 		viewportScale = scale;
+	}
+
+	bool Surface::isCompatible(const RegisterLayout &reg) {
+		return
+			reg.type		 == ResourceType::TEXTURE && 
+			reg.textureType	 == getTextureType() && 
+			(!reg.isWritable || isGPUWritable());
+	}
+
+	bool Surface::isGPUWritable() const {
+		return false;
+	}
+
+	TextureType Surface::getTextureType() const {
+		return info.samples > 1 ? TextureType::TEXTURE_MS : TextureType::TEXTURE_2D;
 	}
 
 }

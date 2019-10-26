@@ -27,10 +27,10 @@ namespace ignis {
 				GLenum type = glShaderStage(stage.first);
 				GLuint shader = shaders[k] = glCreateShader(type);
 
-				if ((u8(stage.first) & 0x80) && !g.hasFeature(Feature::MESH_SHADERS))
+				if ((u8(stage.first) & u8(ShaderStage::PROPERTY_IS_TECHNIQUE)) && !g.hasFeature(Feature::MESH_SHADERS))
 					oic::System::log()->fatal("Driver doesn't support mesh shaders");	//TODO: Mesh shaders
 
-				if((u8(stage.first) & 0x20) && pass.size() != 1)
+				if((u8(stage.first) & u8(ShaderStage::PROPERTY_IS_COMPUTE)) && pass.size() != 1)
 					oic::System::log()->fatal("Can't create a shader with mixed compute and graphics stages");
 
 				String shaderName = NAME(name + " " + std::to_string(i) + " shader " + std::to_string(u8(stage.first)));

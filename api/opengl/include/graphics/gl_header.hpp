@@ -15,6 +15,9 @@ namespace ignis {
 	enum class GPUFormatType : u8;
 	enum class TopologyMode : u8;
 	enum class ShaderStage : u8;
+
+	class Descriptors;
+	class Pipeline;
 }
 
 extern GLenum glDepthFormat(ignis::DepthFormat format);
@@ -36,5 +39,6 @@ extern void APIENTRY glDebugMessage(
 );
 
 extern void glBindPipeline(ignis::Graphics::Data &data, ignis::Pipeline *pipeline);
+extern void glBindDescriptors(ignis::Graphics::Data &data, ignis::Descriptors *descriptors);
 extern bool glCheckShaderLog(GLuint shader, String &str);
 extern bool glCheckProgramLog(GLuint program, String &str);

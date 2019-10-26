@@ -25,6 +25,7 @@ namespace ignis {
 	class Swapchain;
 	class PrimitiveBuffer;
 	class Pipeline;
+	class Descriptors;
 
 	enum class CullMode : u8;
 	enum class WindMode : u8;
@@ -38,6 +39,7 @@ namespace ignis {
 		Swapchain *swapchain{};
 		PrimitiveBuffer *primitiveBuffer{};
 		Pipeline *pipeline{};
+		Descriptors *descriptors{};
 
 		f32 depth{};
 		u32 stencil{};
@@ -47,6 +49,7 @@ namespace ignis {
 		FillMode fillMode{};
 
 		HashMap<GLenum, GLuint> bound;
+		HashMap<u64, GLuint> boundByBase;	//GLenum lower 32-bit, Base upper 32-bit
 
 		Vec4u viewport{}, scissor{};
 

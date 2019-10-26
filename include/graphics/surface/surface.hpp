@@ -1,11 +1,12 @@
 #pragma once
 #include "types/types.hpp"
-#include "graphics/resource.hpp"
+#include "graphics/gpu_resource.hpp"
 
 namespace ignis {
 
 	enum class GPUFormat : u16;
 	enum class DepthFormat : u8;
+	enum class TextureType : u8;
 
 	class Surface : public GPUResource {
 
@@ -34,7 +35,7 @@ namespace ignis {
 			Info(
 				const List<GPUFormat> &colorFormats,
 				DepthFormat depthFormat, bool keepDepth,
-				f64 viewportScale = 1, u32 samples = 1
+				u32 samples = 1, f64 viewportScale = 1
 			);
 		};
 
@@ -46,6 +47,10 @@ namespace ignis {
 
 		virtual void begin(const Vec4u &xywh) = 0;
 		virtual void end() = 0;
+
+		bool isCompatible(const RegisterLayout &reg) final override;
+		virtual bool isGPUWritable() const;
+		TextureType getTextureType() const;
 
 		inline const Info &getInfo() const { return info; }
 

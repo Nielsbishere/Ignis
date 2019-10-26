@@ -3,20 +3,16 @@
 
 namespace ignis {
 
-	class ShaderRegister;
+	struct RegisterLayout;
 
-	//An object capable of being sent to a shader register
+	//An object capable of being sent to a descriptor slot
 	class GPUResource : public GraphicsObject {
 	
-		friend class ShaderRegister;
-
 	public:
 
 		using GraphicsObject::GraphicsObject;
 
-	protected:
-	
-		//TODO: Bind?
+		virtual bool isCompatible(const RegisterLayout &reg) = 0;
 
 	};
 }

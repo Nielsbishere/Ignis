@@ -23,7 +23,7 @@ namespace ignis {
 		bool canCast() { return dynamic_cast<T*>(this); }
 
 		template<typename T>
-		bool cast() { return dynamic_cast<T*>(this); }
+		T *cast() { return dynamic_cast<T*>(this); }
 
 	protected:
 

@@ -4,6 +4,7 @@
 #include "graphics/surface/swapchain.hpp"
 #include "graphics/memory/gl_primitive_buffer.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
+#include "graphics/shader/descriptors.hpp"
 #include "graphics/shader/pipeline.hpp"
 #include "graphics/gl_graphics.hpp"
 
@@ -35,45 +36,6 @@ namespace ignis {
 			case CMD_PRESENT:
 
 				gdata.swapchain->present();
-				break;
-
-			case CMD_DEBUG_START_REGION:
-
-				{
-
-					auto *sr = (DebugStartRegion*)c;
-
-					glPushDebugGroup(
-						GL_DEBUG_SOURCE_APPLICATION,
-						0,
-						GLsizei(sr->size()),
-						sr->string
-					);
-				}
-
-				break;
-
-			case CMD_DEBUG_END_REGION:
-
-				glPopDebugGroup();
-				break;
-
-			case CMD_DEBUG_INSERT_MARKER:
-
-				{
-
-					auto *im = (DebugInsertMarker*)c;
-
-					glDebugMessageInsert(
-						GL_DEBUG_SOURCE_APPLICATION,
-						GL_DEBUG_TYPE_MARKER,
-						0,
-						GL_DEBUG_SEVERITY_NOTIFICATION,
-						GLsizei(im->size()),
-						im->string
-					);
-				}
-
 				break;
 
 			case CMD_SET_CLEAR_COLOR:
@@ -195,6 +157,23 @@ namespace ignis {
 				}
 				break;
 
+			case CMD_BIND_DESCRIPTORS:
+
+				{
+					auto *descriptors = ((BindDescriptors*) c)->bindObject;
+
+					if (descriptors != gdata.descriptors) {
+
+						gdata.descriptors = descriptors;
+
+						if(descriptors)
+							glBindDescriptors(gdata, descriptors);
+					}
+
+				}
+
+				break;
+
 			case CMD_DRAW_INSTANCED:
 
 				if (!gdata.primitiveBuffer)
@@ -205,6 +184,9 @@ namespace ignis {
 
 				if(!gdata.primitiveBuffer->matchLayout(gdata.pipeline->getInfo().attributeLayout))
 					oic::System::log()->fatal("Pipeline vertex layout doesn't match primitive buffer!");
+
+				if (gdata.descriptors && !gdata.descriptors->isShaderCompatible(gdata.pipeline->getInfo().pipelineLayout))
+					oic::System::log()->fatal("Pipeline layout doesn't match descriptors!");
 
 				{
 					auto topo = glTopologyMode(gdata.pipeline->getInfo().topology);
@@ -231,6 +213,57 @@ namespace ignis {
 				}
 
 				break;
+
+
+			#ifndef NDEBUG
+
+				case CMD_DEBUG_START_REGION:
+
+					{
+
+						auto *sr = (DebugStartRegion*)c;
+
+						glPushDebugGroup(
+							GL_DEBUG_SOURCE_APPLICATION,
+							0,
+							GLsizei(sr->size()),
+							sr->string
+						);
+					}
+
+					break;
+
+				case CMD_DEBUG_END_REGION:
+
+					glPopDebugGroup();
+					break;
+
+				case CMD_DEBUG_INSERT_MARKER:
+
+					{
+
+						auto *im = (DebugInsertMarker*)c;
+
+						glDebugMessageInsert(
+							GL_DEBUG_SOURCE_APPLICATION,
+							GL_DEBUG_TYPE_MARKER,
+							0,
+							GL_DEBUG_SEVERITY_NOTIFICATION,
+							GLsizei(im->size()),
+							im->string
+						);
+					}
+
+					break;
+
+			#else
+
+				case CMD_DEBUG_START_REGION:
+				case CMD_DEBUG_END_REGION:
+				case CMD_DEBUG_INSERT_MARKER:
+					break;
+
+			#endif
 
 			default:
 				oic::System::log()->fatal("Unsupported operation");
