@@ -48,7 +48,7 @@ namespace ignis {
 		virtual void begin(const Vec4u &xywh) = 0;
 		virtual void end() = 0;
 
-		bool isCompatible(const RegisterLayout &reg) final override;
+		bool isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) final override;
 		virtual bool isGPUWritable() const;
 		TextureType getTextureType() const;
 

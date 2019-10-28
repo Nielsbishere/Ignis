@@ -28,7 +28,7 @@ namespace ignis {
 				GLuint shader = shaders[k] = glCreateShader(type);
 
 				if ((u8(stage.first) & u8(ShaderStage::PROPERTY_IS_TECHNIQUE)) && !g.hasFeature(Feature::MESH_SHADERS))
-					oic::System::log()->fatal("Driver doesn't support mesh shaders");	//TODO: Mesh shaders
+					oic::System::log()->fatal("Driver doesn't support mesh shaders");
 
 				if((u8(stage.first) & u8(ShaderStage::PROPERTY_IS_COMPUTE)) && pass.size() != 1)
 					oic::System::log()->fatal("Can't create a shader with mixed compute and graphics stages");

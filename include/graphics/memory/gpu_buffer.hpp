@@ -4,7 +4,7 @@
 namespace ignis {
 
 	enum class GPUBufferType : u8;
-	enum class GPUBufferUsage : u8;
+	enum class GPUMemoryUsage : u8;
 
 	class GPUBuffer : public GPUResource {
 
@@ -16,11 +16,11 @@ namespace ignis {
 			usz size;
 
 			GPUBufferType type;
-			GPUBufferUsage usage;
+			GPUMemoryUsage usage;
 
-			Info(usz bufferSize, GPUBufferType type, GPUBufferUsage usage);
+			Info(usz bufferSize, GPUBufferType type, GPUMemoryUsage usage);
 
-			Info(const Buffer &initData, GPUBufferType type, GPUBufferUsage usage);
+			Info(const Buffer &initData, GPUBufferType type, GPUMemoryUsage usage);
 		};
 
 		apimpl struct Data;
@@ -31,7 +31,7 @@ namespace ignis {
 		//Flush the updates from the CPU to the GPU
 		apimpl void flush(usz offset, usz size);
 
-		bool isCompatible(const RegisterLayout &reg) final override;
+		bool isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) final override;
 
 		inline const usz size() const { return info.size; }
 

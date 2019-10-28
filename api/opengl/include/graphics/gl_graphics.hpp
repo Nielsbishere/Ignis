@@ -33,6 +33,11 @@ namespace ignis {
 
 	//Graphics data
 
+	struct BoundRange {
+		GLuint handle{};
+		usz offset{}, size{};
+	};
+
 	struct Graphics::Data {
 
 		Surface *currentSurface{};
@@ -49,7 +54,7 @@ namespace ignis {
 		FillMode fillMode{};
 
 		HashMap<GLenum, GLuint> bound;
-		HashMap<u64, GLuint> boundByBase;	//GLenum lower 32-bit, Base upper 32-bit
+		HashMap<u64, BoundRange> boundByBase;	//GLenum lower 32-bit, Base upper 32-bit
 
 		Vec4u viewport{}, scissor{};
 

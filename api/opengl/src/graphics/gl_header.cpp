@@ -154,22 +154,22 @@ GLenum glBufferType(GPUBufferType format) {
 	}
 }
 
-GLenum glBufferUsage(GPUBufferUsage usage, bool isPersistent) {
+GLenum glBufferUsage(GPUMemoryUsage usage, bool isPersistent) {
 
 	GLenum res{};
 
-	if (u8(usage) & u8(GPUBufferUsage::CPU_WRITE)) {
+	if (u8(usage) & u8(GPUMemoryUsage::CPU_WRITE)) {
 		res |= GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT;
 		if(isPersistent) res |= GL_MAP_PERSISTENT_BIT;
 	}
 
-	if (u8(usage) & u8(GPUBufferUsage::SHARED))
+	if (u8(usage) & u8(GPUMemoryUsage::SHARED))
 		res |= GL_CLIENT_STORAGE_BIT;
 
 	return res;
 }
 
-GLenum glBufferHint(GPUBufferUsage usage) {
+GLenum glBufferHint(GPUMemoryUsage usage) {
 
 	//& 1 = isStatic
 	//& 2 = isCopy
@@ -180,11 +180,11 @@ GLenum glBufferHint(GPUBufferUsage usage) {
 
 	usz id{};
 
-	if (!(u8(usage) & u8(GPUBufferUsage::CPU_WRITE))) {
+	if (!(u8(usage) & u8(GPUMemoryUsage::CPU_WRITE))) {
 
 		id |= 2;		//If CPU doesn't write; it's draw
 
-		if (!(u8(usage) & u8(GPUBufferUsage::GPU_WRITE)))
+		if (!(u8(usage) & u8(GPUMemoryUsage::GPU_WRITE)))
 			id |= 1;	//If GPU also doesn't write; it's static
 	}
 
@@ -434,17 +434,21 @@ void glBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 
 		if (it != descriptors->getInfo().resources.end()) {
 
-			auto *res = it->second;
+			auto &subres = it->second;
+			auto *res = subres.resource;
 
 			if (GPUBuffer *buffer = res->cast<GPUBuffer>()) {
 
-				GLenum bindPoint = resource.type == ResourceType::CBUFFER ? GL_UNIFORM_BUFFER : GL_SHADER_STORAGE_BUFFER;
-				GLuint &bound = g.boundByBase[(u64(resource.localId) << 32) | bindPoint];
+				usz offset = subres.bufferRange.offset, size = subres.bufferRange.size;
 
-				if (bound == buffer->getData()->handle)
+				GLenum bindPoint = resource.type == ResourceType::CBUFFER ? GL_UNIFORM_BUFFER : GL_SHADER_STORAGE_BUFFER;
+				auto &bound = g.boundByBase[(u64(resource.localId) << 32) | bindPoint];
+
+				if (bound.handle == buffer->getData()->handle && bound.offset == offset && bound.size == size)
 					continue;
 
-				glBindBufferBase(bindPoint, resource.localId, bound = buffer->getData()->handle);
+				glBindBufferRange(bindPoint, resource.localId, buffer->getData()->handle, offset, size);
+				bound = { buffer->getData()->handle, offset, size };
 			}
 
 			//TODO: Textures, Samplers, etc.

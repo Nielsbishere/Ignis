@@ -5,19 +5,48 @@
 namespace ignis {
 
 	class GPUResource;
+	class GPUBuffer;
+
+	//Describing which range of the resource has to be bound
+
+	struct GPUSubresource {
+
+		GPUResource *resource{};
+
+		union {
+			//TextureRange textureRange;
+			//CombinedSamplerRange samplerRange;
+
+			struct Buffer {
+				usz offset{}, size {};
+			} bufferRange;
+		};
+
+		GPUSubresource() : bufferRange{} {}
+		GPUSubresource(GPUBuffer *resource, usz offset = 0, usz size = 0);
+		//GPUResourceRange(Texture *resource): resource(resource) {}
+		//GPUResourceRange(Texture *resource, Sampler *sampler)
+	};
+
+	//Which ranges of resources have to be bound
 
 	class Descriptors : public GraphicsObject {
 
 	public:
 
+		using Resources = HashMap<u32, GPUSubresource>;
+
 		struct Info {
 
 			PipelineLayout pipelineLayout;
-			HashMap<u32, GPUResource*> resources;
+			Resources resources;
 
 			bool shouldFlush{};
 
-			Info(const PipelineLayout &pipelineLayout, const HashMap<u32, GPUResource*> &resources);
+			Info(
+				const PipelineLayout &pipelineLayout, 
+				const Resources &resources
+			);
 		};
 
 		apimpl struct Data;
@@ -29,10 +58,10 @@ namespace ignis {
 		apimpl void flush(usz offset, usz size);
 
 		//Update the CPU-side resource; requires flush to be called afterwards
-		apimpl void setResource(u32 i, GPUResource *resource);
+		apimpl void bindSubresource(u32 i, const GPUSubresource &range);
 
 		//Check if descriptor slots are compatible (and exist)
-		bool isResourceCompatible(u32 i, GPUResource *resource) const;
+		bool isResourceCompatible(u32 i, const GPUSubresource &resource) const;
 
 		//Check if pipeline layout is compatible with a shader
 		bool isShaderCompatible(const PipelineLayout &layout) const;

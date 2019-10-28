@@ -12,19 +12,19 @@ namespace ignis {
 
 			List<BufferLayout> vertexLayout;
 			BufferLayout indexLayout;
-			GPUBufferUsage usage;
+			GPUMemoryUsage usage;
 
 			Info(
 				const List<BufferLayout> &vertexLayout, 
 				const BufferLayout &indexLayout = {},
-				GPUBufferUsage usage = GPUBufferUsage::LOCAL
+				GPUMemoryUsage usage = GPUMemoryUsage::LOCAL
 			):
 				vertexLayout(vertexLayout), indexLayout(indexLayout), usage(usage) { }
 
 			Info(
 				const BufferLayout &vertexLayout, 
 				const BufferLayout &indexLayout = {},
-				GPUBufferUsage usage = GPUBufferUsage::LOCAL
+				GPUMemoryUsage usage = GPUMemoryUsage::LOCAL
 			):
 				vertexLayout{ vertexLayout }, indexLayout(indexLayout), usage(usage) { }
 		};
@@ -37,7 +37,7 @@ namespace ignis {
 		inline const BufferLayout &operator[](usz i) const;
 		inline const BufferLayout &getIndexBuffer() const;
 		inline const bool isIndexed() const;
-		inline const GPUBufferUsage getUsage() const;
+		inline const GPUMemoryUsage getUsage() const;
 		inline const u32 indices() const;
 		inline const u32 vertices() const;
 		inline const u32 elements() const;
@@ -72,7 +72,7 @@ namespace ignis {
 		return info.indexLayout.formats.size();
 	}
 
-	inline const GPUBufferUsage PrimitiveBuffer::getUsage() const {
+	inline const GPUMemoryUsage PrimitiveBuffer::getUsage() const {
 		return info.usage;
 	}
 

@@ -18,14 +18,14 @@ namespace ignis {
 
 		glObjectLabel(GL_BUFFER, data->handle, GLsizei(getName().size()), getName().c_str());
 
-		bool persistent = g.getData()->version(4, 4) && (u8(info.usage) & u8(GPUBufferUsage::SHARED));
+		bool persistent = g.getData()->version(4, 4) && (u8(info.usage) & u8(GPUMemoryUsage::SHARED));
 
 		glBufferStorage(
 			t, info.size, info.initData.data(),
 			glBufferUsage(info.usage, persistent)
 		);
 
-		if (u8(info.usage) & u8(GPUBufferUsage::CPU_WRITE)) {
+		if (u8(info.usage) & u8(GPUMemoryUsage::CPU_WRITE)) {
 
 			if (persistent)
 				data->unmapped = (u8*)glMapBufferRange(t, 0, info.size, GL_MAP_WRITE_BIT);
@@ -51,7 +51,7 @@ namespace ignis {
 			return;
 		}
 
-		if (u8(info.usage) & u8(GPUBufferUsage::CPU_WRITE)) {
+		if (u8(info.usage) & u8(GPUMemoryUsage::CPU_WRITE)) {
 
 			auto *gdat = getGraphics().getData();
 

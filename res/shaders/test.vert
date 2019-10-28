@@ -3,7 +3,7 @@
 in layout(location=0) vec2 vpos;
 out layout(location=0) vec2 col;
 
-uniform layout(binding=0, std140) Test {
+layout(binding=0, std140) uniform Test {
 	vec2 mask;
 };
 

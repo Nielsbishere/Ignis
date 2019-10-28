@@ -30,7 +30,7 @@ namespace ignis {
 		viewportScale = scale;
 	}
 
-	bool Surface::isCompatible(const RegisterLayout &reg) {
+	bool Surface::isCompatible(const RegisterLayout &reg, const GPUSubresource&) {
 		return
 			reg.type		 == ResourceType::TEXTURE && 
 			reg.textureType	 == getTextureType() && 

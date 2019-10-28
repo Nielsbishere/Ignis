@@ -30,6 +30,13 @@ namespace ignis {
 
 		};
 
+		struct MSAA {
+
+			u32 samples;
+
+			MSAA(u32 samples = {}) : samples(samples) {}
+		};
+
 		struct Info {
 
 			List<BufferAttributes> attributeLayout;
@@ -40,28 +47,33 @@ namespace ignis {
 			Flag flag;
 			TopologyMode topology;
 			Rasterizer rasterizer;
+			MSAA msaa;
 
 			Info(
 				Flag f, 
 				const List<BufferAttributes> &attributeLayout, 
 				const HashMap<ShaderStage, Buffer> &passes,
 				const PipelineLayout &pipelineLayout,
+				MSAA msaa = {},
 				TopologyMode topology = TopologyMode::TRIANGLE_LIST, 
 				Rasterizer rasterizer = {}
 			) : 
-				flag(f), attributeLayout(attributeLayout), topology(topology), passes{ passes },
-				pipelineLayout(pipelineLayout), rasterizer(rasterizer) { }
+				flag(f), attributeLayout(attributeLayout), topology(topology),
+				passes{ passes }, pipelineLayout(pipelineLayout),
+				rasterizer(rasterizer), msaa(msaa) { }
 
 			Info(
 				Flag f,
 				const List<BufferAttributes> &attributeLayout,
 				const List<HashMap<ShaderStage, Buffer>> &passes,
 				const PipelineLayout &pipelineLayout,
+				MSAA msaa = {},
 				TopologyMode topology = TopologyMode::TRIANGLE_LIST,
 				Rasterizer rasterizer = {}
 			) : 
-				flag(f), attributeLayout(attributeLayout), topology(topology), passes(passes), 
-				pipelineLayout(pipelineLayout), rasterizer(rasterizer) { }
+				flag(f), attributeLayout(attributeLayout), topology(topology), 
+				passes(passes),  pipelineLayout(pipelineLayout), 
+				rasterizer(rasterizer), msaa(msaa) { }
 
 		};
 

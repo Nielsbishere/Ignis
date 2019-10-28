@@ -27,7 +27,7 @@ namespace ignis {
 	//& 2 = isPreferred		; requires heap to be the same (!isPreferred = use specified heap)
 	//& 4 = isGPUWritable	; can the resource be written to from the GPU?
 	//& 8 = isCPUWritable	; can the CPU update this or is it just an initialization
-	enum class GPUBufferUsage : u8 {
+	enum class GPUMemoryUsage : u8 {
 
 		LOCAL				= 0b00000000,
 		SHARED				= 0b00000001,
@@ -162,27 +162,55 @@ namespace ignis {
 		TEXTURE_CUBE_ARRAY	= 0x08, 
 		TEXTURE_1D_ARRAY, 
 		TEXTURE_2D_ARRAY,
-		TEXTURE_MS_ARRAY	= 0x0C
+		TEXTURE_MS_ARRAY	= 0x0C,
+
+		PROPERTY_DIMENSION		= 0x03,
+		PROPERTY_IS_MS			= 0x04,
+		PROPERTY_IS_ARRAY		= 0x08
+	};
+
+	//How the mips are generated and how many are used
+	//& 0x80 = isNearest
+	//& 0x1F = mipCount
+	//!(& 0x1F) = isAuto (automaticaly determines mips)
+	//If mipCount is set to non zero, it will use the mipCount
+
+	enum class TextureMip : u8 {
+
+		AUTO = 0x00,			//N mipmaps (based on resolution); linear by default
+		NONE = 0x01,
+		LINEAR = 0x00,
+		NEAREST = 0x80,
+
+		PROPERTY_IS_NEAREST = 0x80,
+		PROPERTY_MIP_COUNT = 0x1F
 	};
 
 	//& 0x03 = dimension (CUBE, 1D, 2D, 3D)
 	//& 0x04 = isMultisampled
 	//& 0x08 = isArray
-	//& 0x10 = isIndependentSampler (can be used for anything)
+	//& 0x0F = TextureType
+	//& 0x10 = isCombinedSampler (can only be used on specified texture type)
 	enum class SamplerType : u8 {
 
-		SAMPLER_CUBE		= 0x00,
+		SAMPLER					= 0x00,
+
+		SAMPLER_CUBE			= 0x10,
 		SAMPLER_1D, 
 		SAMPLER_2D,
 		SAMPLER_3D,
-		SAMPLER_MS			= 0x06,
+		SAMPLER_MS				= 0x16,
 
-		SAMPLER_CUBE_ARRAY	= 0x08, 
+		SAMPLER_CUBE_ARRAY		= 0x18, 
 		SAMPLER_1D_ARRAY, 
 		SAMPLER_2D_ARRAY,
-		SAMPLER_MS_ARRAY	= 0x0C,
+		SAMPLER_MS_ARRAY		= 0x1C,
 
-		SAMPLER				= 0x10
+		PROPERTY_DIMENSION		= 0x03,
+		PROPERTY_IS_MS			= 0x04,
+		PROPERTY_IS_ARRAY		= 0x08,
+		PROPERTY_IS_COMBINED	= 0x10,
+		PROPERTY_AS_TEXTURE		= 0x0F
 	};
 
 }

@@ -37,7 +37,7 @@ namespace ignis {
 			HashMap<String, Layout> layout;
 			GPUBuffer::Info bufferInfo;
 
-			Info(const HashMap<String, Layout> &layout, GPUBufferType type, GPUBufferUsage usage);
+			Info(const HashMap<String, Layout> &layout, GPUBufferType type, GPUMemoryUsage usage);
 		};
 
 		ShaderBuffer(Graphics &g, const String &name, const ShaderBuffer::Info &info);

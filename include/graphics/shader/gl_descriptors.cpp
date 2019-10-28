@@ -14,12 +14,12 @@ namespace ignis {
 
 	void Descriptors::flush(usz, usz) { }
 
-	void Descriptors::setResource(u32 i, GPUResource *resource) {
+	void Descriptors::bindSubresource(u32 i, const GPUSubresource &range) {
 
-		if(!isResourceCompatible(i, resource))
+		if(!isResourceCompatible(i, range))
 			oic::System::log()->fatal("Couldn't call setResource with incompatible resource");
 
-		info.resources[i] = resource;
+		info.resources[i] = range;
 	}
 
 }
