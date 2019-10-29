@@ -48,52 +48,56 @@ namespace ignis {
 			return;
 		}
 
-		glGenFramebuffers(1, &data->index);
-		glBindFramebuffer(GL_FRAMEBUFFER, data->index);
+		glCreateFramebuffers(1, &data->index);
+		GLuint fb = data->index;
+
 		glObjectLabel(
-			GL_FRAMEBUFFER, data->index, GLsizei(getName().size()), getName().c_str()
+			GL_FRAMEBUFFER, fb, GLsizei(getName().size()), getName().c_str()
 		);
 
 		if (info.depthFormat != DepthFormat::NONE) {
 
 			if (info.keepDepth) {
 
-				glGenTextures(1, &data->depth);
-				glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, data->depth);
+				glCreateTextures(
+					glxTextureType(getTextureType()), 1, &data->depth
+				);
+
+				GLuint handle = data->depth;
 
 				String hashed = NAME(getName() + " depth texture");
 				glObjectLabel(
-					GL_TEXTURE, data->depth, GLsizei(hashed.size()), hashed.c_str()
+					GL_TEXTURE, handle, GLsizei(hashed.size()), hashed.c_str()
 				);
 
-				glTexImage2DMultisample(
-					GL_TEXTURE_2D_MULTISAMPLE, GLsizei(info.samples),
-					glDepthFormat(info.depthFormat), size[0], size[1], GL_FALSE
+				glTextureStorage2DMultisample(
+					handle, GLsizei(info.samples),
+					glxDepthFormat(info.depthFormat), size[0], size[1], GL_FALSE
 				);
 
-				glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, data->depth, 0);
+				glNamedFramebufferTexture(fb, GL_DEPTH_ATTACHMENT, handle, 0);
 
 			} else {
 
-				glGenRenderbuffers(1, &data->depth);
-				glBindRenderBuffer(GL_RENDERBUFFER, data->depth);
+				glCreateRenderbuffers(1, &data->depth);
+				GLuint handle = data->depth;
 
 				String hashed = NAME(getName() + " depth buffer");
 				glObjectLabel(
-					GL_RENDERBUFFER, data->depth, GLsizei(hashed.size()), hashed.c_str()
+					GL_RENDERBUFFER, handle, GLsizei(hashed.size()), hashed.c_str()
 				);
 
-				glRenderbufferStorageMultisample(
-					GL_RENDERBUFFER, GLsizei(info.samples),
-					glDepthFormat(info.depthFormat), size[0], size[1]
+				glNamedRenderbufferStorageMultisample(
+					handle, GLsizei(info.samples),
+					glxDepthFormat(info.depthFormat), size[0], size[1]
 				);
 
-				glFramebufferRenderbuffer(
-					GL_FRAMEBUFFER,
+				glNamedFramebufferRenderbuffer(
+					fb,
 					FormatHelper::hasStencil(info.depthFormat) ?
 					GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT,
 					GL_RENDERBUFFER,
-					data->depth
+					handle
 				);
 			}
 		}
@@ -103,23 +107,25 @@ namespace ignis {
 
 		for (usz i = 0, j = info.colorFormats.size(); i < j; ++i) {
 
-			glGenTextures(1, data->renderTextures.data() + i);
+			glCreateTextures(
+				glxTextureType(getTextureType()), 1, data->renderTextures.data() + i
+			);
+
 			GLuint tex = data->renderTextures[i];
 
-			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex);
-			glTexImage2DMultisample(
-				GL_TEXTURE_2D_MULTISAMPLE, GLsizei(info.samples),
-				glColorFormat(info.colorFormats[i]), size[0], size[1], GL_FALSE
+			glTextureStorage2DMultisample(
+				tex, GLsizei(info.samples),
+				glxColorFormat(info.colorFormats[i]), size[0], size[1], GL_FALSE
 			);
 
 			String hashed = NAME(getName() + " buffer " + std::to_string(i));
 			glObjectLabel(GL_TEXTURE, tex, GLsizei(hashed.size()), hashed.c_str());
 
-			glFramebufferTexture(GL_FRAMEBUFFER, drawBuffers[i] = GL_COLOR_ATTACHMENT0 + GLenum(i), tex, 0);
+			glNamedFramebufferTexture(fb, drawBuffers[i] = GL_COLOR_ATTACHMENT0 + GLenum(i), tex, 0);
 		}
 
-		glDrawBuffers(GLsizei(drawBuffers.size()), drawBuffers.data());
-		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		glNamedFramebufferDrawBuffers(fb, GLsizei(drawBuffers.size()), drawBuffers.data());
+		GLenum status = glCheckNamedFramebufferStatus(fb, GL_FRAMEBUFFER);
 
 		if (status != GL_FRAMEBUFFER_COMPLETE)
 			oic::System::log()->fatal("Couldn't create framebuffer");
@@ -127,7 +133,7 @@ namespace ignis {
 	}
 
 	void Framebuffer::begin(const Vec4u &area) {
-		glBeginRenderPass(*getGraphics().getData(), area, info.size, data->index);
+		glxBeginRenderPass(*getGraphics().getData(), area, info.size, data->index);
 	}
 
 	void Framebuffer::end() {}

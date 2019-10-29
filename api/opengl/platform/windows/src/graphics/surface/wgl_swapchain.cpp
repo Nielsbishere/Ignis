@@ -89,7 +89,7 @@ namespace ignis {
 
 		#ifndef NO_DEBUG
 			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-			glDebugMessageCallback(glDebugMessage, nullptr);
+			glDebugMessageCallback(glxDebugMessage, nullptr);
 		#endif
 
 		onResize(getInfo().size);

@@ -6,8 +6,9 @@
 
 namespace ignis {
 
-	BufferLayout::BufferLayout(GPUBuffer *b, const BufferAttributes &formats) :
-		buffer(b), formats(formats), elements(u32(b->size() / formats.getStride())) {}
+	BufferLayout::BufferLayout(GPUBuffer *b, const BufferAttributes &formats, usz bufferOffset) :
+		buffer(b), formats(formats), elements(u32(b->size() / formats.getStride())),
+		bufferOffset(bufferOffset) {}
 
 	PrimitiveBuffer::PrimitiveBuffer(
 		Graphics &g, const String &name, const Info &inf

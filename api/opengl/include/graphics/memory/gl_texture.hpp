@@ -1,11 +1,11 @@
 #pragma once
-#include "graphics/memory/gpu_buffer.hpp"
+#include "graphics/memory/texture.hpp"
 #include "graphics/gl_graphics.hpp"
 
 namespace ignis {
 
-	struct GPUBuffer::Data {
-		u8 *unmapped{};
+	struct Texture::Data {
 		GLuint handle{};
 	};
+
 }

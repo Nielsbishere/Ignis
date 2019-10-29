@@ -83,7 +83,7 @@ namespace ignis {
 					SetClearStencil *cd = (SetClearStencil*)c;
 
 					if (cd->dataObject != gdata.stencil)
-						glClearDepth(gdata.stencil = cd->dataObject);
+						glClearStencil(gdata.stencil = cd->dataObject);
 				}
 				break;
 
@@ -102,19 +102,15 @@ namespace ignis {
 					else
 						mask |= GL_STENCIL_BUFFER_BIT;
 
-					GLuint index = 0; 
+					GLuint read{};
 
 					if (bs->src->canCast<Framebuffer>())
-						index = ((Framebuffer*) bs->src)->getData()->index;
+						read = ((Framebuffer*) bs->src)->getData()->index;
 
-					gdata.bind(glBindFramebuffer, GL_READ_FRAMEBUFFER, index);
-
-					index = 0;
+					GLuint write{};
 
 					if (bs->dst->canCast<Framebuffer>())
-						index = ((Framebuffer*) bs->dst)->getData()->index;
-
-					gdata.bind(glBindFramebuffer, GL_DRAW_FRAMEBUFFER, index);
+						write = ((Framebuffer*) bs->dst)->getData()->index;
 
 					Vec4u srcArea = bs->srcArea, dstArea = bs->dstArea;
 
@@ -123,7 +119,8 @@ namespace ignis {
 					if (!dstArea[2]) dstArea[2] = bs->dst->getInfo().size[0];
 					if (!dstArea[3]) dstArea[3] = bs->dst->getInfo().size[1];
 
-					glBlitFramebuffer(
+					glBlitNamedFramebuffer(
+						read, write,
 						srcArea[0], srcArea[1], srcArea[2], srcArea[3],
 						dstArea[0], dstArea[1], dstArea[2], dstArea[3],
 						mask,
@@ -152,7 +149,7 @@ namespace ignis {
 
 					if (pipeline != gdata.pipeline) {
 						gdata.pipeline = pipeline;
-						glBindPipeline(gdata, pipeline);
+						glxBindPipeline(gdata, pipeline);
 					}
 				}
 				break;
@@ -167,7 +164,7 @@ namespace ignis {
 						gdata.descriptors = descriptors;
 
 						if(descriptors)
-							glBindDescriptors(gdata, descriptors);
+							glxBindDescriptors(gdata, descriptors);
 					}
 
 				}
@@ -189,14 +186,14 @@ namespace ignis {
 					oic::System::log()->fatal("Pipeline layout doesn't match descriptors!");
 
 				{
-					auto topo = glTopologyMode(gdata.pipeline->getInfo().topology);
+					auto topo = glxTopologyMode(gdata.pipeline->getInfo().topology);
 					auto *di = (DrawInstanced*) c;
 
 					if (gdata.primitiveBuffer->indices())
 						glDrawElementsInstancedBaseVertexBaseInstance(
 							topo,
 							di->count,
-							glGpuFormat(gdata.primitiveBuffer->getIndexFormat()),
+							glxGpuFormatType(gdata.primitiveBuffer->getIndexFormat()),
 							(void*) (usz(di->start) * FormatHelper::getSizeBytes(gdata.primitiveBuffer->getIndexFormat())),
 							di->instanceCount,
 							di->vertexStart,

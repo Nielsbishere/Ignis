@@ -73,16 +73,6 @@ namespace ignis {
 		inline const bool version(u32 maj, u32 min) const {
 			return getVersion(major, minor) >= getVersion(maj, min);
 		}
-		
-		inline void bind(void (*bindFunc)(GLenum, GLuint), GLenum where, GLuint what) {
-			
-			auto it = bound.find(where);
-
-			if (it == bound.end() || it->second != what) {
-				bindFunc(where, what);
-				bound[where] = what;
-			}
-		}
 	};
 
 }

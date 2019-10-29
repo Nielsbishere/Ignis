@@ -8,31 +8,44 @@ namespace ignis {
 
 		data = new Data();
 
-		glGenVertexArrays(1, &data->handle);
-		glBindVertexArray(data->handle);
+		glCreateVertexArrays(1, &data->handle);
+		glObjectLabel(
+			GL_VERTEX_ARRAY, data->handle, GLsizei(getName().size()), getName().c_str()
+		);
+
+		GLuint handle = data->handle;
+
+		u32 i{};
 		
 		for (auto &v : info.vertexLayout) {
 
-			glBindBuffer(GL_ARRAY_BUFFER, v.buffer->getData()->handle);
+			glVertexArrayVertexBuffer(
+				handle, i, v.buffer->getData()->handle, v.bufferOffset, v.stride()
+			);
 
 			for (auto &elem : v.formats) {
-				glEnableVertexAttribArray(elem.index);
-				glVertexAttribPointer(
+
+				glEnableVertexArrayAttrib(handle, elem.index);
+				glVertexArrayAttribFormat(
+					handle,
 					elem.index, 
 					GLint(FormatHelper::getChannelCount(elem.format)),
-					glGpuFormat(elem.format),
+					glxGpuFormatType(elem.format),
 					!FormatHelper::isUnnormalized(elem.format), 
-					GLsizei(v.stride()),
-					(void*)usz(elem.offset)
+					elem.offset
 				);
 
+				glVertexArrayAttribBinding(handle, elem.index, i);
+
 				if (v.instanced())
-					glVertexAttribDivisor(elem.index, 1);
+					glVertexArrayBindingDivisor(handle, elem.index, 1);
 			}
 		}
 
 		if(isIndexed())
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, info.indexLayout.buffer->getData()->handle);
+			glVertexArrayElementBuffer(
+				handle, info.indexLayout.buffer->getData()->handle
+			);
 	}
 
 	void PrimitiveBuffer::destroy() {

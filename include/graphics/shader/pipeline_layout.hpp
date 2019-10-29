@@ -24,7 +24,7 @@ namespace ignis {
 			//	(Else)			represents required buffer size
 			usz	  bufferSize;
 
-			//(If isWritable && texture)
+			//(If texture)
 			GPUFormat textureFormat;
 		};
 
@@ -58,17 +58,20 @@ namespace ignis {
 
 		//Construct a RW texture register
 		RegisterLayout(
-			const String &name, u32 globalId, TextureType type, u32 localId, ShaderAccess access, GPUFormat textureFormat
+			const String &name, u32 globalId, TextureType type, u32 localId,
+			ShaderAccess access, GPUFormat textureFormat, bool writable = false
 		);
 
 		//Construct a texture register
 		RegisterLayout(
-			const String &name, u32 globalId, TextureType type, u32 localId, ShaderAccess access
+			const String &name, u32 globalId, TextureType type, u32 localId,
+			ShaderAccess access, bool writable = false
 		);
 
 		//Construct a sampler register
 		RegisterLayout(
-			const String &name, u32 globalId, SamplerType type, u32 localId, ShaderAccess access
+			const String &name, u32 globalId, SamplerType type, u32 localId,
+			ShaderAccess access
 		);
 
 		//Check if two registers are equal (ignore name)

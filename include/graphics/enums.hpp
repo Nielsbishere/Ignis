@@ -171,8 +171,8 @@ namespace ignis {
 
 	//How the mips are generated and how many are used
 	//& 0x80 = isNearest
-	//& 0x1F = mipCount
-	//!(& 0x1F) = isAuto (automaticaly determines mips)
+	//& 0x3F = mipCount (max is 0x20; representing 32 mips including the base level)
+	//!(& 0x3F) = isAuto (automaticaly determines mips)
 	//If mipCount is set to non zero, it will use the mipCount
 
 	enum class TextureMip : u8 {
@@ -183,7 +183,7 @@ namespace ignis {
 		NEAREST = 0x80,
 
 		PROPERTY_IS_NEAREST = 0x80,
-		PROPERTY_MIP_COUNT = 0x1F
+		PROPERTY_MIP_COUNT = 0x3F
 	};
 
 	//& 0x03 = dimension (CUBE, 1D, 2D, 3D)

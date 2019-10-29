@@ -16,21 +16,24 @@ namespace ignis {
 		type(type == GPUBufferType::UNIFORM ? ResourceType::CBUFFER : ResourceType::BUFFER) {}
 
 	RegisterLayout::RegisterLayout(
-		const String &name, u32 globalId, TextureType type, u32 localId, ShaderAccess access, GPUFormat textureFormat
+		const String &name, u32 globalId, TextureType type, u32 localId,
+		ShaderAccess access, GPUFormat textureFormat, bool isWritable
 	):
 		name(name), globalId(globalId), textureType(type), localId(localId), 
-		access(access), isWritable(true), textureFormat(textureFormat),
+		access(access), isWritable(isWritable), textureFormat(textureFormat),
 		type(ResourceType::TEXTURE) {}
 
 	RegisterLayout::RegisterLayout(
-		const String &name, u32 globalId, TextureType type, u32 localId, ShaderAccess access
+		const String &name, u32 globalId, TextureType type, u32 localId,
+		ShaderAccess access, bool isWritable
 	):
 		name(name), globalId(globalId), textureType(type), localId(localId), 
-		access(access), isWritable(false), textureFormat(textureFormat),
+		access(access), isWritable(isWritable), textureFormat(textureFormat),
 		type(ResourceType::TEXTURE) {}
 
 	RegisterLayout::RegisterLayout(
-		const String &name, u32 globalId, SamplerType type, u32 localId, ShaderAccess access
+		const String &name, u32 globalId, SamplerType type, u32 localId,
+		ShaderAccess access
 	):
 		name(name), globalId(globalId), samplerType(type), localId(localId), 
 		access(access), isWritable(true), type(ResourceType::SAMPLER) {}

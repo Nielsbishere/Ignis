@@ -3,6 +3,7 @@
 #include "graphics/surface/framebuffer.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/memory/shader_buffer.hpp"
+#include "graphics/memory/texture.hpp"
 #include "graphics/shader/pipeline.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/enums.hpp"
@@ -30,7 +31,7 @@ struct TestViewportInterface : public ViewportInterface {
 	Descriptors *descriptors{};
 	Pipeline *pipeline{};
 	GPUBuffer *uniforms{};
-	//Texture *tex2D{};
+	Texture *tex2D{};
 
 	//Cleanup resources
 
@@ -87,18 +88,17 @@ struct TestViewportInterface : public ViewportInterface {
 
 		//Create texture
 
-		const List<List<u32>> rgba = {
-			{ 0xFF00FFFF, 0x00FFFFFF },
-			{ 0xFFFF00FF, 0xF00FFFFF }
+		const u32 rgba[2][2] = {
+			{ 0xFFFF00FF, 0xFF00FFFF },
+			{ 0xFFFFFF00, 0xFFFFFFFF }
 		};
 
-		/*tex2D = new Texture(
+		tex2D = new Texture(
 			g, NAME("Test texture"),
 			Texture::Info(
-				Vec2u(2, 2), GPUFormat::RGBA8, TextureMip::AUTO, 
-				GPUMemoryUsage::LOCAL, rgba
+				rgba, GPUFormat::RGBA8, GPUMemoryUsage::LOCAL
 			)
-		);*/
+		);
 
 		//Load shader code
 

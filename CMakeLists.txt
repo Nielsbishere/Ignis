@@ -69,7 +69,7 @@ source_group("Graphics (${graphicsApi}) Source" FILES ${apiCpp})
 source_group("Shaders" FILES ${shaders})
 
 if(MSVC)
-    target_compile_options(ignis PRIVATE /W4 /WX /MD /MP)
+    target_compile_options(ignis PRIVATE /W4 /WX /MD /MP /wd26812)
 else()
     target_compile_options(ignis PRIVATE -Wall -Wextra -pedantic -Werror)
 endif()

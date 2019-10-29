@@ -22,7 +22,7 @@ using namespace ignis;
 
 //Enums
 
-GLenum glDepthFormat(DepthFormat format) {
+GLenum glxDepthFormat(DepthFormat format) {
 
 	switch (format) {
 
@@ -42,7 +42,7 @@ GLenum glDepthFormat(DepthFormat format) {
 
 }
 
-GLenum glColorFormat(GPUFormat format){
+GLenum glxColorFormat(GPUFormat format){
 
 	switch (format) {
 
@@ -134,7 +134,7 @@ GLenum glColorFormat(GPUFormat format){
 
 }
 
-GLenum glBufferType(GPUBufferType format) {
+GLenum glxBufferType(GPUBufferType format) {
 
 	switch (format) {
 
@@ -154,7 +154,7 @@ GLenum glBufferType(GPUBufferType format) {
 	}
 }
 
-GLenum glBufferUsage(GPUMemoryUsage usage, bool isPersistent) {
+GLenum glxBufferUsage(GPUMemoryUsage usage, bool isPersistent) {
 
 	GLenum res{};
 
@@ -169,7 +169,7 @@ GLenum glBufferUsage(GPUMemoryUsage usage, bool isPersistent) {
 	return res;
 }
 
-GLenum glBufferHint(GPUMemoryUsage usage) {
+GLenum glxBufferHint(GPUMemoryUsage usage) {
 
 	//& 1 = isStatic
 	//& 2 = isCopy
@@ -191,7 +191,7 @@ GLenum glBufferHint(GPUMemoryUsage usage) {
 	return type[id];
 }
 
-GLenum glGpuFormat(GPUFormat type) {
+GLenum glxGpuFormatType(GPUFormat type) {
 
 	const GPUFormatType t = FormatHelper::getType(type);
 	const usz stride = FormatHelper::getStrideBits(type);
@@ -227,7 +227,29 @@ error:
 	return {};
 }
 
-GLenum glTopologyMode(TopologyMode topo) {
+GLenum glxGpuDataFormat(GPUFormat format) {
+	
+	switch (FormatHelper::getChannelCount(format)) {
+
+	case 1:
+		return GL_RED;
+
+	case 2:
+		return GL_RG;
+
+	case 3:
+		return FormatHelper::flipRGB(format) ? GL_BGR : GL_RGB;
+
+	case 4:
+		return FormatHelper::flipRGB(format) ? GL_BGRA : GL_RGBA;
+
+	}
+
+	oic::System::log()->fatal("Unsupported GPU format");
+	return {};
+}
+
+GLenum glxTopologyMode(TopologyMode topo) {
 
 	switch (topo) {
 
@@ -246,7 +268,7 @@ GLenum glTopologyMode(TopologyMode topo) {
 	return {};
 }
 
-GLenum glShaderStage(ShaderStage stage) {
+GLenum glxShaderStage(ShaderStage stage) {
 
 	if (u8(stage) & 0x40)
 		oic::System::log()->fatal("OpenGL doesn't natively support raytracing");
@@ -267,14 +289,37 @@ GLenum glShaderStage(ShaderStage stage) {
 	return {};
 }
 
+GLenum glxTextureType(TextureType type) {
+
+	switch (type) {
+
+		case TextureType::TEXTURE_CUBE:			return GL_TEXTURE_CUBE_MAP;
+		case TextureType::TEXTURE_1D:			return GL_TEXTURE_1D;
+		case TextureType::TEXTURE_2D:			return GL_TEXTURE_2D;
+		case TextureType::TEXTURE_3D:			return GL_TEXTURE_3D;
+		case TextureType::TEXTURE_MS:			return GL_TEXTURE_2D_MULTISAMPLE;
+
+		case TextureType::TEXTURE_CUBE_ARRAY:	return GL_TEXTURE_CUBE_MAP_ARRAY;
+		case TextureType::TEXTURE_1D_ARRAY:		return GL_TEXTURE_1D_ARRAY;
+		case TextureType::TEXTURE_2D_ARRAY:		return GL_TEXTURE_2D_ARRAY;
+		case TextureType::TEXTURE_MS_ARRAY:		return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
+
+	}
+
+	oic::System::log()->fatal("Invalid texture type");
+	return {};
+}
+
 //Functionality
 
-void glBeginRenderPass(
+void glxBeginRenderPass(
 	Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
 ) {
 
-	if (gdata.bound[GL_READ_FRAMEBUFFER] != framebuffer || gdata.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
-		glBindFramebuffer(GL_FRAMEBUFFER, gdata.bound[GL_READ_FRAMEBUFFER] = gdata.bound[GL_DRAW_FRAMEBUFFER] = framebuffer);
+	if (gdata.bound[GL_FRAMEBUFFER] != framebuffer)
+		glBindFramebuffer(
+			GL_FRAMEBUFFER, gdata.bound[GL_FRAMEBUFFER] = framebuffer
+		);
 
 	Vec4u sc = xywh;
 
@@ -310,7 +355,7 @@ void glBeginRenderPass(
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void glDebugMessage(
+void glxDebugMessage(
 	GLenum source, GLenum type, GLuint, GLenum severity,
 	GLsizei, const GLchar *message, const void *
 ) {
@@ -385,15 +430,15 @@ bool glCheckLog(GlGetIv glGetIv, GlGetInfoLog glGetInfoLog, GLuint handle, Strin
 	return false;
 }
 
-bool glCheckShaderLog(GLuint shader, String &str) {
+bool glxCheckShaderLog(GLuint shader, String &str) {
 	return glCheckLog<GL_COMPILE_STATUS>(glGetShaderiv, glGetShaderInfoLog, shader, str);
 }
 
-bool glCheckProgramLog(GLuint program, String &str) {
+bool glxCheckProgramLog(GLuint program, String &str) {
 	return glCheckLog<GL_LINK_STATUS>(glGetProgramiv, glGetProgramInfoLog, program, str);
 }
 
-void glBindPipeline(Graphics::Data &g, Pipeline *pipeline) {
+void glxBindPipeline(Graphics::Data &g, Pipeline *pipeline) {
 
 	glUseProgram(pipeline->getData()->handles[0]);
 
@@ -425,7 +470,7 @@ void glBindPipeline(Graphics::Data &g, Pipeline *pipeline) {
 
 }
 
-void glBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
+void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 
 	for (auto &mapIt : descriptors->getInfo().pipelineLayout) {
 

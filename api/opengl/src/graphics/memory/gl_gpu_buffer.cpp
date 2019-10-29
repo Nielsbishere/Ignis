@@ -11,24 +11,23 @@ namespace ignis {
 
 		//Initialize buffer
 
-		auto t = data->t = glBufferType(info.type);
+		glCreateBuffers(1, &data->handle);
+		GLuint handle = data->handle;
 
-		glGenBuffers(1, &data->handle);
-		glBindBuffer(t, data->handle);
+		glObjectLabel(GL_BUFFER, handle, GLsizei(name.size()), name.c_str());
 
-		glObjectLabel(GL_BUFFER, data->handle, GLsizei(getName().size()), getName().c_str());
+		bool persistent = u8(info.usage) & u8(GPUMemoryUsage::SHARED);
 
-		bool persistent = g.getData()->version(4, 4) && (u8(info.usage) & u8(GPUMemoryUsage::SHARED));
-
-		glBufferStorage(
-			t, info.size, info.initData.data(),
-			glBufferUsage(info.usage, persistent)
+		glNamedBufferStorage(
+			handle, info.size, info.initData.data(),
+			glxBufferUsage(info.usage, persistent)
 		);
 
 		if (u8(info.usage) & u8(GPUMemoryUsage::CPU_WRITE)) {
 
 			if (persistent)
-				data->unmapped = (u8*)glMapBufferRange(t, 0, info.size, GL_MAP_WRITE_BIT);
+				data->unmapped = 
+					(u8*)glMapNamedBufferRange(handle, 0, info.size, GL_MAP_WRITE_BIT);
 			
 		} else
 			this->info.initData.clear();
@@ -37,7 +36,7 @@ namespace ignis {
 	GPUBuffer::~GPUBuffer() {
 
 		if (data->unmapped) {
-			glUnmapBuffer(data->handle);
+			glUnmapNamedBuffer(data->handle);
 			data->unmapped = nullptr;
 		}
 
@@ -53,18 +52,13 @@ namespace ignis {
 
 		if (u8(info.usage) & u8(GPUMemoryUsage::CPU_WRITE)) {
 
-			auto *gdat = getGraphics().getData();
-
 			if (data->unmapped) {
 
 				memcpy(data->unmapped, info.initData.data() + offset, size);
-				gdat->bind(glBindBuffer, data->t, data->handle);
-				glFlushMappedBufferRange(data->t, offset, size);
+				glFlushMappedNamedBufferRange(data->handle, offset, size);
 
-			} else {
-				gdat->bind(glBindBuffer, data->t, data->handle);
-				glBufferSubData(data->t, offset, size, info.initData.data() + offset);
-			}
+			} else 
+				glNamedBufferSubData(data->handle, offset, size, info.initData.data() + offset);
 
 		} else
 			oic::System::log()->fatal("GPUBuffer wasn't created with CPU write flags");

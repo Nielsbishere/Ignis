@@ -16,6 +16,12 @@ namespace ignis {
 		for (usz i = 0, j = info.passes.size(); i < j; ++i) {
 
 			GLuint handle = data->handles[i] = glCreateProgram();
+			String iname = name + " " + std::to_string(i);
+
+			glObjectLabel(
+				GL_PROGRAM, handle, GLsizei(iname.size()), iname.c_str()
+			);
+
 			auto &pass = info.passes[i];
 
 			List<GLuint> shaders(pass.size());
@@ -24,7 +30,7 @@ namespace ignis {
 
 			for (auto &stage : pass) {
 
-				GLenum type = glShaderStage(stage.first);
+				GLenum type = glxShaderStage(stage.first);
 				GLuint shader = shaders[k] = glCreateShader(type);
 
 				if ((u8(stage.first) & u8(ShaderStage::PROPERTY_IS_TECHNIQUE)) && !g.hasFeature(Feature::MESH_SHADERS))
@@ -40,7 +46,7 @@ namespace ignis {
 
 				String error;
 
-				if (glCheckShaderLog(shader, error))
+				if (glxCheckShaderLog(shader, error))
 					oic::System::log()->fatal("Couldn't compile shader");
 				else
 					glAttachShader(handle, shader);
@@ -57,7 +63,7 @@ namespace ignis {
 
 			String error;
 
-			if (glCheckProgramLog(handle, error))
+			if (glxCheckProgramLog(handle, error))
 				oic::System::log()->fatal("Couldn't link shader");
 
 		}

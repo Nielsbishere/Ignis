@@ -13,6 +13,7 @@ namespace ignis {
 	enum class GPUMemoryUsage : u8;
 	enum class GPUFormat : u16;
 	enum class GPUFormatType : u8;
+	enum class TextureType : u8;
 	enum class TopologyMode : u8;
 	enum class ShaderStage : u8;
 
@@ -20,25 +21,27 @@ namespace ignis {
 	class Pipeline;
 }
 
-extern GLenum glDepthFormat(ignis::DepthFormat format);
-extern GLenum glColorFormat(ignis::GPUFormat format);
-extern GLenum glBufferType(ignis::GPUBufferType format);
-extern GLenum glBufferUsage(ignis::GPUMemoryUsage usage, bool isPersistent);
-extern GLenum glBufferHint(ignis::GPUMemoryUsage usage);
-extern GLenum glGpuFormat(ignis::GPUFormat type);
-extern GLenum glTopologyMode(ignis::TopologyMode topo);
-extern GLenum glShaderStage(ignis::ShaderStage stage);
+extern GLenum glxDepthFormat(ignis::DepthFormat format);
+extern GLenum glxColorFormat(ignis::GPUFormat format);
+extern GLenum glxBufferType(ignis::GPUBufferType format);
+extern GLenum glxBufferUsage(ignis::GPUMemoryUsage usage, bool isPersistent);
+extern GLenum glxBufferHint(ignis::GPUMemoryUsage usage);
+extern GLenum glxGpuFormatType(ignis::GPUFormat type);
+extern GLenum glxGpuDataFormat(ignis::GPUFormat type);
+extern GLenum glxTopologyMode(ignis::TopologyMode topo);
+extern GLenum glxShaderStage(ignis::ShaderStage stage);
+extern GLenum glxTextureType(ignis::TextureType type);
 
-extern void glBeginRenderPass(
+extern void glxBeginRenderPass(
 	ignis::Graphics::Data &data, const Vec4u &renderArea, const Vec2u &size, GLuint framebuffer
 );
 
-extern void APIENTRY glDebugMessage(
+extern void APIENTRY glxDebugMessage(
 	GLenum, GLenum, GLuint, GLenum,
 	GLsizei, const GLchar*, const void*
 );
 
-extern void glBindPipeline(ignis::Graphics::Data &data, ignis::Pipeline *pipeline);
-extern void glBindDescriptors(ignis::Graphics::Data &data, ignis::Descriptors *descriptors);
-extern bool glCheckShaderLog(GLuint shader, String &str);
-extern bool glCheckProgramLog(GLuint program, String &str);
+extern void glxBindPipeline(ignis::Graphics::Data &data, ignis::Pipeline *pipeline);
+extern void glxBindDescriptors(ignis::Graphics::Data &data, ignis::Descriptors *descriptors);
+extern bool glxCheckShaderLog(GLuint shader, String &str);
+extern bool glxCheckProgramLog(GLuint program, String &str);

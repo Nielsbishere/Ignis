@@ -78,20 +78,22 @@ namespace ignis {
 
 	struct BufferLayout {
 
-		Buffer initData {};
-		BufferAttributes formats;
+		Buffer initData{};
+		BufferAttributes formats{};
 
-		GPUBuffer *buffer {};
-		u32 elements;
+		GPUBuffer *buffer{};
+		usz bufferOffset{};		//TODO: Require all buffer offsets to adhere to GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT
+		u32 elements{};
 
 		template<typename T>
-		BufferLayout(const List<T> &b, const BufferAttributes &formats) :
+		BufferLayout(const List<T> &b, const BufferAttributes &formats, usz bufferOffset = 0) :
 			initData((const u8*) b.data(), (const u8*) (b.data() + b.size())),
-			formats(formats), elements(u32(initData.size() / formats.getStride())) {}
+			formats(formats), elements(u32(initData.size() / formats.getStride())),
+			bufferOffset(bufferOffset) {}
 
-		BufferLayout(GPUBuffer *b, const BufferAttributes &formats);
+		BufferLayout(GPUBuffer *b, const BufferAttributes &formats, usz bufferOffset = 0);
 
-		BufferLayout() : formats {}, elements {} {}
+		BufferLayout() {}
 
 		inline const usz size() const { return usz(elements) * formats.getStride(); }
 		inline const u32 stride() const { return formats.getStride(); }
