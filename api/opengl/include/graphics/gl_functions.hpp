@@ -61,6 +61,14 @@ GL_FUNC(glGetProgramInfoLog, GLGETPROGRAMINFOLOG);
 GL_FUNC(glGetShaderiv, GLGETSHADERIV);
 GL_FUNC(glGetShaderInfoLog, GLGETSHADERINFOLOG);
 
+//Samplers
+
+GL_FUNC(glCreateSamplers, GLCREATESAMPLERS);
+GL_FUNC(glDeleteSamplers, GLDELETESAMPLERS);
+GL_FUNC(glSamplerParameteri, GLSAMPLERPARAMETERI);
+GL_FUNC(glSamplerParameterf, GLSAMPLERPARAMETERF);
+GL_FUNC(glSamplerParameterfv, GLSAMPLERPARAMETERFV);
+
 //Textures
 
 GL_FUNC(glCreateTextures, GLCREATETEXTURES);

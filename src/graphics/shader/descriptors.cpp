@@ -6,12 +6,14 @@
 
 namespace ignis {
 
-	Descriptors::Info::Info(const PipelineLayout &pipelineLayout, const Resources &resources):
+	Descriptors::Info::Info(
+		const PipelineLayout &pipelineLayout, const Subresources &resources
+	):
 		pipelineLayout(pipelineLayout), resources(resources) {
 
 		for (auto &elem : pipelineLayout)
 			if (resources.find(elem.first) == resources.end())
-				this->resources[elem.first] = nullptr;
+				this->resources[elem.first] = {};
 	}
 
 	bool Descriptors::isResourceCompatible(u32 i, const GPUSubresource &resource) const {

@@ -7,18 +7,17 @@ namespace ignis {
 	//& 0xC = GPUBuffer (0), ShaderBuffer (4), DrawBuffer (8)
 	enum class GPUBufferType : u8 {
 
-		NONE = 0x0,		//Used for specifying a buffer without a type
-		VERTEX,
+		VERTEX				= 0x0,
 		INDEX,
 
-		UNIFORM	= 0x4,
+		UNIFORM				= 0x4,
 		STORAGE,
 		STRUCTURED,
 
-		INDIRECT_DRAW = 0x8,
+		INDIRECT_DRAW		= 0x8,
 		INDIRECT_DISPATCH,
 
-		PROPERTY_TYPE = 0xC
+		PROPERTY_TYPE		= 0xC
 	};
 
 	//This is a usage hint to how the GPU memory should behave:
@@ -29,14 +28,14 @@ namespace ignis {
 	//& 8 = isCPUWritable	; can the CPU update this or is it just an initialization
 	enum class GPUMemoryUsage : u8 {
 
-		LOCAL				= 0b00000000,
-		SHARED				= 0b00000001,
+		LOCAL				= 0x0,
+		SHARED				= 0x1,
 
-		REQUIRE				= 0b00000000,
-		PREFER				= 0b00000010,
+		REQUIRE				= 0x0,
+		PREFER				= 0x2,
 
-		GPU_WRITE			= 0b00000100,
-		CPU_WRITE			= 0b00001000
+		GPU_WRITE			= 0x4,
+		CPU_WRITE			= 0x8
 	};
 
 	//This is the topology that should be assembled
@@ -48,25 +47,25 @@ namespace ignis {
 	//& 16 = isAdjacent
 	enum class TopologyMode : u8 {
 
-		POINT_LIST				= 0b0000,
+		POINT_LIST				= 0x0,
 
-		LINE_LIST				= 0b0010,
-		LINE_STRIP				= 0b0011,
+		LINE_LIST				= 0x2,
+		LINE_STRIP				= 0x3,
 
-		TRIANGLE_LIST			= 0b0100,
-		TRIANGLE_STRIP			= 0b0101,
+		TRIANGLE_LIST			= 0x4,
+		TRIANGLE_STRIP			= 0x5,
 
-		LINE_LIST_ADJ			= 0b1010,
-		LINE_STRIP_ADJ			= 0b1011,
+		LINE_LIST_ADJ			= 0xA,
+		LINE_STRIP_ADJ			= 0xB,
 
-		TRIANGLE_LIST_ADJ		= 0b1100,
-		TRIANGLE_STRIP_ADJ		= 0b1101,
+		TRIANGLE_LIST_ADJ		= 0xC,
+		TRIANGLE_STRIP_ADJ		= 0xD,
 
-		PROPERTY_IS_STRIP		= 0b0001,
-		PROPERTY_IS_LINE		= 0b0010,
-		PROPERTY_IS_TRIANGLE	= 0b0100,
-		PROPERTY_TYPE			= 0b0110,
-		PROPERTY_IS_ADJ			= 0b1000
+		PROPERTY_IS_STRIP		= 0x1,
+		PROPERTY_IS_LINE		= 0x2,
+		PROPERTY_IS_TRIANGLE	= 0x4,
+		PROPERTY_TYPE			= 0x6,
+		PROPERTY_IS_ADJ			= 0x8
 	};
 
 	//The shader stage type
@@ -139,11 +138,15 @@ namespace ignis {
 	//Each one has its own localId counter
 
 	enum class ResourceType : u8 {
-		NONE,
+
+		NONE = 0x00,
+
 		CBUFFER,		//Uniform buffer only
 		BUFFER,			//All other buffer types
+
 		TEXTURE,
-		SAMPLER
+		SAMPLER,
+		COMBINED_SAMPLER
 	};
 
 	//Types of textures and samplers
@@ -153,37 +156,20 @@ namespace ignis {
 	//& 0x08 = isArray
 	enum class TextureType : u8 {
 
-		TEXTURE_CUBE		= 0x00,
+		TEXTURE_CUBE			= 0x0,
 		TEXTURE_1D, 
 		TEXTURE_2D,
 		TEXTURE_3D,
-		TEXTURE_MS			= 0x06,
+		TEXTURE_MS				= 0x6,
 
-		TEXTURE_CUBE_ARRAY	= 0x08, 
+		TEXTURE_CUBE_ARRAY		= 0x8, 
 		TEXTURE_1D_ARRAY, 
 		TEXTURE_2D_ARRAY,
-		TEXTURE_MS_ARRAY	= 0x0C,
+		TEXTURE_MS_ARRAY		= 0xC,
 
-		PROPERTY_DIMENSION		= 0x03,
-		PROPERTY_IS_MS			= 0x04,
-		PROPERTY_IS_ARRAY		= 0x08
-	};
-
-	//How the mips are generated and how many are used
-	//& 0x80 = isNearest
-	//& 0x3F = mipCount (max is 0x20; representing 32 mips including the base level)
-	//!(& 0x3F) = isAuto (automaticaly determines mips)
-	//If mipCount is set to non zero, it will use the mipCount
-
-	enum class TextureMip : u8 {
-
-		AUTO = 0x00,			//N mipmaps (based on resolution); linear by default
-		NONE = 0x01,
-		LINEAR = 0x00,
-		NEAREST = 0x80,
-
-		PROPERTY_IS_NEAREST = 0x80,
-		PROPERTY_MIP_COUNT = 0x3F
+		PROPERTY_DIMENSION		= 0x3,
+		PROPERTY_IS_MS			= 0x4,
+		PROPERTY_IS_ARRAY		= 0x8
 	};
 
 	//& 0x03 = dimension (CUBE, 1D, 2D, 3D)
@@ -211,6 +197,50 @@ namespace ignis {
 		PROPERTY_IS_ARRAY		= 0x08,
 		PROPERTY_IS_COMBINED	= 0x10,
 		PROPERTY_AS_TEXTURE		= 0x0F
+	};
+
+	//Minification filter
+	//& 1 = useNearestFilter
+	//& 2 = disableMips
+	//& 4 = mipsUseNearestFilter
+	enum class SamplerMin : u8 {
+
+		LINEAR_MIPS					= 0x0, 
+		LINEAR_MIPS_NEAREST, 
+
+		LINEAR						= 0x2,
+		NEAREST, 
+
+		NEAREST_MIPS_LINEAR			= 0x4,
+		NEAREST_MIPS,
+
+		PROPERTY_USE_NEAREST		= 0x1,
+		PROPERTY_DISABLE_MIPS		= 0x2,
+		PROPERTY_MIPS_USE_NEAREST	= 0x4
+	};
+
+	//Magnification filter (& 1 = isNearest)
+	enum class SamplerMag : u8 {
+		LINEAR, NEAREST
+	};
+
+	//Sampler addressing mode
+	//& 1 = doMirror
+	//& 2 = useBorder
+	//& 4 = doRepeat
+	enum class SamplerMode : u8 {
+
+		CLAMP_EDGE			= 0x0,
+		MIRROR_CLAMP_EDGE,
+
+		CLAMP_BORDER		= 0x2, 
+
+		REPEAT				= 0x4,
+		MIRROR_REPEAT,
+
+		PROPERTY_MIRROR		= 0x1,
+		PROPERTY_BORDER		= 0x2,
+		PROPERTY_REPEAT		= 0x4
 	};
 
 }

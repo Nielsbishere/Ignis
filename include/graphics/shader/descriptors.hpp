@@ -13,16 +13,46 @@ namespace ignis {
 
 		GPUResource *resource{};
 
-		union {
-			//TextureRange textureRange;
-			//CombinedSamplerRange samplerRange;
+		struct Texture {
 
-			struct Buffer {
-				usz offset{}, size {};
-			} bufferRange;
+			u32 minLevel{}, minLayer{};
+			u32 levelCount{}, layerCount{};
+
+			Texture() {}
+			Texture(
+				u32 minLevel, u32 minLayer, u32 levelCount, u32 layerCount
+			) :
+				minLevel(minLevel), minLayer(minLayer), 
+				levelCount(levelCount), layerCount(layerCount) {}
 		};
 
-		GPUSubresource() : bufferRange{} {}
+		struct Sampler : Texture {
+
+			GPUResource *texture{};
+
+			Sampler() {}
+			Sampler(
+				GPUResource *texture,
+				u32 minLevel, u32 minLayer, u32 levelCount, u32 layerCount
+			): 
+				texture(texture), Texture(minLevel, minLayer, levelCount, layerCount){}
+		};
+
+		struct Buffer {
+
+			usz offset{}, size{};
+
+			Buffer() {}
+			Buffer(usz offset, usz size): offset(offset), size(size) {}
+		};
+
+		union {
+			Texture textureRange;
+			Sampler samplerRange;
+			Buffer bufferRange;
+		};
+
+		GPUSubresource() : samplerRange{} {}
 		GPUSubresource(GPUBuffer *resource, usz offset = 0, usz size = 0);
 		//GPUResourceRange(Texture *resource): resource(resource) {}
 		//GPUResourceRange(Texture *resource, Sampler *sampler)
@@ -34,18 +64,18 @@ namespace ignis {
 
 	public:
 
-		using Resources = HashMap<u32, GPUSubresource>;
+		using Subresources = HashMap<u32, GPUSubresource>;
 
 		struct Info {
 
 			PipelineLayout pipelineLayout;
-			Resources resources;
+			Subresources resources;
 
 			bool shouldFlush{};
 
 			Info(
 				const PipelineLayout &pipelineLayout, 
-				const Resources &resources
+				const Subresources &resources
 			);
 		};
 

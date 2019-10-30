@@ -4,6 +4,7 @@
 #include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/memory/shader_buffer.hpp"
 #include "graphics/memory/texture.hpp"
+#include "graphics/shader/sampler.hpp"
 #include "graphics/shader/pipeline.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/enums.hpp"
@@ -32,11 +33,12 @@ struct TestViewportInterface : public ViewportInterface {
 	Pipeline *pipeline{};
 	GPUBuffer *uniforms{};
 	Texture *tex2D{};
+	Sampler *samp{};
 
 	//Cleanup resources
 
 	~TestViewportInterface() {
-		destroy(/*tex2D, */uniforms, pipeline, descriptors, mesh, cl, intermediate, s);
+		destroy(samp, tex2D, uniforms, pipeline, descriptors, mesh, cl, intermediate, s);
 	}
 
 	//Create resources
@@ -60,7 +62,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		const List<Vec2f> vboBuffer{
 			{ 0.5, -0.5 }, { -1, -1 },
-		{ -1, 1 }, { 0.5, 0.5 }
+			{ -1, 1 }, { 0.5, 0.5 }
 		};
 
 		const List<u8> iboBuffer{
@@ -100,6 +102,12 @@ struct TestViewportInterface : public ViewportInterface {
 			)
 		);
 
+		//Create sampler
+
+		samp = new Sampler(
+			g, NAME("Test sampler"), Sampler::Info()
+		);
+
 		//Load shader code
 
 		Buffer vert, frag;
@@ -113,11 +121,16 @@ struct TestViewportInterface : public ViewportInterface {
 
 		PipelineLayout pipelineLayout(
 			RegisterLayout(NAME("Test"), 0, GPUBufferType::UNIFORM, 0, ACCESS_VERTEX, uniforms->size())
+			//RegisterLayout(NAME("test"), 1, SamplerType::SAMPLER_2D, 0, ACCESS_FRAGMENT)
 		);
+
+		auto descriptorsInfo = Descriptors::Info(pipelineLayout, {});
+		descriptorsInfo.resources[0] = uniforms;
+		//descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D);
 
 		descriptors = new Descriptors(
 			g, NAME("Test descriptors"), 
-			Descriptors::Info(pipelineLayout, { { 0, uniforms } })
+			descriptorsInfo
 		);
 
 		//Create pipeline (shader and render states)
@@ -161,6 +174,7 @@ struct TestViewportInterface : public ViewportInterface {
 			//TODO: BeginRenderPass instead of BeginSurface
 
 			//Draw primitive
+
 			BindDescriptors(descriptors),
 			BindPipeline(pipeline),
 			BindPrimitiveBuffer(mesh),
