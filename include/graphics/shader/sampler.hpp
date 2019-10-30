@@ -10,7 +10,7 @@ namespace ignis {
 
 		struct Info {
 
-			Vec4f borderColor{ 1, 1, 1, 1 };
+			Vec4f borderColor{};
 
 			f32 anisotropy, minLod, maxLod;
 
