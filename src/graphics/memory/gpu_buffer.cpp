@@ -11,7 +11,9 @@ namespace ignis {
 	GPUBuffer::Info::Info(const Buffer &initData, GPUBufferType type, GPUMemoryUsage usage):
 		type(type), usage(usage), size(initData.size()), initData(initData) {}
 
-	bool GPUBuffer::isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) {
+	bool GPUBuffer::isCompatible(
+		const RegisterLayout &reg, const GPUSubresource &resource
+	) const {
 		return
 			reg.type == ResourceType::BUFFER && 
 			(!u8(reg.bufferType) || reg.bufferType == info.type) && 

@@ -1,4 +1,6 @@
 #include "graphics/shader/sampler.hpp"
+#include "graphics/shader/descriptors.hpp"
+#include "graphics/memory/texture.hpp"
 
 namespace ignis {
 
@@ -59,10 +61,22 @@ namespace ignis {
 		minLod(minLod), maxLod(maxLod) {}
 
 	bool Sampler::isCompatible(
-		const RegisterLayout &, const GPUSubresource &
-	) {
-		//TODO:
-		return true;
+		const RegisterLayout &rl, const GPUSubresource &sub
+	) const {
+
+		Texture *tex = sub.samplerData.texture;
+
+		if (rl.type == ResourceType::SAMPLER)
+			return !tex;
+
+		else if(rl.type != ResourceType::COMBINED_SAMPLER)
+			return false;
+
+		return 
+			tex && 
+			tex->getInfo().textureType != 
+			TextureType(u8(rl.samplerType) & u8(SamplerType::PROPERTY_AS_TEXTURE)) &&
+			tex->validSubresource(sub, true);
 	}
 
 }

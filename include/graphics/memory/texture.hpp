@@ -73,7 +73,13 @@ namespace ignis {
 		apimpl Texture(Graphics &g, const String &name, const Info &info);
 		apimpl ~Texture();
 
-		bool isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) final override;
+		bool isCompatible(
+			const RegisterLayout &reg, const GPUSubresource &resource
+		) const final override;
+
+		bool validSubresource(
+			const GPUSubresource &resource, bool isSampler = false
+		) const;
 
 		Data *getData() { return data; }
 		const Info &getInfo() const { return info; }

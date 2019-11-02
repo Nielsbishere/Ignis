@@ -71,14 +71,18 @@ namespace ignis {
 	}
 	
 	bool Texture::isCompatible(
-		const RegisterLayout &reg, const GPUSubresource &
-	) {
+		const RegisterLayout &reg, const GPUSubresource &sub
+	) const {
 		return
 			reg.type == ResourceType::TEXTURE &&
 			reg.textureType == info.textureType &&
-			(reg.textureFormat == GPUFormat::NONE || reg.textureFormat == info.format);
+			(reg.textureFormat == GPUFormat::NONE || reg.textureFormat == info.format) &&
+			validSubresource(sub);
+	}
 
-		//TODO: GPUSubresource validation
+	bool Texture::validSubresource(const GPUSubresource &res, bool isSampler) const {
+		auto &tex = isSampler ? (const GPUSubresource::TextureRange&)res.samplerData : res.textureRange;
+		return usz(tex.minLayer) + tex.layerCount <= info.layers && usz(tex.minLevel) + tex.levelCount <= info.mips;
 	}
 
 }

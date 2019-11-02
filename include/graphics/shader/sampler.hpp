@@ -66,7 +66,9 @@ namespace ignis {
 		apimpl Sampler(Graphics &g, const String &name, const Info &info);
 		apimpl ~Sampler();
 
-		bool isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) final override;
+		bool isCompatible(
+			const RegisterLayout &reg, const GPUSubresource &resource
+		) const final override;
 
 		Data *getData() { return data; }
 		const Info &getInfo() const { return info; }
