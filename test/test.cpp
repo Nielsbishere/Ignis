@@ -78,7 +78,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		//Create uniform buffer
 
-		const Vec2f mask = { 1, 1 };
+		const Vec3f mask = { 1, 1, 1 };
 
 		uniforms = new ShaderBuffer(
 			g, NAME("Test pipeline uniform buffer"),
@@ -120,13 +120,21 @@ struct TestViewportInterface : public ViewportInterface {
 		//Create descriptors that should be bound
 
 		PipelineLayout pipelineLayout(
-			RegisterLayout(NAME("Test"), 0, GPUBufferType::UNIFORM, 0, ACCESS_VERTEX, uniforms->size())
-			//RegisterLayout(NAME("test"), 1, SamplerType::SAMPLER_2D, 0, ACCESS_FRAGMENT)
+
+			RegisterLayout(
+				NAME("Test"), 0, GPUBufferType::UNIFORM, 0,
+				ACCESS_FRAGMENT, uniforms->size()
+			),
+
+			RegisterLayout(
+				NAME("test"), 1, SamplerType::SAMPLER_2D, 0,
+				ACCESS_FRAGMENT
+			)
 		);
 
 		auto descriptorsInfo = Descriptors::Info(pipelineLayout, {});
 		descriptorsInfo.resources[0] = uniforms;
-		//descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D);
+		descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D);
 
 		descriptors = new Descriptors(
 			g, NAME("Test descriptors"), 

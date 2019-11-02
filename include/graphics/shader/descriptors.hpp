@@ -6,6 +6,8 @@ namespace ignis {
 
 	class GPUResource;
 	class GPUBuffer;
+	class Sampler;
+	class Texture;
 
 	//Describing which range of the resource has to be bound
 
@@ -13,49 +15,61 @@ namespace ignis {
 
 		GPUResource *resource{};
 
-		struct Texture {
+		struct TextureRange {
 
 			u32 minLevel{}, minLayer{};
 			u32 levelCount{}, layerCount{};
 
-			Texture() {}
-			Texture(
+			TextureRange() {}
+			TextureRange(
 				u32 minLevel, u32 minLayer, u32 levelCount, u32 layerCount
 			) :
 				minLevel(minLevel), minLayer(minLayer), 
 				levelCount(levelCount), layerCount(layerCount) {}
 		};
 
-		struct Sampler : Texture {
+		struct SamplerData : TextureRange {
 
-			GPUResource *texture{};
+			Texture *texture{};
 
-			Sampler() {}
-			Sampler(
-				GPUResource *texture,
+			SamplerData() {}
+			SamplerData(
+				Texture *texture,
 				u32 minLevel, u32 minLayer, u32 levelCount, u32 layerCount
 			): 
-				texture(texture), Texture(minLevel, minLayer, levelCount, layerCount){}
+				texture(texture), TextureRange(minLevel, minLayer, levelCount, layerCount){}
 		};
 
-		struct Buffer {
+		struct BufferRange {
 
 			usz offset{}, size{};
 
-			Buffer() {}
-			Buffer(usz offset, usz size): offset(offset), size(size) {}
+			BufferRange() {}
+			BufferRange(usz offset, usz size): offset(offset), size(size) {}
 		};
 
 		union {
-			Texture textureRange;
-			Sampler samplerRange;
-			Buffer bufferRange;
+			TextureRange textureRange;
+			SamplerData samplerData;
+			BufferRange bufferRange;
 		};
 
-		GPUSubresource() : samplerRange{} {}
+		GPUSubresource(): samplerData{} {}
 		GPUSubresource(GPUBuffer *resource, usz offset = 0, usz size = 0);
-		//GPUResourceRange(Texture *resource): resource(resource) {}
-		//GPUResourceRange(Texture *resource, Sampler *sampler)
+
+		GPUSubresource(
+			Sampler *sampler, Texture *texture,
+			u32 levelCount = 0, u32 layerCount = 0,
+			u32 minLevel = 0, u32 minLayer = 0
+		);
+
+		GPUSubresource(Sampler *resource);
+
+		GPUSubresource(
+			Texture *resource,
+			u32 levelCount = 0, u32 layerCount = 0,
+			u32 minLevel = 0, u32 minLayer = 0
+		);
 	};
 
 	//Which ranges of resources have to be bound

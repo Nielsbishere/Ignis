@@ -3,6 +3,8 @@
 #include "system/system.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/memory/gl_gpu_buffer.hpp"
+#include "graphics/memory/gl_texture.hpp"
+#include "graphics/shader/gl_sampler.hpp"
 #include "graphics/gl_graphics.hpp"
 
 HashMap<String, void**> ignis::glFunctionNames = HashMap<String, void**>();
@@ -310,6 +312,44 @@ GLenum glxTextureType(TextureType type) {
 	return {};
 }
 
+GLenum glxSamplerMode(ignis::SamplerMode mode) {
+
+	switch (mode) {
+		case ignis::SamplerMode::CLAMP_EDGE:			return GL_CLAMP_TO_EDGE;
+		case ignis::SamplerMode::MIRROR_CLAMP_EDGE:		return GL_MIRROR_CLAMP_TO_EDGE;
+		case ignis::SamplerMode::CLAMP_BORDER:			return GL_CLAMP_TO_BORDER;
+		case ignis::SamplerMode::REPEAT:				return GL_REPEAT;
+		case ignis::SamplerMode::MIRROR_REPEAT:			return GL_MIRRORED_REPEAT;
+	}
+
+	oic::System::log()->fatal("Invalid sampler mode");
+	return {};
+}
+
+GLenum glxSamplerMag(ignis::SamplerMag mag) {
+
+	if (mag == SamplerMag::LINEAR) return GL_LINEAR;
+	else if (mag == SamplerMag::NEAREST) return GL_NEAREST;
+
+	oic::System::log()->fatal("Invalid sampler mag");
+	return {};
+}
+
+GLenum glxSamplerMin(ignis::SamplerMin min) {
+
+	switch (min) {
+		case ignis::SamplerMin::LINEAR_MIPS:			return GL_LINEAR_MIPMAP_LINEAR;
+		case ignis::SamplerMin::LINEAR_MIPS_NEAREST:	return GL_LINEAR_MIPMAP_NEAREST;
+		case ignis::SamplerMin::LINEAR:					return GL_LINEAR;
+		case ignis::SamplerMin::NEAREST:				return GL_NEAREST;
+		case ignis::SamplerMin::NEAREST_MIPS_LINEAR:	return GL_NEAREST_MIPMAP_LINEAR;
+		case ignis::SamplerMin::NEAREST_MIPS:			return GL_NEAREST_MIPMAP_NEAREST;
+	}
+
+	oic::System::log()->fatal("Invalid sampler mag");
+	return {};
+}
+
 //Functionality
 
 void glxBeginRenderPass(
@@ -482,6 +522,10 @@ void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 			auto &subres = it->second;
 			auto *res = subres.resource;
 
+			Texture *tex = res->cast<Texture>();
+
+			//Bind buffer range
+
 			if (GPUBuffer *buffer = res->cast<GPUBuffer>()) {
 
 				usz offset = subres.bufferRange.offset, size = subres.bufferRange.size;
@@ -496,7 +540,42 @@ void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 				bound = { buffer->getData()->handle, offset, size };
 			}
 
-			//TODO: Textures, Samplers, etc.
+			//Bind sampler range
+
+			else if (Sampler *sampler = res->cast<Sampler>()) {
+
+				auto &bound = g.boundByBase[(u64(resource.localId) << 32) | GL_SAMPLER];
+
+				if (bound.handle != sampler->getData()->handle)
+					glBindSampler(resource.localId, bound.handle = sampler->getData()->handle);
+
+				tex = subres.samplerData.texture;
+			}
+
+			//Bind texture
+
+			if (tex) {
+
+				//TODO: Create texture view if it doesn't exist yet!
+
+				if (!resource.isWritable) {
+
+					auto &boundTex = g.boundByBase[(u64(resource.localId) << 32) | GL_TEXTURE];
+
+					if (boundTex.handle != tex->getData()->handle)
+						glBindTextureUnit(resource.localId, boundTex.handle = tex->getData()->handle);
+
+				} else {
+
+					auto &boundImg = g.boundByBase[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but GL_IMAGE doesn't exist*/];
+
+					if (boundImg.handle != tex->getData()->handle)
+						glBindImageTexture(
+							resource.localId, boundImg.handle = tex->getData()->handle, 0,
+							GL_TRUE, 0, GL_WRITE_ONLY, glxColorFormat(tex->getInfo().format)
+						);
+				}
+			}
 
 		}
 	}

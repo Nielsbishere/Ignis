@@ -15,17 +15,34 @@ namespace ignis {
 		glCreateSamplers(1, &data->handle);
 		GLuint h = data->handle;
 
-		glSamplerParameteri(h, GL_TEXTURE_WRAP_R,		glxSamplerMode(inf.r));
-		glSamplerParameteri(h, GL_TEXTURE_WRAP_S,		glxSamplerMode(inf.s));
-		glSamplerParameteri(h, GL_TEXTURE_WRAP_T,		glxSamplerMode(inf.t));
-		glSamplerParameteri(h, GL_TEXTURE_MAG_FILTER,	glxSamplerMag(inf.magFilter));
-		glSamplerParameteri(h, GL_TEXTURE_MIN_FILTER,	glxSamplerMin(inf.minFilter));
+		glObjectLabel(GL_SAMPLER, h, GLsizei(getName().size()), getName().c_str());
 
-		glSamplerParameterf(h, GL_TEXTURE_MAX_ANISOTROPY,	info.anisotropy);
-		glSamplerParameterf(h, GL_TEXTURE_MIN_LOD,			inf.minLod);
-		glSamplerParameterf(h, GL_TEXTURE_MAX_LOD,			inf.maxLod);
+		if(inf.r != SamplerMode::REPEAT)
+			glSamplerParameteri(h, GL_TEXTURE_WRAP_R,			glxSamplerMode(inf.r));
 
-		glSamplerParameterfv(h, GL_TEXTURE_BORDER_COLOR,	inf.borderColor.data());
+		if(inf.s != SamplerMode::REPEAT)
+			glSamplerParameteri(h, GL_TEXTURE_WRAP_S,			glxSamplerMode(inf.s));
+
+		if(inf.t != SamplerMode::REPEAT)
+			glSamplerParameteri(h, GL_TEXTURE_WRAP_T,			glxSamplerMode(inf.t));
+
+		if(inf.magFilter != SamplerMag::LINEAR)
+			glSamplerParameteri(h, GL_TEXTURE_MAG_FILTER,		glxSamplerMag(inf.magFilter));
+
+		if(inf.minFilter != SamplerMin::NEAREST_MIPS_LINEAR)
+			glSamplerParameteri(h, GL_TEXTURE_MIN_FILTER,		glxSamplerMin(inf.minFilter));
+
+		if(inf.anisotropy > 1)
+			glSamplerParameterf(h, GL_TEXTURE_MAX_ANISOTROPY,	info.anisotropy);
+
+		if(inf.minLod != -f32_MAX && inf.minLod != -1000)
+			glSamplerParameterf(h, GL_TEXTURE_MIN_LOD,			inf.minLod);
+
+		if(inf.maxLod != f32_MAX && inf.maxLod != 1000)
+			glSamplerParameterf(h, GL_TEXTURE_MAX_LOD,			inf.maxLod);
+
+		if (inf.borderColor != Vec4f{})
+			glSamplerParameterfv(h, GL_TEXTURE_BORDER_COLOR,	inf.borderColor.data());
 	}
 
 	Sampler::~Sampler() {

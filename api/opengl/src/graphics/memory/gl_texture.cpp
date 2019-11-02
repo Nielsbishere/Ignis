@@ -20,7 +20,7 @@ namespace ignis {
 		glCreateTextures(glxTextureType(info.textureType), 1, &data->handle);
 		GLuint handle = data->handle;
 
-		data->textureViews.push_back({ GPUSubresource::Texture(0, 0, info.mips, info.layers), handle });
+		data->textureViews.push_back({ GPUSubresource::TextureRange(0, 0, info.mips, info.layers), handle });
 		
 		glObjectLabel(GL_TEXTURE, handle, GLsizei(name.size()), name.c_str());
 

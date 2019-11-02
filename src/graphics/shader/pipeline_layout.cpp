@@ -36,7 +36,7 @@ namespace ignis {
 		ShaderAccess access
 	):
 		name(name), globalId(globalId), samplerType(type), localId(localId), 
-		access(access), isWritable(true), type(ResourceType::SAMPLER) {}
+		access(access), isWritable(false), type(ResourceType::SAMPLER) {}
 
 	RegisterLayout::RegisterLayout(): 
 		name(), globalId(), type(), localId(), access(), isWritable() { }

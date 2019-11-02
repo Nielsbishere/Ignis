@@ -10,7 +10,7 @@ namespace ignis {
 		GLuint handle{};
 
 		//Subresources
-		List<std::pair<GPUSubresource::Texture, GLuint>> textureViews;
+		List<std::pair<GPUSubresource::TextureRange, GLuint>> textureViews;
 
 	};
 

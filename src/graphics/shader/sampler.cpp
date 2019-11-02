@@ -59,9 +59,10 @@ namespace ignis {
 		minLod(minLod), maxLod(maxLod) {}
 
 	bool Sampler::isCompatible(
-		const RegisterLayout &reg, const GPUSubresource &resource
+		const RegisterLayout &, const GPUSubresource &
 	) {
 		//TODO:
+		return true;
 	}
 
 }
