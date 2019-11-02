@@ -16,6 +16,9 @@ namespace ignis {
 	enum class TextureType : u8;
 	enum class TopologyMode : u8;
 	enum class ShaderStage : u8;
+	enum class SamplerMode : u8;
+	enum class SamplerMag : u8;
+	enum class SamplerMin : u8;
 
 	class Descriptors;
 	class Pipeline;
@@ -31,6 +34,9 @@ extern GLenum glxGpuDataFormat(ignis::GPUFormat type);
 extern GLenum glxTopologyMode(ignis::TopologyMode topo);
 extern GLenum glxShaderStage(ignis::ShaderStage stage);
 extern GLenum glxTextureType(ignis::TextureType type);
+extern GLenum glxSamplerMode(ignis::SamplerMode mode);
+extern GLenum glxSamplerMag(ignis::SamplerMag mag);
+extern GLenum glxSamplerMin(ignis::SamplerMin min);
 
 extern void glxBeginRenderPass(
 	ignis::Graphics::Data &data, const Vec4u &renderArea, const Vec2u &size, GLuint framebuffer

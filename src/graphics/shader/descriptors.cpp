@@ -1,17 +1,20 @@
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/memory/gpu_buffer.hpp"
+#include "graphics/memory/texture.hpp"
 #include "graphics/enums.hpp"
 #include "system/log.hpp"
 #include "system/system.hpp"
 
 namespace ignis {
 
-	Descriptors::Info::Info(const PipelineLayout &pipelineLayout, const Resources &resources):
+	Descriptors::Info::Info(
+		const PipelineLayout &pipelineLayout, const Subresources &resources
+	):
 		pipelineLayout(pipelineLayout), resources(resources) {
 
 		for (auto &elem : pipelineLayout)
 			if (resources.find(elem.first) == resources.end())
-				this->resources[elem.first] = nullptr;
+				this->resources[elem.first] = {};
 	}
 
 	bool Descriptors::isResourceCompatible(u32 i, const GPUSubresource &resource) const {
@@ -46,5 +49,32 @@ namespace ignis {
 		if (size == 0)
 			bufferRange.size = resource->size() - offset;
 	}
+
+	GPUSubresource::GPUSubresource(
+		Sampler *sampler, Texture *texture,
+		u32 levelCount, u32 layerCount,
+		u32 minLevel, u32 minLayer
+	) :
+		resource((GPUResource*)sampler), 
+		samplerData(texture, minLevel, minLayer, levelCount, layerCount) {
+	
+		if (!levelCount) samplerData.levelCount = samplerData.texture->getInfo().mips;
+		if (!layerCount) samplerData.layerCount = samplerData.texture->getInfo().layers;
+	}
+
+	GPUSubresource::GPUSubresource(
+		Texture *resource, u32 levelCount,
+		u32 layerCount, u32 minLevel, u32 minLayer
+	): 
+		resource(resource),
+		textureRange(minLevel, minLayer, levelCount, layerCount) {
+
+		if (!levelCount) samplerData.levelCount = resource->getInfo().mips;
+		if (!layerCount) samplerData.layerCount = resource->getInfo().layers;
+	}
+
+	GPUSubresource::GPUSubresource(Sampler *resource): 
+		resource((GPUResource*)resource), samplerData(){}
+
 
 }

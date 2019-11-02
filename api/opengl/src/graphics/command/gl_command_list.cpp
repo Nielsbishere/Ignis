@@ -179,10 +179,16 @@ namespace ignis {
 				if (!gdata.pipeline)
 					oic::System::log()->fatal("No pipeline bound!");
 
-				if(!gdata.primitiveBuffer->matchLayout(gdata.pipeline->getInfo().attributeLayout))
+				if(!gdata.primitiveBuffer->matchLayout(
+					gdata.pipeline->getInfo().attributeLayout
+				))
 					oic::System::log()->fatal("Pipeline vertex layout doesn't match primitive buffer!");
 
-				if (gdata.descriptors && !gdata.descriptors->isShaderCompatible(gdata.pipeline->getInfo().pipelineLayout))
+				if (gdata.descriptors && 
+					!gdata.descriptors->isShaderCompatible(
+					gdata.pipeline->getInfo().pipelineLayout
+					)
+				)
 					oic::System::log()->fatal("Pipeline layout doesn't match descriptors!");
 
 				{

@@ -13,7 +13,10 @@ namespace ignis {
 	): 
 		name(name), globalId(globalId), bufferType(type), localId(localId), 
 		access(access), isWritable(isWritable), bufferSize(bufferSize),
-		type(type == GPUBufferType::UNIFORM ? ResourceType::CBUFFER : ResourceType::BUFFER) {}
+		type(
+			type == GPUBufferType::UNIFORM ? ResourceType::CBUFFER : 
+			ResourceType::BUFFER
+		) {}
 
 	RegisterLayout::RegisterLayout(
 		const String &name, u32 globalId, TextureType type, u32 localId,
@@ -36,14 +39,23 @@ namespace ignis {
 		ShaderAccess access
 	):
 		name(name), globalId(globalId), samplerType(type), localId(localId), 
-		access(access), isWritable(true), type(ResourceType::SAMPLER) {}
+		access(access), isWritable(false), 
+		type(
+			samplerType == SamplerType::SAMPLER ? ResourceType::SAMPLER :
+			ResourceType::COMBINED_SAMPLER
+		) {}
 
 	RegisterLayout::RegisterLayout(): 
 		name(), globalId(), type(), localId(), access(), isWritable() { }
 
 	bool RegisterLayout::operator==(const RegisterLayout &other) const {
 
-		const bool contentsEqual = memcmp(&globalId, &other.globalId, sizeof(other) - offsetof(RegisterLayout, globalId)) == 0;
+		const bool contentsEqual = 
+			memcmp(
+				&globalId, &other.globalId, 
+				offsetof(RegisterLayout, access) - offsetof(RegisterLayout, globalId)
+			) == 0 && 
+			isWritable == other.isWritable;
 		
 		return
 
@@ -60,7 +72,8 @@ namespace ignis {
 					(type == ResourceType::BUFFER || type == ResourceType::CBUFFER) && 
 					(!bufferSize || bufferSize == other.bufferSize)
 				) ||
-				type == ResourceType::SAMPLER
+				type == ResourceType::SAMPLER ||
+				type == ResourceType::COMBINED_SAMPLER
 			);
 	}
 

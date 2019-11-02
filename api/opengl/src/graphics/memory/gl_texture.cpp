@@ -10,7 +10,7 @@ namespace ignis {
 
 		data = new Data();
 
-		GLint mipCount = u8(info.mips) & u8(TextureMip::PROPERTY_MIP_COUNT);
+		GLint mipCount = info.mips;
 		GLenum textureFormat = glxColorFormat(info.format);
 		GLenum type = glxGpuFormatType(info.format);
 		GLenum format = glxGpuDataFormat(info.format);
@@ -19,6 +19,8 @@ namespace ignis {
 
 		glCreateTextures(glxTextureType(info.textureType), 1, &data->handle);
 		GLuint handle = data->handle;
+
+		data->textureViews.push_back({ GPUSubresource::TextureRange(0, 0, info.mips, info.layers), handle });
 		
 		glObjectLabel(GL_TEXTURE, handle, GLsizei(name.size()), name.c_str());
 
@@ -77,6 +79,11 @@ namespace ignis {
 	}
 
 	Texture::~Texture() {
+
+		for(auto &views : data->textureViews)
+			if(views.second != data->handle)
+				glDeleteTextures(1, &data->handle);
+
 		glDeleteTextures(1, &data->handle);
 		delete data;
 	}

@@ -65,14 +65,10 @@ namespace ignis {
 
 		//Obtain the OpenGL version and max supported sample count
 
-		GLint samples, major, minor;
-		glGetIntegerv(GL_MAX_SAMPLES, &samples);
-		glGetIntegerv(GL_MAJOR_VERSION, &major);
-		glGetIntegerv(GL_MINOR_VERSION, &minor);
-
-		data->major = u32(major);
-		data->minor = u32(minor);
-		data->maxSamples = u32(samples);
+		glGetIntegerv(GL_MAX_SAMPLES, (GLint*)&data->maxSamples);
+		glGetIntegerv(GL_MAJOR_VERSION, (GLint*)&data->major);
+		glGetIntegerv(GL_MINOR_VERSION, (GLint*)&data->minor);
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &data->maxAnistropy);
 
 		if (!data->version(4, 6))
 			oic::System::log()->fatal("OpenGL version not supported; >= 4.6 required");

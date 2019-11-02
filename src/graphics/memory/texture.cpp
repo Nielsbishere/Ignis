@@ -8,7 +8,7 @@ namespace ignis {
 
 	Texture::Info::Info(
 		u32 x, GPUFormat format, GPUMemoryUsage usage,
-		TextureMip mips, u32 layers
+		u8 mips, u32 layers
 	) :
 		Info(Vec3u{ x, 1, 1 }, format, usage, mips, layers) {
 
@@ -18,7 +18,7 @@ namespace ignis {
 
 	Texture::Info::Info(
 		Vec2u xy, GPUFormat format, GPUMemoryUsage usage,
-		TextureMip mips, u32 layers
+		u8 mips, u32 layers
 	) :
 		Info(Vec3u{ xy[0], xy[1], 1 }, format, usage, mips, layers) {
 
@@ -28,9 +28,9 @@ namespace ignis {
 
 	Texture::Info::Info(
 		Vec3u xyz, GPUFormat format, GPUMemoryUsage usage,
-		TextureMip mips, u32 layers
+		u8 mipCount, u32 layers
 	): 
-		dimensions(xyz), format(format), usage(usage), mips(mips), layers(layers),
+		dimensions(xyz), format(format), usage(usage), mips(mipCount), layers(layers),
 		textureType(TextureType::TEXTURE_3D) {
 	
 		if (layers > 1)			//TODO: This is called for 1D and 2D arrays too!
@@ -48,17 +48,11 @@ namespace ignis {
 			);
 
 		u8 biggestMip = u8(oic::Math::ceil(oic::Math::log2<f64>(biggestRes)) + 1);
-		u8 mipCount = u8(mips) & u8(TextureMip::PROPERTY_MIP_COUNT);
 
-		if (mipCount)
-			mipCount = oic::Math::min(mipCount, u8(biggestMip));
+		if (mips)
+			mips = oic::Math::min(mips, biggestMip);
 		else
-			mipCount = biggestMip;
-
-		this->mips = TextureMip(
-			(u8(mips) & ~u8(TextureMip::PROPERTY_MIP_COUNT)) |
-			mipCount
-		);
+			mips = biggestMip;
 	}
 
 	bool Texture::Info::init(const Buffer &b) {
@@ -77,14 +71,18 @@ namespace ignis {
 	}
 	
 	bool Texture::isCompatible(
-		const RegisterLayout &reg, const GPUSubresource &
-	) {
+		const RegisterLayout &reg, const GPUSubresource &sub
+	) const {
 		return
 			reg.type == ResourceType::TEXTURE &&
 			reg.textureType == info.textureType &&
-			(reg.textureFormat == GPUFormat::NONE || reg.textureFormat == info.format);
+			(reg.textureFormat == GPUFormat::NONE || reg.textureFormat == info.format) &&
+			validSubresource(sub);
+	}
 
-		//TODO: GPUSubresource validation
+	bool Texture::validSubresource(const GPUSubresource &res, bool isSampler) const {
+		auto &tex = isSampler ? (const GPUSubresource::TextureRange&)res.samplerData : res.textureRange;
+		return usz(tex.minLayer) + tex.layerCount <= info.layers && usz(tex.minLevel) + tex.levelCount <= info.mips;
 	}
 
 }

@@ -61,6 +61,7 @@ namespace ignis {
 		Vec4f clearColor{};
 
 		u32 maxSamples;
+		f32 maxAnistropy;
 
 		u32 major, minor;
 		bool isES{}, scissorEnable{};

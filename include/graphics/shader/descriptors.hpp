@@ -6,6 +6,8 @@ namespace ignis {
 
 	class GPUResource;
 	class GPUBuffer;
+	class Sampler;
+	class Texture;
 
 	//Describing which range of the resource has to be bound
 
@@ -13,19 +15,61 @@ namespace ignis {
 
 		GPUResource *resource{};
 
-		union {
-			//TextureRange textureRange;
-			//CombinedSamplerRange samplerRange;
+		struct TextureRange {
 
-			struct Buffer {
-				usz offset{}, size {};
-			} bufferRange;
+			u32 minLevel{}, minLayer{};
+			u32 levelCount{}, layerCount{};
+
+			TextureRange() {}
+			TextureRange(
+				u32 minLevel, u32 minLayer, u32 levelCount, u32 layerCount
+			) :
+				minLevel(minLevel), minLayer(minLayer), 
+				levelCount(levelCount), layerCount(layerCount) {}
 		};
 
-		GPUSubresource() : bufferRange{} {}
+		struct SamplerData : TextureRange {
+
+			Texture *texture{};
+
+			SamplerData() {}
+			SamplerData(
+				Texture *texture,
+				u32 minLevel, u32 minLayer, u32 levelCount, u32 layerCount
+			): 
+				texture(texture), TextureRange(minLevel, minLayer, levelCount, layerCount){}
+		};
+
+		struct BufferRange {
+
+			usz offset{}, size{};
+
+			BufferRange() {}
+			BufferRange(usz offset, usz size): offset(offset), size(size) {}
+		};
+
+		union {
+			TextureRange textureRange;
+			SamplerData samplerData;
+			BufferRange bufferRange;
+		};
+
+		GPUSubresource(): samplerData{} {}
 		GPUSubresource(GPUBuffer *resource, usz offset = 0, usz size = 0);
-		//GPUResourceRange(Texture *resource): resource(resource) {}
-		//GPUResourceRange(Texture *resource, Sampler *sampler)
+
+		GPUSubresource(
+			Sampler *sampler, Texture *texture,
+			u32 levelCount = 0, u32 layerCount = 0,
+			u32 minLevel = 0, u32 minLayer = 0
+		);
+
+		GPUSubresource(Sampler *resource);
+
+		GPUSubresource(
+			Texture *resource,
+			u32 levelCount = 0, u32 layerCount = 0,
+			u32 minLevel = 0, u32 minLayer = 0
+		);
 	};
 
 	//Which ranges of resources have to be bound
@@ -34,18 +78,18 @@ namespace ignis {
 
 	public:
 
-		using Resources = HashMap<u32, GPUSubresource>;
+		using Subresources = HashMap<u32, GPUSubresource>;
 
 		struct Info {
 
 			PipelineLayout pipelineLayout;
-			Resources resources;
+			Subresources resources;
 
 			bool shouldFlush{};
 
 			Info(
 				const PipelineLayout &pipelineLayout, 
-				const Resources &resources
+				const Subresources &resources
 			);
 		};
 

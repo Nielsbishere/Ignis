@@ -31,7 +31,9 @@ namespace ignis {
 		//Flush the updates from the CPU to the GPU
 		apimpl void flush(usz offset, usz size);
 
-		bool isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) final override;
+		bool isCompatible(
+			const RegisterLayout &reg, const GPUSubresource &resource
+		) const final override;
 
 		inline const usz size() const { return info.size; }
 

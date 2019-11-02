@@ -13,7 +13,9 @@ namespace ignis {
 
 		using GraphicsObject::GraphicsObject;
 
-		virtual bool isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) = 0;
+		virtual bool isCompatible(
+			const RegisterLayout &reg, const GPUSubresource &resource
+		) const = 0;
 
 	};
 }
