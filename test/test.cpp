@@ -49,7 +49,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		s = new Swapchain(g, NAME("Swapchain"), Swapchain::Info{ vp, false, DepthFormat::NONE });
 
-		intermediate =  new Framebuffer(
+		intermediate = new Framebuffer(
 			g, NAME("Framebuffer"),
 			Surface::Info(
 				{ GPUFormat::RGBA16f }, DepthFormat::NONE, false, 8
