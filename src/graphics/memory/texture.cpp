@@ -57,15 +57,35 @@ namespace ignis {
 			mips = biggestMip;
 	}
 
-	bool Texture::Info::init(const Buffer &b) {
+	bool Texture::Info::init(const List<Buffer> &b) {
 
-		usz size =
-			FormatHelper::getSizeBytes(format) * 
-			dimensions[0] * dimensions[1] * dimensions[2];
-
-		if (b.size() != size || !size) {
-			oic::System::log()->error("Invalid texture size");
+		if (b.size() != usz(mips) * layers) {
+			oic::System::log()->error("Texture requires all init data (mips and layers)");
 			return false;
+		}
+
+		for (usz l = 0; l < layers; ++l) {
+
+			Vec3u res = dimensions;
+
+			for (usz m = 0; m < mips; ++m) {
+
+				usz size =
+					FormatHelper::getSizeBytes(format) * 
+					res[0] * res[1] * res[2];
+
+				if (b[l * mips + m].size() != size || !size) {
+					oic::System::log()->error("Invalid texture size");
+					return false;
+				}
+
+				//TODO: Use Vec3f
+
+				f64 x = res[0], y = res[1], z = res[2];
+				x /= 2; y /= 2; z /= 2;
+
+				res = Vec3u{ u32(oic::Math::ceil(x)), u32(oic::Math::ceil(y)), u32(oic::Math::ceil(z)) };
+			}
 		}
 
 		initData = b;

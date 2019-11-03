@@ -90,15 +90,22 @@ struct TestViewportInterface : public ViewportInterface {
 
 		//Create texture
 
-		const u32 rgba[2][2] = {
-			{ 0xFFFF00FF, 0xFF00FFFF },
-			{ 0xFFFFFF00, 0xFFFFFFFF }
+		const u32 rgba0[2][2] = {
+			{ 0xFFFF00FF, 0xFF00FFFF },	//1,0,1, 0,1,1
+			{ 0xFFFFFF00, 0xFFFFFFFF }	//1,1,0, 1,1,1
+		};
+
+		const u32 rgba1[1][1] = {
+			{ 0xFFBFBFBF }				//0.75,0.75,0.75
 		};
 
 		tex2D = new Texture(
 			g, NAME("Test texture"),
 			Texture::Info(
-				Grid2D<u32>(rgba), GPUFormat::RGBA8, GPUMemoryUsage::LOCAL
+				List<Grid2D<u32>>{
+					rgba0, rgba1
+				}, 
+				GPUFormat::RGBA8, GPUMemoryUsage::LOCAL
 			)
 		);
 
@@ -134,7 +141,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		auto descriptorsInfo = Descriptors::Info(pipelineLayout, {});
 		descriptorsInfo.resources[0] = uniforms;
-		descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D, 1);
+		descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D);
 
 		descriptors = new Descriptors(
 			g, NAME("Test descriptors"), 

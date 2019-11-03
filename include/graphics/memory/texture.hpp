@@ -11,7 +11,7 @@ namespace ignis {
 
 		struct Info {
 
-			Buffer initData;
+			List<Buffer> initData;		//[mip + layer * mips]
 
 			Vec3u dimensions;
 			u32 layers;
@@ -43,29 +43,29 @@ namespace ignis {
 			//Filled Texture1D
 			template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 			Info(
-				const oic::Grid1D<T> &val, GPUFormat format, GPUMemoryUsage usage,
+				const List<oic::Grid1D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
 				u8 mips = 0, u32 layers = 1
 			);
 
 			//Filled Texture2D
 			template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 			Info(
-				const oic::Grid2D<T> &val, GPUFormat format, GPUMemoryUsage usage,
+				const List<oic::Grid2D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
 				u8 mips = 0, u32 layers = 1
 			);
 
 			//Filled Texture3D
 			template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 			Info(
-				const oic::Grid3D<T> &val, GPUFormat format, GPUMemoryUsage usage,
+				const List<oic::Grid3D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
 				u8 mips = 0
 			);
 
 			//TODO: Cubemap
-			//TODO: Store mips and layers in memory too
 			//TODO: Compressed texture
 
-			bool init(const Buffer &b);
+			//List<Buffer> with size mips * layers
+			bool init(const List<Buffer> &b);
 
 		private:
 
@@ -100,35 +100,53 @@ namespace ignis {
 
 	template<typename T, typename>
 	Texture::Info::Info(
-		const oic::Grid1D<T> &val, GPUFormat format, GPUMemoryUsage usage,
+		const List<oic::Grid1D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
 		u8 mips, u32 layers
 	) : 
-		Info(u32(val.size()), format, usage, mips, layers) {
-		init(val.buffer());
+		Info(u32(val[0].size()), format, usage, mips, layers) {
+
+		List<Buffer> buffers(val.size());
+
+		for (usz i = 0, j = val.size(); i < j; ++i)
+			buffers[i] = val[i].buffer();
+
+		init(buffers);
 	}
 
 	template<typename T, typename>
 	Texture::Info::Info(
-		const oic::Grid2D<T> &val, GPUFormat format, GPUMemoryUsage usage,
+		const List<oic::Grid2D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
 		u8 mips, u32 layers
 	) : 
 		Info(
-			Vec2u{ u32(val.size()[1]), u32(val.size()[0]) }, 
+			Vec2u{ u32(val[0].size()[1]), u32(val[0].size()[0]) }, 
 			format, usage, mips, layers
 		) {
-		init(val.buffer());
+
+		List<Buffer> buffers(val.size());
+
+		for (usz i = 0, j = val.size(); i < j; ++i)
+			buffers[i] = val[i].buffer();
+
+		init(buffers);
 	}
 
 	template<typename T, typename>
 	Texture::Info::Info(
-		const oic::Grid3D<T> &val, GPUFormat format, GPUMemoryUsage usage,
+		const List<oic::Grid3D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
 		u8 mips
 	) : 
 		Info(
-			Vec3u{ u32(val.size()[2]), u32(val.size()[1]), u32(val.size()[0]) }, 
+			Vec3u{ u32(val[0].size()[2]), u32(val[0].size()[1]), u32(val[0].size()[0]) }, 
 			format, usage, mips, 1
 		) {
-		init(val.buffer());
+
+		List<Buffer> buffers(val.size());
+
+		for (usz i = 0, j = val.size(); i < j; ++i)
+			buffers[i] = val[i].buffer();
+
+		init(buffers);
 	}
 
 }

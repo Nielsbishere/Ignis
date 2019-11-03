@@ -32,13 +32,18 @@ namespace ignis {
 				handle, mipCount, textureFormat, info.dimensions[0]
 			);
 
-			if(info.initData.size())
-				glTextureSubImage1D(
-					handle, 0, 0, x, format, type, info.initData.data()
-				);
+			if (info.initData.size())
+				for (u32 i = 0; i < info.mips; ++i) {
+
+					glTextureSubImage1D(
+						handle, i, 0, x, format, type, info.initData[i].data()
+					);
+
+					x = u32(oic::Math::ceil(x / 2.0));
+				}
+			
 			break;
 
-		case TextureType::TEXTURE_1D_ARRAY:
 		case TextureType::TEXTURE_2D: {
 
 				u32 y = oic::Math::max(info.dimensions[1], info.layers);
@@ -47,15 +52,19 @@ namespace ignis {
 					handle, mipCount, textureFormat, x, y
 				);
 
-				if(info.initData.size())
-					glTextureSubImage2D(
-						handle, 0, 0, 0, x, y, format, type, info.initData.data()
-					);
+				if (info.initData.size())
+					for (u32 i = 0; i < info.mips; ++i) {
+
+						glTextureSubImage2D(
+							handle, i, 0, 0, x, y, format, type, info.initData[i].data()
+						);
+
+						x = u32(oic::Math::ceil(x / 2.0));
+						y = u32(oic::Math::ceil(y / 2.0));
+					}
 
 			}
 			break;
-
-		case TextureType::TEXTURE_2D_ARRAY:
 		case TextureType::TEXTURE_3D: {
 
 				u32 y = info.dimensions[1];
@@ -66,12 +75,23 @@ namespace ignis {
 				);
 
 				if(info.initData.size())
-					glTextureSubImage3D(
-						handle, 0, 0, 0, 0, x, y, z, format, type, info.initData.data()
-					);
+					for (u32 i = 0; i < info.mips; ++i) {
+
+						glTextureSubImage3D(
+							handle, i, 0, 0, 0, x, y, z, format, type, info.initData[i].data()
+						);
+
+						x = u32(oic::Math::ceil(x / 2.0));
+						y = u32(oic::Math::ceil(y / 2.0));
+						z = u32(oic::Math::ceil(z / 2.0));
+					}
 
 			}
 			break;
+
+		//TODO:
+		case TextureType::TEXTURE_1D_ARRAY:
+		case TextureType::TEXTURE_2D_ARRAY:
 
 		default:
 			oic::System::log()->fatal("TextureType not supported");
