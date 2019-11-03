@@ -98,7 +98,7 @@ struct TestViewportInterface : public ViewportInterface {
 		tex2D = new Texture(
 			g, NAME("Test texture"),
 			Texture::Info(
-				rgba, GPUFormat::RGBA8, GPUMemoryUsage::LOCAL
+				Grid2D<u32>(rgba), GPUFormat::RGBA8, GPUMemoryUsage::LOCAL
 			)
 		);
 
@@ -134,7 +134,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		auto descriptorsInfo = Descriptors::Info(pipelineLayout, {});
 		descriptorsInfo.resources[0] = uniforms;
-		descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D);
+		descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D, 1);
 
 		descriptors = new Descriptors(
 			g, NAME("Test descriptors"), 
@@ -158,7 +158,7 @@ struct TestViewportInterface : public ViewportInterface {
 				},
 
 				pipelineLayout,
-				Pipeline::MSAA(intermediate->getInfo().samples)	//TODO: Do validation with RT
+				Pipeline::MSAA(intermediate->getInfo().samples)
 
 				//TODO:
 				//DepthStencil()

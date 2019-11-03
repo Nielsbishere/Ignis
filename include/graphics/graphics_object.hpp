@@ -25,10 +25,11 @@ namespace ignis {
 		template<typename T>
 		T *cast() { return dynamic_cast<T*>(this); }
 
+		inline const String &getName() { return name; }
+
 	protected:
 
 		inline Graphics &getGraphics() { return g; }
-		inline const String &getName() { return name; }
 
 	private:
 

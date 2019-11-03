@@ -51,10 +51,8 @@ namespace ignis {
 	bool RegisterLayout::operator==(const RegisterLayout &other) const {
 
 		const bool contentsEqual = 
-			memcmp(
-				&globalId, &other.globalId, 
-				offsetof(RegisterLayout, access) - offsetof(RegisterLayout, globalId)
-			) == 0 && 
+			(u64&)globalId == (u64&)other.globalId &&
+			(u16&)type == (u16&)other.type &&
 			isWritable == other.isWritable;
 		
 		return

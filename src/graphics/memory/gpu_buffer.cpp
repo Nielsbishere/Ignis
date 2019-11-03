@@ -17,7 +17,20 @@ namespace ignis {
 		return
 			reg.type == ResourceType::BUFFER && 
 			(!u8(reg.bufferType) || reg.bufferType == info.type) && 
-			(!reg.bufferSize	 || reg.bufferSize == resource.bufferRange.size) && //TODO: Structured buffer
+
+			//Validate size
+			(!reg.bufferSize	 || 
+				(
+					reg.bufferType != GPUBufferType::STRUCTURED && 
+					reg.bufferSize == resource.bufferRange.size
+				) ||
+				(
+					reg.bufferType == GPUBufferType::STRUCTURED && 
+					(resource.bufferRange.size % reg.bufferSize) == 0
+				)
+			 ) &&
+
+			//Validate write flags
 			(!reg.isWritable	 || (u8(info.usage) & u8(GPUMemoryUsage::GPU_WRITE)));
 	}
 

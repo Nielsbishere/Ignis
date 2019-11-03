@@ -26,6 +26,12 @@ namespace ignis {
 			) :
 				minLevel(minLevel), minLayer(minLayer), 
 				levelCount(levelCount), layerCount(layerCount) {}
+
+			inline bool operator==(const TextureRange &other) const {
+				return
+					(u64&)minLevel == (u64&)other.minLevel && 
+					(u64&)levelCount == (u64&)other.layerCount;
+			}
 		};
 
 		struct SamplerData : TextureRange {

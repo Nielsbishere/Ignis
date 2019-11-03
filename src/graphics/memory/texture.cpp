@@ -10,31 +10,33 @@ namespace ignis {
 		u32 x, GPUFormat format, GPUMemoryUsage usage,
 		u8 mips, u32 layers
 	) :
-		Info(Vec3u{ x, 1, 1 }, format, usage, mips, layers) {
-
-		textureType = 
-			layers > 1 ? TextureType::TEXTURE_1D_ARRAY : TextureType::TEXTURE_1D;
-	}
+		Info(
+			TextureType(u8(TextureType::TEXTURE_1D) | ((layers > 1) << u8(TextureType::PROPERTY_IS_ARRAY_BIT))), 
+			Vec3u{ x, 1, 1 }, format, usage, mips, layers
+		) { }
 
 	Texture::Info::Info(
 		Vec2u xy, GPUFormat format, GPUMemoryUsage usage,
 		u8 mips, u32 layers
 	) :
-		Info(Vec3u{ xy[0], xy[1], 1 }, format, usage, mips, layers) {
-
-		textureType = 
-			layers > 1 ? TextureType::TEXTURE_2D_ARRAY : TextureType::TEXTURE_2D;
-	}
+		Info(
+			TextureType(u8(TextureType::TEXTURE_2D) | ((layers > 1) << u8(TextureType::PROPERTY_IS_ARRAY_BIT))), 
+			Vec3u{ xy[0], xy[1], 1 }, format, usage, mips, layers
+		) { }
 
 	Texture::Info::Info(
+		Vec3u xyz, GPUFormat format, GPUMemoryUsage usage,
+		u8 mipCount
+	): 
+		Info(TextureType::TEXTURE_3D, xyz, format, usage, mipCount, 1) { }
+
+	Texture::Info::Info(
+		TextureType textureType,
 		Vec3u xyz, GPUFormat format, GPUMemoryUsage usage,
 		u8 mipCount, u32 layers
 	): 
 		dimensions(xyz), format(format), usage(usage), mips(mipCount), layers(layers),
-		textureType(TextureType::TEXTURE_3D) {
-	
-		if (layers > 1)			//TODO: This is called for 1D and 2D arrays too!
-			oic::System::log()->fatal("4D Textures aren't supported yet");
+		textureType(textureType) {
 
 		//Automatically determine mips
 

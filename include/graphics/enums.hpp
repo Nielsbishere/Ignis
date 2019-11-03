@@ -169,7 +169,8 @@ namespace ignis {
 
 		PROPERTY_DIMENSION		= 0x3,
 		PROPERTY_IS_MS			= 0x4,
-		PROPERTY_IS_ARRAY		= 0x8
+		PROPERTY_IS_ARRAY		= 0x8,	//1 << PROPERTY_IS_ARRAY_BIT
+		PROPERTY_IS_ARRAY_BIT	= 0x3
 	};
 
 	//& 0x03 = dimension (CUBE, 1D, 2D, 3D)

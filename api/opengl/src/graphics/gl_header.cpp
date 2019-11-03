@@ -556,22 +556,50 @@ void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 
 			if (tex) {
 
-				//TODO: Create texture view if it doesn't exist yet!
+				auto &textureViews = tex->getData()->textureViews;
+				GLuint textureView{};
+
+				for(auto &view : textureViews)
+					if (view.first == subres.textureRange) {
+						textureView = view.second;
+						break;
+					}
+
+				if (!textureView) {
+
+					glGenTextures(1, &textureView);
+					glTextureView(
+						textureView,
+						glxTextureType(tex->getInfo().textureType),
+						tex->getData()->handle,
+						glxColorFormat(tex->getInfo().format),
+						subres.textureRange.minLevel,
+						subres.textureRange.levelCount,
+						subres.textureRange.minLayer,
+						subres.textureRange.layerCount
+					);
+
+					String name = tex->getName() + " " + std::to_string(textureViews.size());
+
+					glObjectLabel(GL_TEXTURE, textureView, GLsizei(name.size()), name.c_str());
+
+					textureViews.push_back({ subres.textureRange, textureView });
+				}
 
 				if (!resource.isWritable) {
 
 					auto &boundTex = g.boundByBase[(u64(resource.localId) << 32) | GL_TEXTURE];
 
-					if (boundTex.handle != tex->getData()->handle)
-						glBindTextureUnit(resource.localId, boundTex.handle = tex->getData()->handle);
+					if (boundTex.handle != textureView)
+						glBindTextureUnit(resource.localId, boundTex.handle = textureView);
 
 				} else {
 
 					auto &boundImg = g.boundByBase[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but GL_IMAGE doesn't exist*/];
 
-					if (boundImg.handle != tex->getData()->handle)
+					if (boundImg.handle != textureView)
 						glBindImageTexture(
-							resource.localId, boundImg.handle = tex->getData()->handle, 0,
+							resource.localId, boundImg.handle = textureView, 0,
 							GL_TRUE, 0, GL_WRITE_ONLY, glxColorFormat(tex->getInfo().format)
 						);
 				}

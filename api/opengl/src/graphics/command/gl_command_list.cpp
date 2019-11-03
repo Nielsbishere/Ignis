@@ -186,10 +186,16 @@ namespace ignis {
 
 				if (gdata.descriptors && 
 					!gdata.descriptors->isShaderCompatible(
-					gdata.pipeline->getInfo().pipelineLayout
+						gdata.pipeline->getInfo().pipelineLayout
 					)
 				)
 					oic::System::log()->fatal("Pipeline layout doesn't match descriptors!");
+
+				if(!gdata.currentSurface)
+					oic::System::log()->fatal("No surface bound");
+
+				if(gdata.currentSurface->getInfo().samples != gdata.pipeline->getInfo().msaa.samples)
+					oic::System::log()->fatal("Surface didn't have the same number of samples as pipeline");
 
 				{
 					auto topo = glxTopologyMode(gdata.pipeline->getInfo().topology);
