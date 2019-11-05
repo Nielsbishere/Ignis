@@ -51,23 +51,24 @@ namespace ignis {
 	}
 
 	GPUSubresource::GPUSubresource(
-		Sampler *sampler, Texture *texture,
+		Sampler *sampler, Texture *texture, TextureType subType,
 		u32 levelCount, u32 layerCount,
 		u32 minLevel, u32 minLayer
 	) :
 		resource((GPUResource*)sampler), 
-		samplerData(texture, minLevel, minLayer, levelCount, layerCount) {
+		samplerData(texture, minLevel, minLayer, levelCount, layerCount, subType) {
 	
 		if (!levelCount) samplerData.levelCount = samplerData.texture->getInfo().mips;
 		if (!layerCount) samplerData.layerCount = samplerData.texture->getInfo().layers;
 	}
 
 	GPUSubresource::GPUSubresource(
-		Texture *resource, u32 levelCount,
-		u32 layerCount, u32 minLevel, u32 minLayer
+		Texture *resource,  TextureType subType,
+		u32 levelCount, u32 layerCount,
+		u32 minLevel, u32 minLayer
 	): 
 		resource(resource),
-		textureRange(minLevel, minLayer, levelCount, layerCount) {
+		textureRange(minLevel, minLayer, levelCount, layerCount, subType) {
 
 		if (!levelCount) samplerData.levelCount = resource->getInfo().mips;
 		if (!layerCount) samplerData.layerCount = resource->getInfo().layers;

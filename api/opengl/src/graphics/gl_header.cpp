@@ -567,15 +567,10 @@ void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 
 				if (!textureView) {
 
-					auto subTextureType = tex->getInfo().textureType;
-
-					if(subres.textureRange.layerCount == 1 && tex->getInfo().layers > 1)
-						subTextureType = TextureType(u8(subTextureType) & ~u8(TextureType::PROPERTY_IS_ARRAY));
-
 					glGenTextures(1, &textureView);
 					glTextureView(
 						textureView,
-						glxTextureType(subTextureType),
+						glxTextureType(subres.textureRange.subType),
 						tex->getData()->handle,
 						glxColorFormat(tex->getInfo().format),
 						subres.textureRange.minLevel,

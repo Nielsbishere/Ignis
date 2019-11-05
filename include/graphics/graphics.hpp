@@ -1,13 +1,8 @@
 #pragma once
 #include "graphics_object.hpp"
+#include "enums.hpp"
 
 namespace ignis {
-
-	//A feature that's dependent on the current platform
-	enum class Feature : u32 { RAYTRACING, MESH_SHADERS, COUNT };
-
-	//An extension that's dependent on the current gpu
-	enum class Extension : u32 { COUNT };
 
 	using Features = Bitset<usz(Feature::COUNT)>;
 	using Extensions = Bitset<usz(Extension::COUNT)>;

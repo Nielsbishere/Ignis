@@ -15,8 +15,11 @@ namespace ignis {
 		return GraphicsApi::OPENGL;
 	}
 
-	CommandAvailability Graphics::getCommandAvailability(CommandOp) {
-		//TODO:
+	CommandAvailability Graphics::getCommandAvailability(CommandOp op) {
+		
+		if (op >> CMD_PROPERTY_TECHNIQUE_SHIFT)
+			return CommandAvailability::UNSUPPORTED;
+
 		return CommandAvailability::SUPPORTED;
 	}
 

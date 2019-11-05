@@ -1,7 +1,15 @@
 #pragma once
-#include "types/types.hpp"
+#include "graphics/enums.hpp"
 
 namespace ignis {
+
+	//Used to determine how common an extension/feature is
+	enum CommandOpSupport : u8 {
+		CMD_SUPPORT_COMMON,				//_0
+		CMD_SUPPORT_DESKTOP_COMMON,		//_1
+		CMD_SUPPORT_DESKTOP_RARE,		//_2
+		CMD_SUPPORT_VENDOR				//_3
+	};
 
 	//Command op codes
 
@@ -15,13 +23,26 @@ namespace ignis {
 	//	Unsupported: It won't be able to run
 	//Suffixes:
 	//	none: Core standard
-	//	_0: Rarely unavailable, often available either by hardware or software (performance impact when software)
-	//  _1: Often available on desktop
-	//  _2: Rarely available on desktop
-	//  _3: Only available for certain vendors
+	//	_0: Rarely unavailable (>90%)
+	//  _1: Often available on desktop (~50%)
+	//  _2: Rarely available on desktop (<50%)
+	//  _3: Only available for certain vendors (<25% generally)
 
-	//TODO: Refactor into bitset; so you can immediately query important flags
+	//>> 24 = technique
+	//& 0x800000 = isFeature
+	//& 0x600000 = support
+	//& 0x1FFFFF = commandId (restarts per feature or extension)
+
 	enum CommandOp : u32 {
+
+		//Properties
+
+		CMD_PROPERTY_TECHNIQUE_SHIFT	= 24,			//CommandOp >> N
+		CMD_PROPERTY_TECHNIQUE			= 0xFF000000,
+		CMD_PROPERTY_IS_FEATURE			= 0x00800000,
+		CMD_PROPERTY_SUPPORT_SHIFT		= 21,			//Availability << N
+		CMD_PROPERTY_SUPPORT			= 0x00600000,
+		CMD_PROPERTY_ID					= 0x001FFFFF,
 
 		//Core commands
 
@@ -64,35 +85,47 @@ namespace ignis {
 		CMD_DEBUG_INSERT_MARKER,
 		CMD_DEBUG_END_REGION,
 
-		//Software or hardware backed commands
+		//Common extensions
 		//TODO:
 
-		CMD_BEGIN_QUERY_INDIRECT_EXT_0,
-		CMD_END_QUERY_INDIRECT_EXT_0,
-		CMD_BEGIN_CONDITIONAL_EXT_0,
+		CMD_BEGIN_CONDITIONAL_EXT_0 = 
+			(CMD_SUPPORT_COMMON << CMD_PROPERTY_SUPPORT_SHIFT) |
+			(u32(Extension::CONDITIONAL_RENDERING) << CMD_PROPERTY_TECHNIQUE_SHIFT),
+
 		CMD_END_CONDITIONAL_EXT_0,
 
-		//Common commands
+		//Common desktop extensions
 		//TODO:
 
-		CMD_DRAW_INDIRECT_COUNT_EXT_2,
-		CMD_DRAW_INDEXED_INDIRECT_COUNT_EXT_2,
+		CMD_DRAW_INDIRECT_COUNT_EXT_1 = 
+			(CMD_SUPPORT_DESKTOP_COMMON << CMD_PROPERTY_SUPPORT_SHIFT) |
+			(u32(Extension::INDIRECT_COUNT) << CMD_PROPERTY_TECHNIQUE_SHIFT),
+
+		CMD_DRAW_INDEXED_INDIRECT_COUNT_EXT_1,
 
 		//Vendor commands
 		//TODO:
 
-		CMD_TRACE_RAYS_FT_3,
+		CMD_TRACE_RAYS_FT_3 = 
+			(CMD_SUPPORT_VENDOR << CMD_PROPERTY_SUPPORT_SHIFT) |
+			(u32(Feature::RAYTRACING) << CMD_PROPERTY_TECHNIQUE_SHIFT),
+
 		CMD_BUILD_ACCELERATION_STRUCTURE_FT_3,
 		CMD_COPY_ACCELERATION_STRUCTURE_FT_3,
 		CMD_WRITE_ACCELERATION_STRUCTURE_PROPERTIES_FT_3,
-		CMD_DRAW_MESH_TASKS_FT_3,
+
+
+		CMD_DRAW_MESH_TASKS_FT_3 =
+			(CMD_SUPPORT_VENDOR << CMD_PROPERTY_SUPPORT_SHIFT) |
+			(u32(Feature::MESH_SHADERS) << CMD_PROPERTY_TECHNIQUE_SHIFT),
+
 		CMD_DRAW_MESH_TASKS_INDIRECT_FT_3,
 		CMD_DRAW_MESH_TASKS_INDIRECT_COUNT_FT_3,
 		//TODO: Variable rate shading
 
 		//End of enum
 
-		CMD_ENUM_NEXT
+		CMD_ENUM_NEXT,
 	};
 
 }

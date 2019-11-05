@@ -110,7 +110,7 @@ struct TestViewportInterface : public ViewportInterface {
 				List<Grid2D<u32>>{
 					rgba0, rgba1
 				}, 
-				GPUFormat::RGBA8, GPUMemoryUsage::LOCAL, 2, 2
+				GPUFormat::RGBA8, GPUMemoryUsage::LOCAL, 2
 			)
 		);
 
@@ -146,7 +146,10 @@ struct TestViewportInterface : public ViewportInterface {
 
 		auto descriptorsInfo = Descriptors::Info(pipelineLayout, {});
 		descriptorsInfo.resources[0] = uniforms;
-		descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D, 0, 1, 0, 1);
+
+		descriptorsInfo.resources[1] = GPUSubresource(
+			samp, tex2D, TextureType::TEXTURE_2D, 0, 1, 0, 1
+		);
 
 		descriptors = new Descriptors(
 			g, NAME("Test descriptors"), 

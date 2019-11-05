@@ -3,6 +3,16 @@
 
 namespace ignis {
 
+	//A feature that's dependent on the current platform
+	enum class Feature : u8 { 
+		NONE, RAYTRACING, MESH_SHADERS, COUNT 
+	};
+
+	//An extension that's dependent on the current gpu
+	enum class Extension : u8 { 
+		NONE, CONDITIONAL_RENDERING, INDIRECT_COUNT, COUNT 
+	};
+
 	//0 = NONE
 	//& 0xC = GPUBuffer (0), ShaderBuffer (4), DrawBuffer (8)
 	enum class GPUBufferType : u8 {

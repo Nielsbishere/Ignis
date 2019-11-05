@@ -38,6 +38,9 @@ namespace ignis {
 		dimensions(xyz), format(format), usage(usage), mips(mipCount), layers(layers),
 		textureType(textureType) {
 
+		if(!layers || !xyz[0] || !xyz[1] || !xyz[2])
+			oic::System::log()->fatal("Texture created with invalid dimensions!");
+
 		//Automatically determine mips
 
 		u32 biggestRes =
@@ -98,8 +101,28 @@ namespace ignis {
 	}
 
 	bool Texture::validSubresource(const GPUSubresource &res, bool isSampler) const {
+
 		auto &tex = isSampler ? (const GPUSubresource::TextureRange&)res.samplerData : res.textureRange;
-		return usz(tex.minLayer) + tex.layerCount <= info.layers && usz(tex.minLevel) + tex.levelCount <= info.mips;
+
+		return 
+			usz(tex.minLayer) + tex.layerCount <= info.layers && 
+			usz(tex.minLevel) + tex.levelCount <= info.mips &&
+			isValidSubType(tex.subType);
+	}
+
+	bool Texture::isValidSubType(const TextureType type) const {
+
+		if (info.textureType == TextureType::TEXTURE_CUBE)
+			return
+				type == TextureType::TEXTURE_2D || type == TextureType::TEXTURE_2D_ARRAY ||
+				type == TextureType::TEXTURE_CUBE;
+
+		if (info.textureType == TextureType::TEXTURE_CUBE_ARRAY)
+			return 
+				type == TextureType::TEXTURE_2D || type == TextureType::TEXTURE_2D_ARRAY ||
+				type == TextureType::TEXTURE_CUBE || type == TextureType::TEXTURE_CUBE_ARRAY;
+
+		return info.textureType == type || TextureType(u8(info.textureType) & ~u8(TextureType::PROPERTY_IS_ARRAY)) == type;
 	}
 
 }

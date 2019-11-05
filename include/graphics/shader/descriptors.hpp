@@ -19,18 +19,22 @@ namespace ignis {
 
 			u32 minLevel{}, minLayer{};
 			u32 levelCount{}, layerCount{};
+			TextureType subType{};
 
 			TextureRange() {}
 			TextureRange(
-				u32 minLevel, u32 minLayer, u32 levelCount, u32 layerCount
+				u32 minLevel, u32 minLayer,
+				u32 levelCount, u32 layerCount,
+				TextureType subType
 			) :
 				minLevel(minLevel), minLayer(minLayer), 
-				levelCount(levelCount), layerCount(layerCount) {}
+				levelCount(levelCount), layerCount(layerCount), subType(subType) {}
 
 			inline bool operator==(const TextureRange &other) const {
 				return
 					(u64&)minLevel == (u64&)other.minLevel && 
-					(u64&)levelCount == (u64&)other.layerCount;
+					(u64&)levelCount == (u64&)other.layerCount &&
+					subType == other.subType;
 			}
 		};
 
@@ -41,9 +45,12 @@ namespace ignis {
 			SamplerData() {}
 			SamplerData(
 				Texture *texture,
-				u32 minLevel, u32 minLayer, u32 levelCount, u32 layerCount
+				u32 minLevel, u32 minLayer,
+				u32 levelCount, u32 layerCount,
+				TextureType subType
 			): 
-				texture(texture), TextureRange(minLevel, minLayer, levelCount, layerCount){}
+				texture(texture),
+				TextureRange(minLevel, minLayer, levelCount, layerCount, subType){}
 		};
 
 		struct BufferRange {
@@ -64,7 +71,7 @@ namespace ignis {
 		GPUSubresource(GPUBuffer *resource, usz offset = 0, usz size = 0);
 
 		GPUSubresource(
-			Sampler *sampler, Texture *texture,
+			Sampler *sampler, Texture *texture, TextureType subType,
 			u32 levelCount = 0, u32 layerCount = 0,
 			u32 minLevel = 0, u32 minLayer = 0
 		);
@@ -72,7 +79,7 @@ namespace ignis {
 		GPUSubresource(Sampler *resource);
 
 		GPUSubresource(
-			Texture *resource,
+			Texture *resource, TextureType subType,
 			u32 levelCount = 0, u32 layerCount = 0,
 			u32 minLevel = 0, u32 minLayer = 0
 		);
