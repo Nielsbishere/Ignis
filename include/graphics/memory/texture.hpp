@@ -11,60 +11,60 @@ namespace ignis {
 
 		struct Info {
 
-			List<Buffer> initData;		//[mip + layer * mips]
+			List<Buffer> initData;		//[mip] Where each buffer.size = linearSize*layers
 
 			Vec3u dimensions;
 			u32 layers;
 
 			GPUFormat format;
 			GPUMemoryUsage usage;
-			u8 mips;				//0 for auto, N for a specific number of mips
+			u8 mips;
 
 			TextureType textureType;
 
 			//Empty Texture1D
 			Info(
 				u32 x, GPUFormat format, GPUMemoryUsage usage,
-				u8 mips = 0, u32 layers = 1
+				u8 mips, u32 layers = 1
 			);
 
 			//Empty Texture2D
 			Info(
 				Vec2u xy, GPUFormat format, GPUMemoryUsage usage,
-				u8 mips = 0, u32 layers = 1
+				u8 mips, u32 layers = 1
 			);
 
 			//Empty Texture3D
 			Info(
-				Vec3u xyz, GPUFormat format, GPUMemoryUsage usage,
-				u8 mips = 0
+				Vec3u xyz, GPUFormat format,
+				GPUMemoryUsage usage, u8 mips
 			);
 
 			//Filled Texture1D
 			template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 			Info(
-				const List<oic::Grid1D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
-				u8 mips = 0, u32 layers = 1
+				const List<oic::Grid1D<T>> &val, GPUFormat format,
+				GPUMemoryUsage usage, u8 mips, u32 layers = 1
 			);
 
 			//Filled Texture2D
 			template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 			Info(
-				const List<oic::Grid2D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
-				u8 mips = 0, u32 layers = 1
+				const List<oic::Grid2D<T>> &val, GPUFormat format,
+				GPUMemoryUsage usage, u8 mips, u32 layers = 1
 			);
 
 			//Filled Texture3D
 			template<typename T, typename = std::enable_if_t<std::is_arithmetic_v<T>>>
 			Info(
-				const List<oic::Grid3D<T>> &val, GPUFormat format, GPUMemoryUsage usage,
-				u8 mips = 0
+				const List<oic::Grid3D<T>> &val, GPUFormat format, 
+				GPUMemoryUsage usage, u8 mips
 			);
 
 			//TODO: Cubemap
 			//TODO: Compressed texture
 
-			//List<Buffer> with size mips * layers
+			//List<Buffer> with size mips with each buffer of size layers * multiplied(resolution) * stride
 			bool init(const List<Buffer> &b);
 
 		private:
@@ -105,6 +105,11 @@ namespace ignis {
 	) : 
 		Info(u32(val[0].size()), format, usage, mips, layers) {
 
+		if (dimensions[0] % layers != 0)
+			oic::System::log()->fatal("Width of Grid1D should encompass layer count");
+
+		dimensions[0] /= layers;
+
 		List<Buffer> buffers(val.size());
 
 		for (usz i = 0, j = val.size(); i < j; ++i)
@@ -122,6 +127,11 @@ namespace ignis {
 			Vec2u{ u32(val[0].size()[1]), u32(val[0].size()[0]) }, 
 			format, usage, mips, layers
 		) {
+
+		if (dimensions[1] % layers != 0)
+			oic::System::log()->fatal("Height of Grid2D should encompass layer count");
+
+		dimensions[1] /= layers;
 
 		List<Buffer> buffers(val.size());
 

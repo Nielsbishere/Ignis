@@ -51,41 +51,36 @@ namespace ignis {
 
 		u8 biggestMip = u8(oic::Math::ceil(oic::Math::log2<f64>(biggestRes)) + 1);
 
-		if (mips)
-			mips = oic::Math::min(mips, biggestMip);
-		else
-			mips = biggestMip;
+		if (!mips || mips > biggestMip)
+			oic::System::log()->fatal("Texture created with too many or no mips!");
 	}
 
 	bool Texture::Info::init(const List<Buffer> &b) {
 
-		if (b.size() != usz(mips) * layers) {
+		if (b.size() != usz(mips)) {
 			oic::System::log()->error("Texture requires all init data (mips and layers)");
 			return false;
 		}
 
-		for (usz l = 0; l < layers; ++l) {
+		Vec3u res = dimensions;
 
-			Vec3u res = dimensions;
+		for (usz m = 0; m < mips; ++m) {
 
-			for (usz m = 0; m < mips; ++m) {
+			usz size =
+				FormatHelper::getSizeBytes(format) * 
+				res[0] * res[1] * res[2] * layers;
 
-				usz size =
-					FormatHelper::getSizeBytes(format) * 
-					res[0] * res[1] * res[2];
-
-				if (b[l * mips + m].size() != size || !size) {
-					oic::System::log()->error("Invalid texture size");
-					return false;
-				}
-
-				//TODO: Use Vec3f
-
-				f64 x = res[0], y = res[1], z = res[2];
-				x /= 2; y /= 2; z /= 2;
-
-				res = Vec3u{ u32(oic::Math::ceil(x)), u32(oic::Math::ceil(y)), u32(oic::Math::ceil(z)) };
+			if (b[m].size() != size || !size) {
+				oic::System::log()->error("Invalid texture size");
+				return false;
 			}
+
+			//TODO: Use Vec3f
+
+			f64 x = res[0], y = res[1], z = res[2];
+			x /= 2; y /= 2; z /= 2;
+
+			res = Vec3u{ u32(oic::Math::ceil(x)), u32(oic::Math::ceil(y)), u32(oic::Math::ceil(z)) };
 		}
 
 		initData = b;

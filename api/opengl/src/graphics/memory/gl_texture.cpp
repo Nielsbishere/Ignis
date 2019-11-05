@@ -44,9 +44,11 @@ namespace ignis {
 			
 			break;
 
+		case TextureType::TEXTURE_1D_ARRAY:
 		case TextureType::TEXTURE_2D: {
 
 				u32 y = oic::Math::max(info.dimensions[1], info.layers);
+				f64 yDiv = info.layers <= 1 ? 2 : 1;
 
 				glTextureStorage2D(
 					handle, mipCount, textureFormat, x, y
@@ -60,15 +62,18 @@ namespace ignis {
 						);
 
 						x = u32(oic::Math::ceil(x / 2.0));
-						y = u32(oic::Math::ceil(y / 2.0));
+						y = u32(oic::Math::ceil(y / yDiv));
 					}
 
 			}
 			break;
+
+		case TextureType::TEXTURE_2D_ARRAY:
 		case TextureType::TEXTURE_3D: {
 
 				u32 y = info.dimensions[1];
 				u32 z = oic::Math::max(info.dimensions[2], info.layers);
+				f64 zDiv = info.layers <= 1 ? 2 : 1;
 
 				glTextureStorage3D(
 					handle, mipCount, textureFormat, x, y, z
@@ -83,15 +88,11 @@ namespace ignis {
 
 						x = u32(oic::Math::ceil(x / 2.0));
 						y = u32(oic::Math::ceil(y / 2.0));
-						z = u32(oic::Math::ceil(z / 2.0));
+						z = u32(oic::Math::ceil(z / zDiv));
 					}
 
 			}
 			break;
-
-		//TODO:
-		case TextureType::TEXTURE_1D_ARRAY:
-		case TextureType::TEXTURE_2D_ARRAY:
 
 		default:
 			oic::System::log()->fatal("TextureType not supported");

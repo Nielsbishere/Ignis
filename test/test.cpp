@@ -90,13 +90,18 @@ struct TestViewportInterface : public ViewportInterface {
 
 		//Create texture
 
-		const u32 rgba0[2][2] = {
+		const u32 rgba0[4][2] = {
+
 			{ 0xFFFF00FF, 0xFF00FFFF },	//1,0,1, 0,1,1
-			{ 0xFFFFFF00, 0xFFFFFFFF }	//1,1,0, 1,1,1
+			{ 0xFFFFFF00, 0xFFFFFFFF },	//1,1,0, 1,1,1
+
+			{ 0xFF7F007F, 0xFF7F0000 },	//.5,0,.5, .5,0,0
+			{ 0xFF7F7F7F, 0xFF007F00 }	//.5,.5,.5, 0,.5,0
 		};
 
-		const u32 rgba1[1][1] = {
-			{ 0xFFBFBFBF }				//0.75,0.75,0.75
+		const u32 rgba1[2][1] = {
+			{ 0xFFBFBFBF },				//0.75,0.75,0.75
+			{ 0xFF5F7F7F }				//0.375,0.5,0.5
 		};
 
 		tex2D = new Texture(
@@ -105,7 +110,7 @@ struct TestViewportInterface : public ViewportInterface {
 				List<Grid2D<u32>>{
 					rgba0, rgba1
 				}, 
-				GPUFormat::RGBA8, GPUMemoryUsage::LOCAL
+				GPUFormat::RGBA8, GPUMemoryUsage::LOCAL, 2, 2
 			)
 		);
 
@@ -141,7 +146,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		auto descriptorsInfo = Descriptors::Info(pipelineLayout, {});
 		descriptorsInfo.resources[0] = uniforms;
-		descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D);
+		descriptorsInfo.resources[1] = GPUSubresource(samp, tex2D, 0, 1, 0, 1);
 
 		descriptors = new Descriptors(
 			g, NAME("Test descriptors"), 
@@ -190,8 +195,8 @@ struct TestViewportInterface : public ViewportInterface {
 
 			//Draw primitive
 
-			BindDescriptors(descriptors),
 			BindPipeline(pipeline),
+			BindDescriptors(descriptors),
 			BindPrimitiveBuffer(mesh),
 			DrawInstanced(mesh->elements()),
 

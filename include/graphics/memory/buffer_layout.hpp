@@ -55,7 +55,9 @@ namespace ignis {
 		inline const bool isInstanced() const { return instanced; }
 
 		inline const bool operator==(const BufferAttributes &other) const {
-			return values == other.values && stride == other.stride && instanced == other.instanced;
+			return 
+				values == other.values && stride == other.stride && 
+				instanced == other.instanced;
 		}
 
 		inline const bool operator!=(const BufferAttributes &other) const {
