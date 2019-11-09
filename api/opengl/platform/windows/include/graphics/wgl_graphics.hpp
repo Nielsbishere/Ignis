@@ -1,12 +1,12 @@
 #pragma once
-#include "graphics/surface/swapchain.hpp"
 #include "graphics/gl_graphics.hpp"
 
 namespace ignis {
 
-	struct Swapchain::Data {
+	struct Graphics::Data::Platform {
 		HDC dc{};
 		HGLRC rc{};
+		HWND hwnd{};
 	};
 
 }

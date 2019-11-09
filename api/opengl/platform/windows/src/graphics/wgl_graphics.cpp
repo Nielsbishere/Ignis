@@ -1,11 +1,15 @@
 #include "system/system.hpp"
 #include "system/log.hpp"
+#include "utils/thread.hpp"
 #include "error/ignis.hpp"
-#include "graphics/gl_graphics.hpp"
+#include "graphics/gl_context.hpp"
+#include "graphics/wgl_graphics.hpp"
 
 namespace ignis {
 
 	void Graphics::init() {
+
+		data->platform = new Graphics::Data::Platform();
 
 		//Create temporary windows
 
@@ -18,7 +22,7 @@ namespace ignis {
 		if (!RegisterClassA(&tempWClass))
 			oic::System::log()->fatal(errors::surface::contextError);
 
-		HWND tempWind = CreateWindowExA(
+		HWND hwnd = data->platform->hwnd = CreateWindowExA(
 			0,
 			tempWClass.lpszClassName,
 			"WGL Dummy",
@@ -30,7 +34,7 @@ namespace ignis {
 			0
 		);
 
-		HDC dc = GetDC(tempWind);
+		HDC dc = data->platform->dc = GetDC(hwnd);
 
 		//Create temporary context to query for extensions and versions
 
@@ -58,7 +62,7 @@ namespace ignis {
 
 		//Create render context
 
-		HGLRC rc = wglCreateContext(dc);
+		HGLRC rc = data->platform->rc = wglCreateContext(dc);
 
 		if (!rc || !wglMakeCurrent(dc, rc))
 			oic::System::log()->fatal(errors::surface::contextError);
@@ -81,11 +85,28 @@ namespace ignis {
 				oic::System::log()->warn(String("GL Function not found ") + elem.first);
 		}
 
-		wglMakeCurrent(dc, NULL);
-		wglDeleteContext(rc);
-		ReleaseDC(tempWind, dc);
-		DestroyWindow(tempWind);
+		data->contexts[oic::Thread::getCurrentId()];
+	}
+
+	void Graphics::release() {
+
+		data->destroyContext();
+
+		wglMakeCurrent(data->platform->dc, NULL);
+		wglDeleteContext(data->platform->rc);
+		ReleaseDC(data->platform->hwnd, data->platform->dc);
+		DestroyWindow(data->platform->hwnd);
 		UnregisterClassA("WGL", GetModuleHandleA(NULL));
+
+		destroy(data->platform);
+	}
+
+	void Graphics::pause() {
+		wglMakeCurrent(data->platform->dc, NULL);
+	}
+
+	void Graphics::resume() {
+		wglMakeCurrent(data->platform->dc, data->platform->rc);
 	}
 
 }

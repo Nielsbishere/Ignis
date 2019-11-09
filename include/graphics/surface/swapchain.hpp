@@ -31,6 +31,7 @@ namespace ignis {
 		apimpl void begin(const Vec4u &xyzw) final override;
 		apimpl void end() final override;
 		plimpl void present();
+		plimpl void bind();
 
 		inline const Info &getSwapchainInfo() const { return swapchainInfo; }
 		Data *getData() { return data; }

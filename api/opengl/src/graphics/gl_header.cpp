@@ -2,6 +2,7 @@
 #include "system/log.hpp"
 #include "system/system.hpp"
 #include "graphics/shader/descriptors.hpp"
+#include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/memory/gl_gpu_buffer.hpp"
 #include "graphics/memory/gl_texture.hpp"
 #include "graphics/shader/gl_sampler.hpp"
@@ -607,5 +608,54 @@ void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 
 		}
 	}
-
 }
+
+//Per context
+
+GLuint glxGenerateVao(PrimitiveBuffer *prim) {
+	
+	GLuint handle;
+
+	glCreateVertexArrays(1, &handle);
+	glObjectLabel(
+		GL_VERTEX_ARRAY, handle,
+		GLsizei(prim->getName().size()), prim->getName().c_str()
+	);
+
+	auto &info = prim->getInfo();
+
+	u32 i{};
+
+	for (auto &v : info.vertexLayout) {
+
+		glVertexArrayVertexBuffer(
+			handle, i, v.buffer->getData()->handle, v.bufferOffset, v.stride()
+		);
+
+		for (auto &elem : v.formats) {
+
+			glEnableVertexArrayAttrib(handle, elem.index);
+			glVertexArrayAttribFormat(
+				handle,
+				elem.index, 
+				GLint(FormatHelper::getChannelCount(elem.format)),
+				glxGpuFormatType(elem.format),
+				!FormatHelper::isUnnormalized(elem.format), 
+				elem.offset
+			);
+
+			glVertexArrayAttribBinding(handle, elem.index, i);
+
+			if (v.instanced())
+				glVertexArrayBindingDivisor(handle, elem.index, 1);
+		}
+	}
+
+	if(prim->isIndexed())
+		glVertexArrayElementBuffer(
+			handle, info.indexLayout.buffer->getData()->handle
+		);
+
+	return handle;
+}
+

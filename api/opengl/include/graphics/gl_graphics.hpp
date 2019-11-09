@@ -16,6 +16,7 @@
 	#undef min
 	#undef max
 	#undef DOMAIN
+
 #endif
 
 #include "glext.h"
@@ -38,12 +39,17 @@ namespace ignis {
 		usz offset{}, size{};
 	};
 
+	struct GLContext;
+
 	struct Graphics::Data {
+
+		plimpl struct Platform;
 
 		Framebuffer *currentFramebuffer{};
 		PrimitiveBuffer *primitiveBuffer{};
 		Pipeline *pipeline{};
 		Descriptors *descriptors{};
+		Platform *platform{};
 
 		f32 depth{};
 		u32 stencil{};
@@ -64,6 +70,17 @@ namespace ignis {
 
 		u32 major, minor;
 		bool isES{}, scissorEnable{};
+
+		//Per context info
+
+		HashMap<usz, GLContext> contexts;
+		HashMap<PrimitiveBuffer*, bool> primitiveBuffers;
+		//HashMap<Framebuffer*, bool> frameBuffers;
+
+		void updateContext();
+		void destroyContext();
+
+		//Helper functions
 
 		static inline constexpr u64 getVersion(u32 major, u32 minor) {
 			return (u64(major) << 32) | minor;

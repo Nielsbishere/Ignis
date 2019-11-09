@@ -3,7 +3,7 @@
 #include "system/log.hpp"
 #include "error/ignis.hpp"
 #include "graphics/format.hpp"
-#include "graphics/gl_graphics.hpp"
+#include "graphics/wgl_graphics.hpp"
 #include "graphics/surface/wgl_swapchain.hpp"
 
 #pragma comment(lib, "opengl32.lib")
@@ -75,7 +75,7 @@ namespace ignis {
 		};
 
 		wglSwapIntervalEXT(swapchainInfo.useVSync);
-		data->rc = wglCreateContextAttribsARB(data->dc, 0, contextAttribs);
+		data->rc = wglCreateContextAttribsARB(data->dc, g.getData()->platform->rc, contextAttribs);
 
 		if (!data->rc || !wglMakeCurrent(data->dc, data->rc))
 			oic::System::log()->fatal(errors::surface::contextError);
@@ -92,6 +92,12 @@ namespace ignis {
 
 	Swapchain::~Swapchain() {
 
+		//Destroy all FBOs and VAOs
+
+		getGraphics().getData()->destroyContext();
+
+		//Destroy context
+
 		wglMakeCurrent(data->dc, NULL);
 		wglDeleteContext(data->rc);
 
@@ -100,6 +106,8 @@ namespace ignis {
 
 		destroy(data);
 	}
+
+	void Swapchain::bind() { }
 
 	void Swapchain::present() {
 		SwapBuffers(data->dc);

@@ -52,6 +52,8 @@ namespace ignis {
 		inline const usz size() const { return values.size(); }
 		inline auto begin() { return values.begin(); }
 		inline auto end() { return values.end(); }
+		inline auto begin() const { return values.begin(); }
+		inline auto end() const { return values.end(); }
 		inline const bool isInstanced() const { return instanced; }
 
 		inline const bool operator==(const BufferAttributes &other) const {

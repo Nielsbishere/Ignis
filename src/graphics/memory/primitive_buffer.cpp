@@ -81,18 +81,14 @@ namespace ignis {
 			} else if (info.indexLayout.buffer->getInfo().type != GPUBufferType::INDEX)
 				oic::System::log()->fatal("Invalid predefined index buffer");
 		}
-
-		init();
 	}
 
 	PrimitiveBuffer::~PrimitiveBuffer() {
 
-		destroy();
-
 		for (auto &elem : info.vertexLayout)
-			::destroy(elem.buffer);
+			destroy(elem.buffer);
 
-		::destroy(info.indexLayout.buffer);
+		destroy(info.indexLayout.buffer);
 	}
 
 	const bool PrimitiveBuffer::matchLayout(const List<BufferAttributes> &layout) const {

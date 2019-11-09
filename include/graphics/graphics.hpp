@@ -75,8 +75,6 @@ namespace ignis {
 
 		apimpl GraphicsApi getCurrentApi() const;
 
-		plimpl void init();
-
 		apimpl struct Data;
 
 		apimpl CommandAvailability getCommandAvailability(CommandOp op);
@@ -87,9 +85,20 @@ namespace ignis {
 			const List<CommandList*> &commands
 		);
 
+		//Signals that the graphics instance of this thread is not needed currently
+		//This enables other threads from sharing with the creator thread
+		plimpl void pause();
+
+		//Signals that the graphics instance of this thread is needed currently
+		//This blocks other threads from sharing with the creator thread
+		plimpl void resume();
+
 		inline Data *getData() { return data; }
 
 	protected:
+
+		plimpl void init();
+		plimpl void release();
 
 		inline void erase(GraphicsObject *t);
 		inline void add(GraphicsObject *t);
@@ -97,6 +106,9 @@ namespace ignis {
 
 		void setFeature(Feature, bool);
 		void setExtension(Extension, bool);
+
+		//API erasion and deletion of objects
+		apimpl void onAddOrErase(GraphicsObject *t, bool isDeleted);
 
 	private:
 
@@ -109,7 +121,7 @@ namespace ignis {
 	
 	inline auto Graphics::find(GraphicsObject *t) const {
 		return std::find(
-			graphicsObjects.begin(), graphicsObjects.end(), ( GraphicsObject *) t
+			graphicsObjects.begin(), graphicsObjects.end(), (GraphicsObject*) t
 		);
 	}
 	
@@ -118,16 +130,21 @@ namespace ignis {
 	}
 	
 	inline void Graphics::add(GraphicsObject *t) {
-		if(!contains(t))
+
+		if (!contains(t)) {
 			graphicsObjects.push_back(t);
+			onAddOrErase(t, false);
+		}
 	}
 
 	inline void Graphics::erase(GraphicsObject *t) {
 
 		auto it = find(t);
 
-		if (it != graphicsObjects.end())
+		if (it != graphicsObjects.end()) {
+			onAddOrErase(*it, true);
 			graphicsObjects.erase(it);
+		}
 	}
 
 }

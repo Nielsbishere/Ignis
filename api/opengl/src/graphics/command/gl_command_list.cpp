@@ -1,12 +1,13 @@
+#include "utils/thread.hpp"
 #include "graphics/command/command_list.hpp"
 #include "graphics/command/command_ops.hpp"
 #include "graphics/command/commands.hpp"
+#include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/surface/swapchain.hpp"
-#include "graphics/memory/gl_primitive_buffer.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/shader/pipeline.hpp"
-#include "graphics/gl_graphics.hpp"
+#include "graphics/gl_context.hpp"
 
 namespace ignis {
 
@@ -25,6 +26,12 @@ namespace ignis {
 			case CMD_BEGIN_FRAMEBUFFER:
 				{
 					auto *bs = (BeginFramebuffer*)c;
+
+					auto size = bs->bindObject->getInfo().size;
+
+					if(!size[0] || !size[1])
+						oic::System::log()->fatal("Please specify an initialized framebuffer");
+
 					bs->bindObject->begin(bs->renderArea);
 					gdata.currentFramebuffer = bs->bindObject;
 				}
@@ -130,7 +137,13 @@ namespace ignis {
 
 					if (pbuffer != gdata.primitiveBuffer) {
 						gdata.primitiveBuffer = pbuffer;
-						glBindVertexArray(pbuffer->getData()->handle);
+
+						GLContext &context = gdata.contexts[oic::Thread::getCurrentId()];
+
+						if (context.vaos.find(pbuffer) == context.vaos.end())
+							context.vaos[pbuffer] = glxGenerateVao(pbuffer);
+
+						glBindVertexArray(context.vaos[pbuffer]);
 					}
 				}
 				break;

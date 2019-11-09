@@ -22,6 +22,7 @@ namespace ignis {
 
 	class Descriptors;
 	class Pipeline;
+	class PrimitiveBuffer;
 }
 
 extern GLenum glxDepthFormat(ignis::DepthFormat format);
@@ -51,3 +52,7 @@ extern void glxBindPipeline(ignis::Graphics::Data &data, ignis::Pipeline *pipeli
 extern void glxBindDescriptors(ignis::Graphics::Data &data, ignis::Descriptors *descriptors);
 extern bool glxCheckShaderLog(GLuint shader, String &str);
 extern bool glxCheckProgramLog(GLuint program, String &str);
+
+//Per context objects
+
+extern GLuint glxGenerateVao(ignis::PrimitiveBuffer *prim);

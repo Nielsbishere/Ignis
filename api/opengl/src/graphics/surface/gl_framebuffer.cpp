@@ -12,6 +12,9 @@ namespace ignis {
 		
 		data = new Data();
 		this->info.samples = oic::Math::min(g.getData()->maxSamples, info.samples);
+
+		if (!info.isDynamic)
+			onResize(info.size);
 	}
 
 	Framebuffer::~Framebuffer() {
@@ -23,7 +26,7 @@ namespace ignis {
 
 		Vec2u size{ u32(siz[0] * info.viewportScale), u32(siz[1] * info.viewportScale) };
 
-		if (info.size == size || !info.isDynamic)
+		if (info.size == size && (info.isDynamic || (!info.isDynamic && data->index)))
 			return;
 
 		info.size = size;

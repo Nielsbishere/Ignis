@@ -1,12 +1,18 @@
+#include "utils/thread.hpp"
 #include "graphics/command/command_list.hpp"
 #include "graphics/command/command_ops.hpp"
+#include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/gl_graphics.hpp"
+#include "graphics/gl_context.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
 #include "graphics/surface/swapchain.hpp"
 
 namespace ignis {
 
-	Graphics::~Graphics() { delete data; }
+	Graphics::~Graphics() { 
+		release();
+		delete data;
+	}
 
 	Graphics::Graphics() { 
 		data = new Graphics::Data(); 
@@ -27,6 +33,9 @@ namespace ignis {
 
 	void Graphics::execute(const List<CommandList*> &commands) {
 
+		//Updates VAOs and FBOs that have been added/released
+		data->updateContext();
+
 		for (CommandList *cl : commands)
 			cl->execute();
 	}
@@ -36,11 +45,13 @@ namespace ignis {
 		const List<CommandList*> &commands
 	) {
 
-		if (!intermediate || !swapchain || !commands.size())
+		if (!intermediate || !swapchain)
 			oic::System::log()->fatal("Couldn't present; invalid intermediate or swapchain");
 
 		if(intermediate->getInfo().size != swapchain->getInfo().size)
 			oic::System::log()->fatal("Couldn't present; swapchain and intermediate aren't same size");
+
+		swapchain->bind();
 
 		execute(commands);
 
@@ -51,10 +62,57 @@ namespace ignis {
 			data->bound[GL_DRAW_FRAMEBUFFER] = 0,
 			0, 0, size[0], size[1],
 			0, 0, size[0], size[1],
-			GL_COLOR_BUFFER_BIT, GL_NEAREST
+			GL_COLOR_BUFFER_BIT, GL_LINEAR
 		);
 
 		swapchain->present();
+	}
+
+	//Keep track of objects for updating gl contexts
+
+	void Graphics::onAddOrErase(GraphicsObject *go, bool isDeleted) {
+
+		if (go->canCast<PrimitiveBuffer>()) {
+
+			auto *pb = (PrimitiveBuffer*)go;
+
+			if(!isDeleted)
+				data->primitiveBuffers[pb];
+			else
+				data->primitiveBuffers.erase(pb);
+
+			//Remove all referenced VAOs in contexts next time they update
+
+			for (auto &context : data->contexts)
+				if(context.second.vaos.find(pb) != context.second.vaos.end())
+					context.second.deletedVaos.push_back(pb);
+		}
+
+	}
+
+	void Graphics::Data::updateContext() {
+
+		GLContext &context = contexts[oic::Thread::getCurrentId()];
+
+		//Clean up left over VAOs
+
+		for (auto &del : context.deletedVaos) {
+			glDeleteVertexArrays(1, &context.vaos[del]);
+			context.vaos.erase(del);
+		}
+
+		context.deletedVaos.clear();
+
+	}
+
+	void Graphics::Data::destroyContext() {
+
+		GLContext &context = contexts[oic::Thread::getCurrentId()];
+		
+		for(auto &vao : context.vaos)
+			glDeleteVertexArrays(1, &vao.second);
+
+		contexts.erase(oic::Thread::getCurrentId());
 	}
 
 }

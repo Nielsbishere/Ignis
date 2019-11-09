@@ -49,11 +49,6 @@ namespace ignis {
 		//Whether or not this primitive buffer matches a layout
 		const bool matchLayout(const List<BufferAttributes> &layout) const;
 
-	protected:
-
-		apimpl void init();
-		apimpl void destroy();
-
 	private:
 
 		Info info;

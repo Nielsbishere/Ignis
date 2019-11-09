@@ -1,22 +1,20 @@
-#include "graphics/command/commands.hpp"
-#include "graphics/surface/swapchain.hpp"
-#include "graphics/surface/framebuffer.hpp"
-#include "graphics/memory/primitive_buffer.hpp"
-#include "graphics/memory/shader_buffer.hpp"
-#include "graphics/memory/texture.hpp"
-#include "graphics/shader/sampler.hpp"
-#include "graphics/shader/pipeline.hpp"
-#include "graphics/shader/descriptors.hpp"
-#include "graphics/enums.hpp"
-#include "graphics/graphics.hpp"
-#include "system/viewport_manager.hpp"
-#include "system/viewport_interface.hpp"
-#include "system/local_file_system.hpp"
-#include "utils/hash.hpp"
+# ViewportInterface
 
-using namespace ignis;
-using namespace oic;
-using namespace cmd;
+See the core2's [documentation](../core2/docs/ViewportInterface.md) first.
+
+For ignis; you have to use the ViewportInterface if you want to support rendering to a window.
+
+This means that you have to keep track of where the threads come from. Whenever a Viewport thread is executed (all callbacks using ViewportInfo), it cannot access resources simultaneously with the main thread or other viewport threads.
+
+If you have resources that are modified in different viewports but are shared between them, you have to use `std::mutex` to make sure you don't override something. 
+
+When a ViewportInfo is initialized, it shouldn't have to create more data from the main thread; but only from the viewports. When this is the case, you have to `g.pause()` to disallow any further graphics objects from being created. If you need it from the main thread again, you can call `g.resume()`. 
+
+`g.pause()` has to be called from the main thread to allow a viewport to be created. When the viewports are created, it can call `g.resume()` again.
+
+## Example
+
+```cpp
 
 struct TestViewportInterface : public ViewportInterface {
 
@@ -36,19 +34,15 @@ struct TestViewportInterface : public ViewportInterface {
 	Texture *tex2D{};
 	Sampler *samp{};
 
-	//TODO: Better errors in ocore and ignis
-	//TODO: GPUResource should be an interface
-	//TODO: Resize should only take into account the surface size (NOT the full window size with menu)
-	//TODO: Demonstrate multiple windows
-
 	//Create resources
+	//Force 1080p to allow multiple windows easily
 
 	TestViewportInterface() {
 		
 		intermediate = new Framebuffer(
 			g, NAME("Framebuffer"),
 			Surface::Info(
-				{ GPUFormat::RGBA8 }, DepthFormat::NONE, false, 8
+				{ 1920, 1080 }, { GPUFormat::RGBA8 }, DepthFormat::NONE, false, 8
 			)
 		);
 
@@ -206,6 +200,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		//Pre-render and store rendered result.
 
+		g.execute(cl);
 		g.pause();
 	}
 
@@ -218,9 +213,6 @@ struct TestViewportInterface : public ViewportInterface {
 	//Create viewport resources
 
 	void init(ViewportInfo *vp) final override {
-
-		if (swapchains.size())
-			oic::System::log()->fatal("Currently only supporting 1 viewport");
 
 		//Create MSAA render target and window swapchain
 
@@ -241,7 +233,6 @@ struct TestViewportInterface : public ViewportInterface {
 	//Update size of surfaces
 
 	void resize(const ViewportInfo *vp, const Vec2u &size) final override {
-		intermediate->onResize(size);
 		swapchains[vp]->onResize(size);
 	}
 
@@ -251,7 +242,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		//Copy pre-rendered result to viewports
 
-		g.present(intermediate, swapchains[vp], cl);
+		g.present(intermediate, swapchains[vp]);
 	}
 
 };
@@ -272,3 +263,5 @@ int main() {
 
 	return 0;
 }
+```
+
