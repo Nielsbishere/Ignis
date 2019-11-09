@@ -356,9 +356,9 @@ void glxBeginRenderPass(
 	Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
 ) {
 
-	if (gdata.bound[GL_FRAMEBUFFER] != framebuffer)
+	if (gdata.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
 		glBindFramebuffer(
-			GL_FRAMEBUFFER, gdata.bound[GL_FRAMEBUFFER] = framebuffer
+			GL_DRAW_FRAMEBUFFER, gdata.bound[GL_DRAW_FRAMEBUFFER] = framebuffer
 		);
 
 	Vec4u sc = xywh;

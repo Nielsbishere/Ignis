@@ -26,7 +26,8 @@ struct TestViewportInterface : public ViewportInterface {
 
 	//Resources
 
-	Surface *s{}, *intermediate{};
+	Swapchain *swapchain{};
+	Framebuffer *intermediate{};
 	CommandList *cl{};
 	PrimitiveBuffer *mesh{};
 	Descriptors *descriptors{};
@@ -38,7 +39,7 @@ struct TestViewportInterface : public ViewportInterface {
 	//Cleanup resources
 
 	~TestViewportInterface() {
-		destroy(samp, tex2D, uniforms, pipeline, descriptors, mesh, cl, intermediate, s);
+		destroy(samp, tex2D, uniforms, pipeline, descriptors, mesh, cl, intermediate, swapchain);
 	}
 
 	//Create resources
@@ -47,7 +48,10 @@ struct TestViewportInterface : public ViewportInterface {
 
 		//Create MSAA render target and window swapchain
 
-		s = new Swapchain(g, NAME("Swapchain"), Swapchain::Info{ vp, false, DepthFormat::NONE });
+		swapchain = new Swapchain(
+			g, NAME("Swapchain"), 
+			Swapchain::Info{ vp, false, DepthFormat::NONE }
+		);
 
 		intermediate = new Framebuffer(
 			g, NAME("Framebuffer"),
@@ -192,9 +196,9 @@ struct TestViewportInterface : public ViewportInterface {
 			//Clear and bind MSAA
 
 			SetClearColor(Vec4f { 0.586f, 0.129f, 0.949f, 1.0f }),
-			BeginSurface(intermediate),
+			BeginFramebuffer(intermediate),
 
-			//TODO: BeginRenderPass instead of BeginSurface
+			//TODO: BeginRenderPass instead of BeginFramebuffer
 
 			//Draw primitive
 
@@ -205,9 +209,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 			//Present to surface
 
-			EndSurface(),
-			BlitSurface(intermediate, s, Vec4u(), Vec4u(), BlitSurface::COLOR, BlitSurface::LINEAR),
-			Present()
+			EndFramebuffer()
 		);
 	}
 
@@ -215,13 +217,13 @@ struct TestViewportInterface : public ViewportInterface {
 
 	void resize(const Vec2u &size) final override {
 		intermediate->onResize(size);
-		s->onResize(size);
+		swapchain->onResize(size);
 	}
 
 	//Execute commandList
 
 	void render() final override {
-		g.execute(cl);
+		g.present(intermediate, swapchain, cl);
 	}
 
 };

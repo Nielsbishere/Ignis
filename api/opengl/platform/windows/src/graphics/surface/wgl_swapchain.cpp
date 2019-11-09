@@ -24,11 +24,6 @@ namespace ignis {
 	{
 		data = new Swapchain::Data{};
 
-		if (g.getData()->swapchain)
-			oic::System::log()->fatal("Each window can only have one swapchain");
-
-		g.getData()->swapchain = this;
-
 		//Create context
 
 		WWindow *win = ((WViewportManager*) System::viewportManager())->get(info.vi);

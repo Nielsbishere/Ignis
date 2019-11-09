@@ -32,6 +32,8 @@ namespace ignis {
 
 	class GraphicsObject;
 	class CommandList;
+	class Framebuffer;
+	class Swapchain;
 
 	class Graphics {
 
@@ -62,6 +64,12 @@ namespace ignis {
 			execute(commands);
 		}
 
+		template<typename ...args>
+		inline void present(Framebuffer *intermediate, Swapchain *swapchain, args *...arg) {
+			List<CommandList*> commands{ arg... };
+			present(intermediate, swapchain, commands);
+		}
+
 		apimpl Graphics();
 		apimpl ~Graphics();
 
@@ -73,6 +81,11 @@ namespace ignis {
 
 		apimpl CommandAvailability getCommandAvailability(CommandOp op);
 		apimpl void execute(const List<CommandList*> &commands);
+
+		apimpl void present(
+			Framebuffer *intermediate, Swapchain *swapchain, 
+			const List<CommandList*> &commands
+		);
 
 		inline Data *getData() { return data; }
 

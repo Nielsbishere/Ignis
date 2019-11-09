@@ -102,14 +102,15 @@ namespace ignis {
 			}
 		}
 
-		data->renderTextures.resize(info.colorFormats.size());
+		data->renderTextures = decltype(data->renderTextures)(info.colorFormats.size());
 		List<GLenum> drawBuffers(info.colorFormats.size());
 
-		for (usz i = 0, j = info.colorFormats.size(); i < j; ++i) {
+		glCreateTextures(
+			glxTextureType(getTextureType()), 
+			GLsizei(info.colorFormats.size()), data->renderTextures.data()
+		);
 
-			glCreateTextures(
-				glxTextureType(getTextureType()), 1, data->renderTextures.data() + i
-			);
+		for (usz i = 0, j = info.colorFormats.size(); i < j; ++i) {
 
 			GLuint tex = data->renderTextures[i];
 

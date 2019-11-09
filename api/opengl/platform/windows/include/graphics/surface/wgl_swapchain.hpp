@@ -1,7 +1,6 @@
 #pragma once
 #include "graphics/surface/swapchain.hpp"
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include "graphics/gl_graphics.hpp"
 
 namespace ignis {
 

@@ -8,7 +8,7 @@
 namespace ignis {
 
 	class Pipeline;
-	class Surface;
+	class Framebuffer;
 	class Descriptors;
 	class PrimitiveBuffer;
 	class Query;
@@ -34,10 +34,9 @@ namespace ignis {
 		using BindDescriptors		= GraphicsObjOp<CMD_BIND_DESCRIPTORS,		Descriptors>;
 		using BindPrimitiveBuffer	= GraphicsObjOp<CMD_BIND_PRIMITIVE_BUFFER,  PrimitiveBuffer>;
 
-		using BeginQuery			= GraphicsObjOp<CMD_BEGIN_SURFACE,			Query>;
+		using BeginQuery			= GraphicsObjOp<CMD_BEGIN_QUERY,			Query>;
 		using EndQuery				= NoParamOp<CMD_END_QUERY>;
-		using EndSurface			= NoParamOp<CMD_END_SURFACE>;
-		using Present				= NoParamOp<CMD_PRESENT>;
+		using EndFramebuffer		= NoParamOp<CMD_END_FRAMEBUFFER>;
 
 		//Draw/dispatch commands
 
@@ -100,18 +99,21 @@ namespace ignis {
 				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbai(rgba), type(Type::SIGNED_INT) {}
 		};
 
-		struct BeginSurface : GraphicsObjOp<CMD_BEGIN_SURFACE, Surface> {
+		struct BeginFramebuffer : GraphicsObjOp<CMD_BEGIN_FRAMEBUFFER, Framebuffer> {
 
 			Vec4u renderArea;
 
-			BeginSurface(Surface *surface, Vec2u renderSize = {}, Vec2u renderOffset = {}):
-				GraphicsObjOp(surface, sizeof(*this)),
+			BeginFramebuffer(
+				Framebuffer *framebuffer, 
+				Vec2u renderSize = {}, Vec2u renderOffset = {}
+			):
+				GraphicsObjOp(framebuffer, sizeof(*this)),
 				renderArea{ renderOffset[0], renderOffset[1], renderSize[0], renderSize[1] } {}
 		};
 
-		struct BlitSurface : Command {
+		struct BlitFramebuffer : Command {
 
-			Surface *src, *dst;
+			Framebuffer *src, *dst;
 			Vec4u srcArea, dstArea;
 
 			enum BlitMask : u8 {
@@ -124,10 +126,12 @@ namespace ignis {
 				NEAREST, LINEAR
 			} filter;
 
-			BlitSurface(
-				Surface *src, Surface *dst, Vec4u srcArea, Vec4u dstArea, BlitMask mask, BlitFilter filter
+			BlitFramebuffer(
+				Framebuffer *src, Framebuffer *dst, 
+				Vec4u srcArea, Vec4u dstArea,
+				BlitMask mask, BlitFilter filter
 			): 
-				Command(CMD_BLIT_SURFACE, sizeof(*this)), src(src), dst(dst), 
+				Command(CMD_BLIT_FRAMEBUFFER, sizeof(*this)), src(src), dst(dst), 
 				srcArea(srcArea), dstArea(dstArea), mask(mask), filter(filter) {}
 
 		};

@@ -1,6 +1,6 @@
 #pragma once
 #include "types/types.hpp"
-#include "graphics/gpu_resource.hpp"
+#include "graphics/graphics_object.hpp"
 
 namespace ignis {
 
@@ -8,7 +8,7 @@ namespace ignis {
 	enum class DepthFormat : u8;
 	enum class TextureType : u8;
 
-	class Surface : public GPUResource {
+	class Surface : public GraphicsObject {
 
 	public:
 
@@ -39,7 +39,9 @@ namespace ignis {
 			);
 		};
 
-		Surface(Graphics &g, const String &name, const Info &info): GPUResource(g, name), info(info) {}
+		Surface(Graphics &g, const String &name, const Info &info): 
+			GraphicsObject(g, name), info(info) {}
+
 		~Surface() = default;
 
 		//Call whenever the screen is resized
@@ -47,10 +49,6 @@ namespace ignis {
 
 		virtual void begin(const Vec4u &xywh) = 0;
 		virtual void end() = 0;
-
-		bool isCompatible(
-			const RegisterLayout &reg, const GPUSubresource &resource
-		) const final override;
 
 		virtual bool isGPUWritable() const;
 		TextureType getTextureType() const;

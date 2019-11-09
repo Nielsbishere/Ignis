@@ -17,6 +17,11 @@ namespace ignis {
 		apimpl void begin(const Vec4u &area) final override;
 		apimpl void end() final override;
 
+		//TODO:
+		/*bool isCompatible(
+			const RegisterLayout &reg, const GPUSubresource &resource
+		) const final override;*/
+
 		Data *getData() { return data; }
 
 	private:

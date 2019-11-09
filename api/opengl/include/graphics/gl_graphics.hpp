@@ -15,14 +15,14 @@
 	#undef near
 	#undef min
 	#undef max
+	#undef DOMAIN
 #endif
 
 #include "glext.h"
 
 namespace ignis {
 
-	class Surface;
-	class Swapchain;
+	class Framebuffer;
 	class PrimitiveBuffer;
 	class Pipeline;
 	class Descriptors;
@@ -40,8 +40,7 @@ namespace ignis {
 
 	struct Graphics::Data {
 
-		Surface *currentSurface{};
-		Swapchain *swapchain{};
+		Framebuffer *currentFramebuffer{};
 		PrimitiveBuffer *primitiveBuffer{};
 		Pipeline *pipeline{};
 		Descriptors *descriptors{};

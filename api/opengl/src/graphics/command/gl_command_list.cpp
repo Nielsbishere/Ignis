@@ -16,26 +16,23 @@ namespace ignis {
 
 		Graphics::Data &gdata = *getGraphics().getData();
 
-		//TODO: Instead of doing validation here; do it whenever a command enters the command buffer!
+		//TODO: Instead of doing validation here; 
+		//do it whenever a command enters the command buffer!
+		//Also make the arguments invalid so they can pass through
 
 		switch (c->op) {
 
-			case CMD_BEGIN_SURFACE:
+			case CMD_BEGIN_FRAMEBUFFER:
 				{
-					auto *bs = (BeginSurface*)c;
+					auto *bs = (BeginFramebuffer*)c;
 					bs->bindObject->begin(bs->renderArea);
-					gdata.currentSurface = bs->bindObject;
+					gdata.currentFramebuffer = bs->bindObject;
 				}
 				break;
 
-			case CMD_END_SURFACE:
+			case CMD_END_FRAMEBUFFER:
 
-				gdata.currentSurface->end();
-				break;
-
-			case CMD_PRESENT:
-
-				gdata.swapchain->present();
+				gdata.currentFramebuffer->end();
 				break;
 
 			case CMD_SET_CLEAR_COLOR:
@@ -87,40 +84,36 @@ namespace ignis {
 				}
 				break;
 
-			case CMD_BLIT_SURFACE:
+			case CMD_BLIT_FRAMEBUFFER:
 
 				{
-					BlitSurface *bs = (BlitSurface*) c;
+					BlitFramebuffer *bf = (BlitFramebuffer*) c;
 
 					GLenum mask{};
-					GLenum filter = bs->filter == BlitSurface::BlitFilter::NEAREST ? GL_NEAREST : GL_LINEAR;
+					GLenum filter = 
+						bf->filter == BlitFramebuffer::BlitFilter::NEAREST ? GL_NEAREST : 
+						GL_LINEAR;
 
-					if (bs->mask & BlitSurface::COLOR)
+					if (bf->mask & BlitFramebuffer::COLOR)
 						mask |= GL_COLOR_BUFFER_BIT;
-					else if (bs->mask & BlitSurface::DEPTH)
+					else if (bf->mask & BlitFramebuffer::DEPTH)
 						mask |= GL_DEPTH_BUFFER_BIT;
 					else
 						mask |= GL_STENCIL_BUFFER_BIT;
 
-					GLuint read{};
+					GLuint read = ((Framebuffer*) bf->src)->getData()->index;
+					GLuint write = ((Framebuffer*) bf->dst)->getData()->index;
 
-					if (bs->src->canCast<Framebuffer>())
-						read = ((Framebuffer*) bs->src)->getData()->index;
+					Vec4u srcArea = bf->srcArea, dstArea = bf->dstArea;
 
-					GLuint write{};
-
-					if (bs->dst->canCast<Framebuffer>())
-						write = ((Framebuffer*) bs->dst)->getData()->index;
-
-					Vec4u srcArea = bs->srcArea, dstArea = bs->dstArea;
-
-					if (!srcArea[2]) srcArea[2] = bs->src->getInfo().size[0];
-					if (!srcArea[3]) srcArea[3] = bs->src->getInfo().size[1];
-					if (!dstArea[2]) dstArea[2] = bs->dst->getInfo().size[0];
-					if (!dstArea[3]) dstArea[3] = bs->dst->getInfo().size[1];
+					if (!srcArea[2]) srcArea[2] = bf->src->getInfo().size[0];
+					if (!srcArea[3]) srcArea[3] = bf->src->getInfo().size[1];
+					if (!dstArea[2]) dstArea[2] = bf->dst->getInfo().size[0];
+					if (!dstArea[3]) dstArea[3] = bf->dst->getInfo().size[1];
 
 					glBlitNamedFramebuffer(
-						read, write,
+						gdata.bound[GL_READ_FRAMEBUFFER] = read,
+						gdata.bound[GL_DRAW_FRAMEBUFFER] = write,
 						srcArea[0], srcArea[1], srcArea[2], srcArea[3],
 						dstArea[0], dstArea[1], dstArea[2], dstArea[3],
 						mask,
@@ -191,10 +184,10 @@ namespace ignis {
 				)
 					oic::System::log()->fatal("Pipeline layout doesn't match descriptors!");
 
-				if(!gdata.currentSurface)
+				if(!gdata.currentFramebuffer)
 					oic::System::log()->fatal("No surface bound");
 
-				if(gdata.currentSurface->getInfo().samples != gdata.pipeline->getInfo().msaa.samples)
+				if(gdata.currentFramebuffer->getInfo().samples != gdata.pipeline->getInfo().msaa.samples)
 					oic::System::log()->fatal("Surface didn't have the same number of samples as pipeline");
 
 				{
