@@ -1,6 +1,5 @@
 #include "system/system.hpp"
 #include "system/log.hpp"
-#include "utils/thread.hpp"
 #include "error/ignis.hpp"
 #include "graphics/gl_context.hpp"
 #include "graphics/wgl_graphics.hpp"
@@ -85,7 +84,7 @@ namespace ignis {
 				oic::System::log()->warn(String("GL Function not found ") + elem.first);
 		}
 
-		data->contexts[oic::Thread::getCurrentId()];
+		data->getContext();
 	}
 
 	void Graphics::release() {

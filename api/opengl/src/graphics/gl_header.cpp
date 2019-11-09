@@ -7,6 +7,7 @@
 #include "graphics/memory/gl_texture.hpp"
 #include "graphics/shader/gl_sampler.hpp"
 #include "graphics/gl_graphics.hpp"
+#include "graphics/gl_context.hpp"
 
 HashMap<String, void**> ignis::glFunctionNames = HashMap<String, void**>();
 
@@ -354,12 +355,12 @@ GLenum glxSamplerMin(ignis::SamplerMin min) {
 //Functionality
 
 void glxBeginRenderPass(
-	Graphics::Data &gdata, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
+	GLContext &ctx, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
 ) {
 
-	if (gdata.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
+	if (ctx.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
 		glBindFramebuffer(
-			GL_DRAW_FRAMEBUFFER, gdata.bound[GL_DRAW_FRAMEBUFFER] = framebuffer
+			GL_DRAW_FRAMEBUFFER, ctx.bound[GL_DRAW_FRAMEBUFFER] = framebuffer
 		);
 
 	Vec4u sc = xywh;
@@ -372,24 +373,24 @@ void glxBeginRenderPass(
 
 	Vec4u vp = { 0, 0, size[0] - sc[0], size[1] - sc[1] };
 
-	if (gdata.viewport != vp) {
-		gdata.viewport = vp;
+	if (ctx.viewport != vp) {
+		ctx.viewport = vp;
 		glViewport(vp[0], vp[1], vp[2], vp[3]);
 	}
 
 	if (sc == vp) {
-		if (gdata.scissorEnable) {
+		if (ctx.scissorEnable) {
 			glDisable(GL_SCISSOR_TEST);
-			gdata.scissorEnable = false;
+			ctx.scissorEnable = false;
 		}
 	}
-	else if (!gdata.scissorEnable) {
+	else if (!ctx.scissorEnable) {
 		glEnable(GL_SCISSOR_TEST);
-		gdata.scissorEnable = true;
+		ctx.scissorEnable = true;
 	}
 
-	if (gdata.scissor != sc) {
-		gdata.scissor = sc;
+	if (ctx.scissor != sc) {
+		ctx.scissor = sc;
 		glScissor(sc[0], sc[1], sc[2], sc[3]);
 	}
 
@@ -479,39 +480,39 @@ bool glxCheckProgramLog(GLuint program, String &str) {
 	return glCheckLog<GL_LINK_STATUS>(glGetProgramiv, glGetProgramInfoLog, program, str);
 }
 
-void glxBindPipeline(Graphics::Data &g, Pipeline *pipeline) {
+void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 
 	glUseProgram(pipeline->getData()->handles[0]);
 
 	auto &r = pipeline->getInfo().rasterizer;
 
-	if (g.cullMode != r.cull) {
+	if (ctx.cullMode != r.cull) {
 
-		if (u8(g.cullMode) && !u8(r.cull))
+		if (u8(ctx.cullMode) && !u8(r.cull))
 			glDisable(GL_CULL_FACE);
 
-		if (!u8(g.cullMode) && u8(r.cull))
+		if (!u8(ctx.cullMode) && u8(r.cull))
 			glEnable(GL_CULL_FACE);
 
 		if (u8(r.cull))
 			glCullFace(r.cull == CullMode::BACK ? GL_BACK : GL_FRONT);
 
-		g.cullMode = r.cull;
+		ctx.cullMode = r.cull;
 	}
 
-	if (g.windMode != r.winding && u8(r.cull)) {
+	if (ctx.windMode != r.winding && u8(r.cull)) {
 		glFrontFace(r.winding == WindMode::CCW ? GL_CCW : GL_CW);
-		g.windMode = r.winding;
+		ctx.windMode = r.winding;
 	}
 
-	if (g.fillMode != r.fill) {
+	if (ctx.fillMode != r.fill) {
 		glPolygonMode(GL_FRONT_AND_BACK, r.fill == FillMode::FILL ? GL_FILL : GL_LINE);
-		g.fillMode = r.fill;
+		ctx.fillMode = r.fill;
 	}
 
 }
 
-void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
+void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 
 	for (auto &mapIt : descriptors->getInfo().pipelineLayout) {
 
@@ -532,12 +533,14 @@ void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 				usz offset = subres.bufferRange.offset, size = subres.bufferRange.size;
 
 				GLenum bindPoint = resource.type == ResourceType::CBUFFER ? GL_UNIFORM_BUFFER : GL_SHADER_STORAGE_BUFFER;
-				auto &bound = g.boundByBase[(u64(resource.localId) << 32) | bindPoint];
+				auto &bound = ctx.boundByBase[(u64(resource.localId) << 32) | bindPoint];
 
 				if (bound.handle == buffer->getData()->handle && bound.offset == offset && bound.size == size)
 					continue;
 
-				glBindBufferRange(bindPoint, resource.localId, buffer->getData()->handle, offset, size);
+				glBindBufferRange(
+					bindPoint, resource.localId, buffer->getData()->handle, offset, size
+				);
 				bound = { buffer->getData()->handle, offset, size };
 			}
 
@@ -545,10 +548,12 @@ void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 
 			else if (Sampler *sampler = res->cast<Sampler>()) {
 
-				auto &bound = g.boundByBase[(u64(resource.localId) << 32) | GL_SAMPLER];
+				auto &bound = ctx.boundByBase[(u64(resource.localId) << 32) | GL_SAMPLER];
 
 				if (bound.handle != sampler->getData()->handle)
-					glBindSampler(resource.localId, bound.handle = sampler->getData()->handle);
+					glBindSampler(
+						resource.localId, bound.handle = sampler->getData()->handle
+					);
 
 				tex = subres.samplerData.texture;
 			}
@@ -580,28 +585,33 @@ void glxBindDescriptors(Graphics::Data &g, Descriptors *descriptors) {
 						subres.textureRange.layerCount
 					);
 
-					String name = tex->getName() + " " + std::to_string(textureViews.size());
+					String name = 
+							tex->getName() + " " + 
+							std::to_string(textureViews.size());
 
-					glObjectLabel(GL_TEXTURE, textureView, GLsizei(name.size()), name.c_str());
+					glObjectLabel(
+						GL_TEXTURE, textureView, GLsizei(name.size()), name.c_str()
+					);
 
 					textureViews.push_back({ subres.textureRange, textureView });
 				}
 
 				if (!resource.isWritable) {
 
-					auto &boundTex = g.boundByBase[(u64(resource.localId) << 32) | GL_TEXTURE];
+					auto &boundTex = ctx.boundByBase[(u64(resource.localId) << 32) | GL_TEXTURE];
 
 					if (boundTex.handle != textureView)
 						glBindTextureUnit(resource.localId, boundTex.handle = textureView);
 
 				} else {
 
-					auto &boundImg = g.boundByBase[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but GL_IMAGE doesn't exist*/];
+					auto &boundImg = ctx.boundByBase[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but GL_IMAGE doesn't exist*/];
 
 					if (boundImg.handle != textureView)
 						glBindImageTexture(
 							resource.localId, boundImg.handle = textureView, 0,
-							GL_TRUE, 0, GL_WRITE_ONLY, glxColorFormat(tex->getInfo().format)
+							GL_TRUE, 0, GL_WRITE_ONLY,
+							glxColorFormat(tex->getInfo().format)
 						);
 				}
 			}

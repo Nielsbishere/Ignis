@@ -1,8 +1,10 @@
 #include "utils/hash.hpp"
 #include "utils/math.hpp"
+#include "utils/thread.hpp"
 #include "system/system.hpp"
 #include "system/log.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
+#include "graphics/gl_context.hpp"
 #include "graphics/format.hpp"
 
 namespace ignis {
@@ -137,7 +139,10 @@ namespace ignis {
 	}
 
 	void Framebuffer::begin(const Vec4u &area) {
-		glxBeginRenderPass(*getGraphics().getData(), area, info.size, data->index);
+		glxBeginRenderPass(
+			getGraphics().getData()->getContext(), 
+			area, info.size, data->index
+		);
 	}
 
 	void Framebuffer::end() {}

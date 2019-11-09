@@ -23,6 +23,8 @@ namespace ignis {
 	class Descriptors;
 	class Pipeline;
 	class PrimitiveBuffer;
+
+	struct GLContext;
 }
 
 extern GLenum glxDepthFormat(ignis::DepthFormat format);
@@ -40,7 +42,7 @@ extern GLenum glxSamplerMag(ignis::SamplerMag mag);
 extern GLenum glxSamplerMin(ignis::SamplerMin min);
 
 extern void glxBeginRenderPass(
-	ignis::Graphics::Data &data, const Vec4u &renderArea, const Vec2u &size, GLuint framebuffer
+	ignis::GLContext &data, const Vec4u &renderArea, const Vec2u &size, GLuint framebuffer
 );
 
 extern void APIENTRY glxDebugMessage(
@@ -48,8 +50,8 @@ extern void APIENTRY glxDebugMessage(
 	GLsizei, const GLchar*, const void*
 );
 
-extern void glxBindPipeline(ignis::Graphics::Data &data, ignis::Pipeline *pipeline);
-extern void glxBindDescriptors(ignis::Graphics::Data &data, ignis::Descriptors *descriptors);
+extern void glxBindPipeline(ignis::GLContext &data, ignis::Pipeline *pipeline);
+extern void glxBindDescriptors(ignis::GLContext &data, ignis::Descriptors *descriptors);
 extern bool glxCheckShaderLog(GLuint shader, String &str);
 extern bool glxCheckProgramLog(GLuint program, String &str);
 

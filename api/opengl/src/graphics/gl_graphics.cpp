@@ -51,6 +51,8 @@ namespace ignis {
 		if(intermediate->getInfo().size != swapchain->getInfo().size)
 			oic::System::log()->fatal("Couldn't present; swapchain and intermediate aren't same size");
 
+		GLContext &ctx = data->getContext();
+
 		swapchain->bind();
 
 		execute(commands);
@@ -58,8 +60,8 @@ namespace ignis {
 		Vec2u size = intermediate->getInfo().size;
 
 		glBlitNamedFramebuffer(
-			data->bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->index,
-			data->bound[GL_DRAW_FRAMEBUFFER] = 0,
+			ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->index,
+			ctx.bound[GL_DRAW_FRAMEBUFFER] = 0,
 			0, 0, size[0], size[1],
 			0, 0, size[0], size[1],
 			GL_COLOR_BUFFER_BIT, GL_LINEAR
@@ -92,7 +94,7 @@ namespace ignis {
 
 	void Graphics::Data::updateContext() {
 
-		GLContext &context = contexts[oic::Thread::getCurrentId()];
+		GLContext &context = getContext();
 
 		//Clean up left over VAOs
 
@@ -107,12 +109,16 @@ namespace ignis {
 
 	void Graphics::Data::destroyContext() {
 
-		GLContext &context = contexts[oic::Thread::getCurrentId()];
+		GLContext &context = getContext();
 		
 		for(auto &vao : context.vaos)
 			glDeleteVertexArrays(1, &vao.second);
 
 		contexts.erase(oic::Thread::getCurrentId());
+	}
+
+	GLContext &Graphics::Data::getContext() {
+		return contexts[oic::Thread::getCurrentId()];
 	}
 
 }

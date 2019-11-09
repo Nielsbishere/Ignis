@@ -43,42 +43,28 @@ namespace ignis {
 
 	struct Graphics::Data {
 
+		//Per platform data
+
 		plimpl struct Platform;
 
-		Framebuffer *currentFramebuffer{};
-		PrimitiveBuffer *primitiveBuffer{};
-		Pipeline *pipeline{};
-		Descriptors *descriptors{};
 		Platform *platform{};
 
-		f32 depth{};
-		u32 stencil{};
-
-		CullMode cullMode{};
-		WindMode windMode{};
-		FillMode fillMode{};
-
-		HashMap<GLenum, GLuint> bound;
-		HashMap<u64, BoundRange> boundByBase;	//GLenum lower 32-bit, Base upper 32-bit
-
-		Vec4u viewport{}, scissor{};
-
-		Vec4f clearColor{};
+		//OpenGL constants
 
 		u32 maxSamples;
 		f32 maxAnistropy;
 
 		u32 major, minor;
-		bool isES{}, scissorEnable{};
+		bool isES{};
 
 		//Per context info
 
 		HashMap<usz, GLContext> contexts;
 		HashMap<PrimitiveBuffer*, bool> primitiveBuffers;
-		//HashMap<Framebuffer*, bool> frameBuffers;
 
 		void updateContext();
 		void destroyContext();
+		GLContext &getContext();
 
 		//Helper functions
 

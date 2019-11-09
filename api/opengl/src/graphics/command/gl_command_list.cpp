@@ -1,4 +1,3 @@
-#include "utils/thread.hpp"
 #include "graphics/command/command_list.hpp"
 #include "graphics/command/command_ops.hpp"
 #include "graphics/command/commands.hpp"
@@ -15,11 +14,12 @@ namespace ignis {
 
 		using namespace cmd;
 
-		Graphics::Data &gdata = *getGraphics().getData();
+		auto &ctx = getGraphics().getData()->getContext();
 
 		//TODO: Instead of doing validation here; 
 		//do it whenever a command enters the command buffer!
 		//Also make the arguments invalid so they can pass through
+		//Also things like begin/end without a framebuffer set
 
 		switch (c->op) {
 
@@ -33,13 +33,13 @@ namespace ignis {
 						oic::System::log()->fatal("Please specify an initialized framebuffer");
 
 					bs->bindObject->begin(bs->renderArea);
-					gdata.currentFramebuffer = bs->bindObject;
+					ctx.currentFramebuffer = bs->bindObject;
 				}
 				break;
 
 			case CMD_END_FRAMEBUFFER:
 
-				gdata.currentFramebuffer->end();
+				ctx.currentFramebuffer->end();
 				break;
 
 			case CMD_SET_CLEAR_COLOR:
@@ -64,9 +64,9 @@ namespace ignis {
 							f32(cc->rgbai[3])
 						};
 
-					if (color != gdata.clearColor) {
+					if (color != ctx.clearColor) {
 						glClearColor(color[0], color[1], color[2], color[3]);
-						gdata.clearColor = color;
+						ctx.clearColor = color;
 					}
 				}
 				break;
@@ -76,8 +76,8 @@ namespace ignis {
 				{
 					SetClearDepth *cd = (SetClearDepth*)c;
 
-					if (cd->dataObject != gdata.depth)
-						glClearDepth(gdata.depth = cd->dataObject);
+					if (cd->dataObject != ctx.depth)
+						glClearDepth(ctx.depth = cd->dataObject);
 				}
 				break;
 
@@ -86,8 +86,8 @@ namespace ignis {
 				{
 					SetClearStencil *cd = (SetClearStencil*)c;
 
-					if (cd->dataObject != gdata.stencil)
-						glClearStencil(gdata.stencil = cd->dataObject);
+					if (cd->dataObject != ctx.stencil)
+						glClearStencil(ctx.stencil = cd->dataObject);
 				}
 				break;
 
@@ -119,8 +119,8 @@ namespace ignis {
 					if (!dstArea[3]) dstArea[3] = bf->dst->getInfo().size[1];
 
 					glBlitNamedFramebuffer(
-						gdata.bound[GL_READ_FRAMEBUFFER] = read,
-						gdata.bound[GL_DRAW_FRAMEBUFFER] = write,
+						ctx.bound[GL_READ_FRAMEBUFFER] = read,
+						ctx.bound[GL_DRAW_FRAMEBUFFER] = write,
 						srcArea[0], srcArea[1], srcArea[2], srcArea[3],
 						dstArea[0], dstArea[1], dstArea[2], dstArea[3],
 						mask,
@@ -135,15 +135,13 @@ namespace ignis {
 				{
 					auto *pbuffer = ((BindPrimitiveBuffer*) c)->bindObject;
 
-					if (pbuffer != gdata.primitiveBuffer) {
-						gdata.primitiveBuffer = pbuffer;
+					if (pbuffer != ctx.primitiveBuffer) {
+						ctx.primitiveBuffer = pbuffer;
 
-						GLContext &context = gdata.contexts[oic::Thread::getCurrentId()];
+						if (ctx.vaos.find(pbuffer) == ctx.vaos.end())
+							ctx.vaos[pbuffer] = glxGenerateVao(pbuffer);
 
-						if (context.vaos.find(pbuffer) == context.vaos.end())
-							context.vaos[pbuffer] = glxGenerateVao(pbuffer);
-
-						glBindVertexArray(context.vaos[pbuffer]);
+						glBindVertexArray(ctx.vaos[pbuffer]);
 					}
 				}
 				break;
@@ -153,9 +151,9 @@ namespace ignis {
 				{
 					auto *pipeline = ((BindPipeline*) c)->bindObject;
 
-					if (pipeline != gdata.pipeline) {
-						gdata.pipeline = pipeline;
-						glxBindPipeline(gdata, pipeline);
+					if (pipeline != ctx.pipeline) {
+						ctx.pipeline = pipeline;
+						glxBindPipeline(ctx, pipeline);
 					}
 				}
 				break;
@@ -165,12 +163,12 @@ namespace ignis {
 				{
 					auto *descriptors = ((BindDescriptors*) c)->bindObject;
 
-					if (descriptors != gdata.descriptors) {
+					if (descriptors != ctx.descriptors) {
 
-						gdata.descriptors = descriptors;
+						ctx.descriptors = descriptors;
 
 						if(descriptors)
-							glxBindDescriptors(gdata, descriptors);
+							glxBindDescriptors(ctx, descriptors);
 					}
 
 				}
@@ -179,40 +177,48 @@ namespace ignis {
 
 			case CMD_DRAW_INSTANCED:
 
-				if (!gdata.primitiveBuffer)
+				if (!ctx.primitiveBuffer)
 					oic::System::log()->fatal("No primitive buffer bound!");
 
-				if (!gdata.pipeline)
+				if (!ctx.pipeline)
 					oic::System::log()->fatal("No pipeline bound!");
 
-				if(!gdata.primitiveBuffer->matchLayout(
-					gdata.pipeline->getInfo().attributeLayout
+				if(!ctx.primitiveBuffer->matchLayout(
+					ctx.pipeline->getInfo().attributeLayout
 				))
 					oic::System::log()->fatal("Pipeline vertex layout doesn't match primitive buffer!");
 
-				if (gdata.descriptors && 
-					!gdata.descriptors->isShaderCompatible(
-						gdata.pipeline->getInfo().pipelineLayout
+				if (ctx.descriptors && 
+					!ctx.descriptors->isShaderCompatible(
+						ctx.pipeline->getInfo().pipelineLayout
 					)
 				)
 					oic::System::log()->fatal("Pipeline layout doesn't match descriptors!");
 
-				if(!gdata.currentFramebuffer)
+				if(!ctx.currentFramebuffer)
 					oic::System::log()->fatal("No surface bound");
 
-				if(gdata.currentFramebuffer->getInfo().samples != gdata.pipeline->getInfo().msaa.samples)
+				if(
+					ctx.currentFramebuffer->getInfo().samples != 
+					ctx.pipeline->getInfo().msaa.samples
+				)
 					oic::System::log()->fatal("Surface didn't have the same number of samples as pipeline");
 
 				{
-					auto topo = glxTopologyMode(gdata.pipeline->getInfo().topology);
+					auto topo = glxTopologyMode(ctx.pipeline->getInfo().topology);
 					auto *di = (DrawInstanced*) c;
 
-					if (gdata.primitiveBuffer->indices())
+					if (ctx.primitiveBuffer->indices())
 						glDrawElementsInstancedBaseVertexBaseInstance(
 							topo,
 							di->count,
-							glxGpuFormatType(gdata.primitiveBuffer->getIndexFormat()),
-							(void*) (usz(di->start) * FormatHelper::getSizeBytes(gdata.primitiveBuffer->getIndexFormat())),
+							glxGpuFormatType(ctx.primitiveBuffer->getIndexFormat()),
+							(void*) (
+										usz(di->start) * 
+										FormatHelper::getSizeBytes(
+											ctx.primitiveBuffer->getIndexFormat()
+										)
+									 ),
 							di->instanceCount,
 							di->vertexStart,
 							di->instanceStart
