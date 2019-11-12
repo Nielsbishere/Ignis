@@ -6,6 +6,7 @@
 #include "graphics/gl_context.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
 #include "graphics/surface/swapchain.hpp"
+#include "system/system.hpp"
 
 namespace ignis {
 

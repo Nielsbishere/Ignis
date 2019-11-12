@@ -7,6 +7,7 @@
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/shader/pipeline.hpp"
 #include "graphics/gl_context.hpp"
+#include "system/system.hpp"
 
 namespace ignis {
 

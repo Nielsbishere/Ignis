@@ -524,11 +524,11 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 			auto &subres = it->second;
 			auto *res = subres.resource;
 
-			Texture *tex = res->cast<Texture>();
+			Texture *tex = dynamic_cast<Texture*>(res);
 
 			//Bind buffer range
 
-			if (GPUBuffer *buffer = res->cast<GPUBuffer>()) {
+			if (GPUBuffer *buffer = dynamic_cast<GPUBuffer*>(res)) {
 
 				usz offset = subres.bufferRange.offset, size = subres.bufferRange.size;
 
@@ -546,7 +546,7 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 
 			//Bind sampler range
 
-			else if (Sampler *sampler = res->cast<Sampler>()) {
+			else if (Sampler *sampler = dynamic_cast<Sampler*>(res)) {
 
 				auto &bound = ctx.boundByBase[(u64(resource.localId) << 32) | GL_SAMPLER];
 

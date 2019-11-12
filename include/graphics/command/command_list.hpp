@@ -1,6 +1,4 @@
 #pragma once
-#include "error/ignis.hpp"
-#include "system/system.hpp"
 #include "system/log.hpp"
 #include "graphics/graphics_object.hpp"
 
@@ -15,10 +13,7 @@ namespace ignis {
 
 		u32 op, size;
 
-		Command(u32 op, usz size): op(op), size(u32(size)) {
-			if (size >= u32_MAX)
-				oic::System::log()->fatal(errors::commands::tooBig);
-		}
+		Command(u32 op, usz size);
 	};
 
 	//Storing a list of GPU commands that can be executed by the interface

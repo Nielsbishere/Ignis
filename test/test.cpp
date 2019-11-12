@@ -36,9 +36,6 @@ struct TestViewportInterface : public ViewportInterface {
 	Texture *tex2D{};
 	Sampler *samp{};
 
-	//TODO: Better errors in ocore and ignis
-	//TODO: GPUResource should be an interface
-	//TODO: Resize should only take into account the surface size (NOT the full window size with menu)
 	//TODO: Demonstrate multiple windows
 
 	//Create resources
@@ -228,7 +225,6 @@ struct TestViewportInterface : public ViewportInterface {
 			g, NAME("Swapchain"), 
 			Swapchain::Info{ vp, false, DepthFormat::NONE }
 		);
-
 	}
 
 	//Delete viewport resources

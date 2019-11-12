@@ -1,6 +1,7 @@
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/memory/gpu_buffer.hpp"
 #include "graphics/memory/texture.hpp"
+#include "graphics/shader/sampler.hpp"
 #include "graphics/enums.hpp"
 #include "system/log.hpp"
 #include "system/system.hpp"
@@ -55,7 +56,7 @@ namespace ignis {
 		u32 levelCount, u32 layerCount,
 		u32 minLevel, u32 minLayer
 	) :
-		resource((GPUResource*)sampler), 
+		resource(sampler), 
 		samplerData(texture, minLevel, minLayer, levelCount, layerCount, subType) {
 	
 		if (!levelCount) samplerData.levelCount = samplerData.texture->getInfo().mips;
@@ -75,7 +76,7 @@ namespace ignis {
 	}
 
 	GPUSubresource::GPUSubresource(Sampler *resource): 
-		resource((GPUResource*)resource), samplerData(){}
+		resource(resource), samplerData(){}
 
 
 }

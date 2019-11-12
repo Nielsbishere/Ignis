@@ -1,7 +1,6 @@
 #include "system/windows_viewport_manager.hpp"
 #include "system/system.hpp"
 #include "system/log.hpp"
-#include "error/ignis.hpp"
 #include "graphics/format.hpp"
 #include "graphics/wgl_graphics.hpp"
 #include "graphics/surface/wgl_swapchain.hpp"
@@ -49,16 +48,16 @@ namespace ignis {
 		wglChoosePixelFormatARB(data->dc, pixelAttribs, NULL, 1, &pixelFormatId, &numFormats);
 
 		if (!numFormats)
-			oic::System::log()->fatal(errors::surface::contextError);
+			oic::System::log()->fatal("The OpenGL Swapchain's context couldn't be chosen");
 
 		PIXELFORMATDESCRIPTOR pfd;
 		ZeroMemory(&pfd, sizeof(pfd));
 
 		if (!DescribePixelFormat(data->dc, pixelFormatId, sizeof(pfd), &pfd))
-			oic::System::log()->fatal(errors::surface::contextError);
+			oic::System::log()->fatal("The OpenGL Swapchain's context couldn't described");
 
 		if (!SetPixelFormat(data->dc, pixelFormatId, &pfd))
-			oic::System::log()->fatal(errors::surface::contextError);
+			oic::System::log()->fatal("The OpenGL Swapchain's context couldn't be set");
 
 		#ifndef NO_DEBUG
 			constexpr int enableDebug = WGL_CONTEXT_DEBUG_BIT_ARB;
@@ -78,7 +77,7 @@ namespace ignis {
 		data->rc = wglCreateContextAttribsARB(data->dc, g.getData()->platform->rc, contextAttribs);
 
 		if (!data->rc || !wglMakeCurrent(data->dc, data->rc))
-			oic::System::log()->fatal(errors::surface::contextError);
+			oic::System::log()->fatal("The OpenGL Swapchain's context couldn't be made current");
 
 		//Enable debug callbacks
 

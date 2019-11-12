@@ -7,7 +7,7 @@
 namespace ignis {
 
 	GPUBuffer::GPUBuffer(Graphics &g, const String &name, const Info &info):
-		GPUResource(g, name), info(info), data(new Data()) {
+		GraphicsObject(g, name), info(info), data(new Data()) {
 
 		//Initialize buffer
 

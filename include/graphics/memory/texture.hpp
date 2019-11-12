@@ -1,11 +1,12 @@
 #pragma once
+#include "graphics/graphics_object.hpp"
 #include "graphics/gpu_resource.hpp"
 #include "graphics/enums.hpp"
 #include "types/grid.hpp"
 
 namespace ignis {
 	
-	class Texture : public GPUResource {
+	class Texture : public GraphicsObject, public GPUResource {
 
 	public:
 

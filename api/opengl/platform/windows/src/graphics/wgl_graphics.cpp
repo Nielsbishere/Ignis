@@ -1,6 +1,5 @@
 #include "system/system.hpp"
 #include "system/log.hpp"
-#include "error/ignis.hpp"
 #include "graphics/gl_context.hpp"
 #include "graphics/wgl_graphics.hpp"
 
@@ -19,7 +18,7 @@ namespace ignis {
 		tempWClass.lpszClassName = "WGL";
 
 		if (!RegisterClassA(&tempWClass))
-			oic::System::log()->fatal(errors::surface::contextError);
+			oic::System::log()->fatal("The OpenGL context couldn't be registered");
 
 		HWND hwnd = data->platform->hwnd = CreateWindowExA(
 			0,
@@ -57,14 +56,14 @@ namespace ignis {
 		int pixelFormat = ChoosePixelFormat(dc, &pfd);
 
 		if (!pixelFormat || !SetPixelFormat(dc, pixelFormat, &pfd))
-			oic::System::log()->fatal(errors::surface::contextError);
+			oic::System::log()->fatal("The OpenGL context couldn't be set");
 
 		//Create render context
 
 		HGLRC rc = data->platform->rc = wglCreateContext(dc);
 
 		if (!rc || !wglMakeCurrent(dc, rc))
-			oic::System::log()->fatal(errors::surface::contextError);
+			oic::System::log()->fatal("The OpenGL context couldn't be made current");
 
 		//Obtain the OpenGL version and max supported sample count
 

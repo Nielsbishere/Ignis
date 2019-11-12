@@ -1,10 +1,11 @@
 #pragma once
 #include "graphics/gpu_resource.hpp"
+#include "graphics/graphics_object.hpp"
 #include "graphics/enums.hpp"
 
 namespace ignis {
 
-	class Sampler : public GPUResource {
+	class Sampler : public GraphicsObject, public GPUResource {
 
 	public:
 

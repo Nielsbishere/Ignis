@@ -4,7 +4,7 @@
 namespace ignis {
 
 	Sampler::Sampler(Graphics &g, const String &name, const Info &inf):
-		GPUResource(g, name), info(inf) {
+		GraphicsObject(g, name), info(inf) {
 
 		info.anisotropy = oic::Math::min(
 			g.getData()->maxAnistropy, inf.anisotropy

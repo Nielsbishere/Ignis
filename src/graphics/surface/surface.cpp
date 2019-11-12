@@ -1,4 +1,3 @@
-#include "error/ignis.hpp"
 #include "graphics/surface/surface.hpp"
 #include "graphics/shader/pipeline_layout.hpp"
 #include "graphics/enums.hpp"
@@ -17,7 +16,7 @@ namespace ignis {
 	{
 
 		if (colorFormats.size() > 8)
-			oic::System::log()->warn(errors::surface::tooManyFormats);
+			oic::System::log()->warn("The surface had too many color formats and isn't supported");
 	}
 
 	Surface::Info::Info(

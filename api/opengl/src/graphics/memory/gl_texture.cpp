@@ -6,7 +6,7 @@
 namespace ignis {
 	
 	Texture::Texture(Graphics &g, const String &name, const Info &info) :
-		GPUResource(g, name), info(info) {
+		GraphicsObject(g, name), info(info) {
 
 		data = new Data();
 
