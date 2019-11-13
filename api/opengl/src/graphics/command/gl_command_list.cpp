@@ -184,6 +184,9 @@ namespace ignis {
 				if (!ctx.pipeline)
 					oic::System::log()->fatal("No pipeline bound!");
 
+				if (!ctx.pipeline->isGraphics())
+					oic::System::log()->fatal("Pipeline bound was invalid; graphics expected");
+
 				if(!ctx.primitiveBuffer->matchLayout(
 					ctx.pipeline->getInfo().attributeLayout
 				))
@@ -232,6 +235,51 @@ namespace ignis {
 							di->instanceCount,
 							di->instanceStart
 						);
+				}
+
+				break;
+
+			case CMD_DISPATCH:
+
+				if (!ctx.pipeline)
+					oic::System::log()->fatal("No pipeline bound!");
+
+				if (!ctx.pipeline->isCompute())
+					oic::System::log()->fatal("Pipeline bound was invalid; compute expected");
+
+				{
+					Vec3u threads = ((Dispatch*)c)->threadCount;
+					Vec3u count = ctx.pipeline->getInfo().groupSize;
+
+					//TODO: Use Vec3
+
+					Vec3u groups {
+						threads[0] / count[0],
+						threads[1] / count[1],
+						threads[2] / count[2]
+					};
+
+					if (threads[0] % count[0] != 0)
+						++groups[0];
+
+					if (threads[1] % count[1] != 0)
+						++groups[1];
+
+					if (threads[2] % count[2] != 0)
+						++groups[2];
+
+					if (
+						threads[0] % count[0] != 0 ||
+						threads[1] % count[1] != 0 ||
+						threads[2] % count[2] != 0
+					)
+						oic::System::log()->performance(
+							"Thread count was incompatible with compute shader "
+							"this is fixed by the runtime, but could provide out of "
+							"bounds texture writes or reads"
+						);
+
+					glDispatchCompute(groups[0], groups[1], groups[2]);
 				}
 
 				break;

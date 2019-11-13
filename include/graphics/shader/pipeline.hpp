@@ -39,15 +39,25 @@ namespace ignis {
 
 		struct Info {
 
-			List<BufferAttributes> attributeLayout;
 			List<HashMap<ShaderStage, Buffer>> passes;
 
 			PipelineLayout pipelineLayout;
 
 			Flag flag;
-			TopologyMode topology;
-			Rasterizer rasterizer;
-			MSAA msaa;
+
+			//Graphics attributes
+
+			List<BufferAttributes> attributeLayout{};
+
+			TopologyMode topology{};
+			Rasterizer rasterizer{};
+			MSAA msaa{};
+
+			//Compute attributes
+
+			Vec3u groupSize{};
+
+			//Graphics
 
 			Info(
 				Flag f, 
@@ -75,6 +85,32 @@ namespace ignis {
 				passes(passes),  pipelineLayout(pipelineLayout), 
 				rasterizer(rasterizer), msaa(msaa) { }
 
+			//Compute
+
+			Info(
+				Flag f, 
+				const Buffer &computeShader,
+				const PipelineLayout &pipelineLayout,
+				Vec3u groupSize
+			) : 
+				flag(f), passes { { { ShaderStage::COMPUTE, computeShader } } },
+				pipelineLayout(pipelineLayout), groupSize(groupSize) { }
+
+			Info(
+				Flag f,
+				const List<Buffer> &computeShaders,
+				const PipelineLayout &pipelineLayout,
+				Vec3u groupSize
+			) : 
+				flag(f), passes(computeShaders.size()),
+				pipelineLayout(pipelineLayout), groupSize(groupSize) {
+			
+				size_t i{};
+
+				for (auto &buf : computeShaders)
+					passes[i++] = { { ShaderStage::COMPUTE, buf } };
+			}
+
 		};
 
 		apimpl struct Data;
@@ -84,6 +120,9 @@ namespace ignis {
 
 		const Info &getInfo() const { return info; }
 		Data *getData() { return data; }
+
+		inline bool isCompute() const { return info.groupSize[0]; }
+		inline bool isGraphics() const { return info.attributeLayout.size(); }
 
 	private:
 

@@ -88,6 +88,7 @@ GL_FUNC(glTextureView, GLTEXTUREVIEW);
 //GPU commands
 
 GL_FUNC(glDrawArraysInstancedBaseInstance, GLDRAWARRAYSINSTANCEDBASEINSTANCE);
+GL_FUNC(glDispatchCompute, GLDISPATCHCOMPUTE);
 
 //Platform dependent calls
 

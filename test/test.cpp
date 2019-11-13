@@ -30,13 +30,14 @@ struct TestViewportInterface : public ViewportInterface {
 	Framebuffer *intermediate{};
 	CommandList *cl{};
 	PrimitiveBuffer *mesh{};
-	Descriptors *descriptors{};
-	Pipeline *pipeline{};
+	Descriptors *descriptors{}, *computeDescriptors{};
+	Pipeline *pipeline{}, *computePipeline{};
 	GPUBuffer *uniforms{};
-	Texture *tex2D{};
+	Texture *tex2D{}, *computeOutput{};
 	Sampler *samp{};
 
 	//TODO: Demonstrate multiple windows
+	//TODO: Compute and use render targets
 
 	//Create resources
 
@@ -113,10 +114,58 @@ struct TestViewportInterface : public ViewportInterface {
 			g, NAME("Test sampler"), Sampler::Info()
 		);
 
+		//Create compute target
+
+		computeOutput = new Texture(
+			g, NAME("Compute output"),
+			Texture::Info(
+				Vec2u{ 512, 512 }, GPUFormat::RGBA16f, GPUMemoryUsage::LOCAL, 1, 1
+			)
+		);
+
 		//Load shader code
+		//(Compute output 512x512)
+
+		Buffer comp;
+		bool success = oic::System::files()->read("./shaders/test.comp.spv", comp);
+
+		if (!success)
+			oic::System::log()->fatal("Couldn't find compute shader");
+
+		//Create layout for compute
+
+		PipelineLayout pipelineLayout(
+			RegisterLayout(
+				NAME("Output"), 0, TextureType::TEXTURE_2D, 0, ACCESS_COMPUTE, true
+			)
+		);
+
+		auto descriptorsInfo = Descriptors::Info(pipelineLayout, {});
+		descriptorsInfo.resources[0] = { computeOutput, TextureType::TEXTURE_2D };
+
+		computeDescriptors = new Descriptors(
+			g, NAME("Compute descriptors"), 
+			descriptorsInfo
+		);
+
+		//Create pipeline (shader and render states)
+
+		computePipeline = new Pipeline(
+			g, NAME("Compute pipeline"),
+			Pipeline::Info(
+				Pipeline::Flag::OPTIMIZE,
+				comp,
+				pipelineLayout,
+				Vec3u{ 16, 16, 1 }
+			)
+		);
+
+
+		//Load shader code
+		//(Mask shader)
 
 		Buffer vert, frag;
-		bool success =	oic::System::files()->read("./shaders/test.vert.spv", vert);
+		success =	oic::System::files()->read("./shaders/test.vert.spv", vert);
 		success		&=	oic::System::files()->read("./shaders/test.frag.spv", frag);
 
 		if (!success)
@@ -124,7 +173,7 @@ struct TestViewportInterface : public ViewportInterface {
 
 		//Create descriptors that should be bound
 
-		PipelineLayout pipelineLayout(
+		pipelineLayout = {
 
 			RegisterLayout(
 				NAME("Test"), 0, GPUBufferType::UNIFORM, 0,
@@ -135,13 +184,13 @@ struct TestViewportInterface : public ViewportInterface {
 				NAME("test"), 1, SamplerType::SAMPLER_2D, 0,
 				ACCESS_FRAGMENT
 			)
-		);
+		};
 
-		auto descriptorsInfo = Descriptors::Info(pipelineLayout, {});
+		descriptorsInfo = Descriptors::Info(pipelineLayout, {});
 		descriptorsInfo.resources[0] = uniforms;
 
 		descriptorsInfo.resources[1] = GPUSubresource(
-			samp, tex2D, TextureType::TEXTURE_2D, 0, 1, 0, 1
+			samp, computeOutput, TextureType::TEXTURE_2D
 		);
 
 		descriptors = new Descriptors(
@@ -182,6 +231,12 @@ struct TestViewportInterface : public ViewportInterface {
 
 		cl->add(
 
+			//Render to compute shader
+
+			BindPipeline(computePipeline),
+			BindDescriptors(computeDescriptors),
+			Dispatch(computeOutput->getInfo().dimensions),
+			
 			//Clear and bind MSAA
 
 			SetClearColor(Vec4f { 0.586f, 0.129f, 0.949f, 1.0f }),
@@ -209,7 +264,11 @@ struct TestViewportInterface : public ViewportInterface {
 	//Cleanup resources
 
 	~TestViewportInterface() {
-		destroy(samp, tex2D, uniforms, pipeline, descriptors, mesh, cl, intermediate);
+		destroy(
+			samp, tex2D, uniforms, cl, mesh, computeOutput,
+			computePipeline, computeDescriptors,
+			pipeline, descriptors, intermediate
+		);
 	}
 
 	//Create viewport resources

@@ -62,6 +62,25 @@ namespace ignis {
 			}
 		};
 
+		//Dispatch call
+		struct Dispatch : public Command {
+
+			Vec3u threadCount;
+
+			Dispatch(Vec3u xyzThreads) :
+				Command(CMD_DISPATCH, sizeof(*this)),
+				threadCount(xyzThreads) {}
+
+			Dispatch(u32 xThreads) :
+				Command(CMD_DISPATCH, sizeof(*this)),
+				threadCount { xThreads, 1, 1 } {}
+
+			Dispatch(Vec2u xyThreads) :
+				Command(CMD_DISPATCH, sizeof(*this)),
+				threadCount { xyThreads[0], xyThreads[1], 1 } {}
+
+		};
+
 		//Setting values
 
 		template<CommandOp opCode, typename DataObject>
