@@ -37,7 +37,7 @@ struct TestViewportInterface : public ViewportInterface {
 	Sampler *samp{};
 
 	//TODO: Demonstrate multiple windows
-	//TODO: Compute and use render targets
+	//TODO: Use render targets in shaders
 
 	//Create resources
 
@@ -160,7 +160,6 @@ struct TestViewportInterface : public ViewportInterface {
 			)
 		);
 
-
 		//Load shader code
 		//(Mask shader)
 
@@ -236,7 +235,7 @@ struct TestViewportInterface : public ViewportInterface {
 			BindPipeline(computePipeline),
 			BindDescriptors(computeDescriptors),
 			Dispatch(computeOutput->getInfo().dimensions),
-			
+
 			//Clear and bind MSAA
 
 			SetClearColor(Vec4f { 0.586f, 0.129f, 0.949f, 1.0f }),
