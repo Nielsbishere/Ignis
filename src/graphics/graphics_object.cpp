@@ -8,6 +8,10 @@ namespace ignis {
 	}
 
 	GraphicsObject::~GraphicsObject() {
+
+		if (refCount > 1)
+			oic::System::log()->fatal("The graphics object was still being referenced");
+
 		g.erase(this);
 	}
 

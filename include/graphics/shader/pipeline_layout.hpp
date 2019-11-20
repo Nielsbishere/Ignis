@@ -3,7 +3,7 @@
 
 namespace ignis {
 
-	enum ShaderAccess : u32;
+	enum class ShaderAccess : u32;
 	enum class GPUBufferType : u8;
 	enum class TextureType : u8;
 	enum class ResourceType : u8;

@@ -1,6 +1,8 @@
 #pragma once
 #include "graphics_object.hpp"
 #include "enums.hpp"
+#include "system/system.hpp"
+#include "system/log.hpp"
 
 namespace ignis {
 
@@ -52,11 +54,14 @@ namespace ignis {
 		const bool hasFeature(Feature) const;
 		const bool hasExtension(Extension) const;
 
-		inline auto find(GraphicsObject *t) const;
-		inline bool contains(GraphicsObject *t) const;
+		inline auto find(const String &name) const;
+		inline bool contains(const String &name) const;
 
-		GraphicsObject *const *begin() const;
-		GraphicsObject *const *end() const;
+		inline auto begin() { return graphicsObjects.begin(); }
+		inline auto begin() const { return graphicsObjects.begin(); }
+
+		inline auto end() { return graphicsObjects.end(); }
+		inline auto end() const { return graphicsObjects.end(); }
 
 		template<typename ...args>
 		inline void execute(args *...arg) {
@@ -114,35 +119,34 @@ namespace ignis {
 
 		Features features;
 		Extensions extensions;
-		List<GraphicsObject*> graphicsObjects;
+		HashMap<String, GraphicsObject*> graphicsObjects;
 		Data *data;
 
 	};
 	
-	inline auto Graphics::find(GraphicsObject *t) const {
-		return std::find(
-			graphicsObjects.begin(), graphicsObjects.end(), (GraphicsObject*) t
-		);
+	inline auto Graphics::find(const String &name) const {
+		return graphicsObjects.find(name);
 	}
 	
-	inline bool Graphics::contains(GraphicsObject *t) const {
-		return find(t) != graphicsObjects.end();
+	inline bool Graphics::contains(const String &name) const {
+		return find(name) != graphicsObjects.end();
 	}
 	
 	inline void Graphics::add(GraphicsObject *t) {
 
-		if (!contains(t)) {
-			graphicsObjects.push_back(t);
-			onAddOrErase(t, false);
-		}
+		if (contains(t->getName()))
+			oic::System::log()->fatal("Couldn't add object with name; it already exists");
+
+		graphicsObjects[t->getName()] = t;
+		onAddOrErase(t, false);
 	}
 
 	inline void Graphics::erase(GraphicsObject *t) {
 
-		auto it = find(t);
+		auto it = find(t->getName());
 
 		if (it != graphicsObjects.end()) {
-			onAddOrErase(*it, true);
+			onAddOrErase(it->second, true);
 			graphicsObjects.erase(it);
 		}
 	}

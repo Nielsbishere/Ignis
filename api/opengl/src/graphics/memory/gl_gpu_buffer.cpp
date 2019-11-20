@@ -7,9 +7,11 @@
 namespace ignis {
 
 	GPUBuffer::GPUBuffer(Graphics &g, const String &name, const Info &info):
-		GraphicsObject(g, name), info(info), data(new Data()) {
+		GraphicsObject(g, name), info(info) {
 
 		//Initialize buffer
+
+		data = new Data();
 
 		glCreateBuffers(1, &data->handle);
 		GLuint handle = data->handle;
@@ -41,6 +43,7 @@ namespace ignis {
 		}
 
 		glDeleteBuffers(1, &data->handle);
+		delete data;
 	}
 
 	void GPUBuffer::flush(usz offset, usz size) {

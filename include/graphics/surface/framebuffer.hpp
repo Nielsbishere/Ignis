@@ -9,6 +9,8 @@ namespace ignis {
 
 		apimpl struct Data;
 
+		using Info = Surface::Info;
+
 		apimpl Framebuffer(Graphics &g, const String &name, const Info &info);
 		apimpl ~Framebuffer();
 

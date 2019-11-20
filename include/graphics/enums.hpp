@@ -109,25 +109,25 @@ namespace ignis {
 		PROPERTY_IS_TECHNIQUE		= 0x80
 	};
 
-	enum ShaderAccess : u32 {
+	enum class ShaderAccess : u32 {
 
-		ACCESS_VERTEX				= 1_u32 << (u8(ShaderStage::VERTEX) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_GEOMETRY				= 1_u32 << (u8(ShaderStage::GEOMETRY) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_TESS_CTRL			= 1_u32 << (u8(ShaderStage::TESS_CTRL) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_TESS_EVAL			= 1_u32 << (u8(ShaderStage::TESS_EVAL) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_FRAGMENT				= 1_u32 << (u8(ShaderStage::FRAGMENT) & u8(ShaderStage::PROPERTY_TYPE)),
+		VERTEX				= 1_u32 << (u8(ShaderStage::VERTEX) & u8(ShaderStage::PROPERTY_TYPE)),
+		GEOMETRY			= 1_u32 << (u8(ShaderStage::GEOMETRY) & u8(ShaderStage::PROPERTY_TYPE)),
+		TESS_CTRL			= 1_u32 << (u8(ShaderStage::TESS_CTRL) & u8(ShaderStage::PROPERTY_TYPE)),
+		TESS_EVAL			= 1_u32 << (u8(ShaderStage::TESS_EVAL) & u8(ShaderStage::PROPERTY_TYPE)),
+		FRAGMENT			= 1_u32 << (u8(ShaderStage::FRAGMENT) & u8(ShaderStage::PROPERTY_TYPE)),
 
-		ACCESS_COMPUTE				= 1_u32 << (u8(ShaderStage::COMPUTE) & u8(ShaderStage::PROPERTY_TYPE)),
+		COMPUTE				= 1_u32 << (u8(ShaderStage::COMPUTE) & u8(ShaderStage::PROPERTY_TYPE)),
 
-		ACCESS_TASK_EXT				= 1_u32 << (u8(ShaderStage::TASK_EXT) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_MESH_EXT				= 1_u32 << (u8(ShaderStage::MESH_EXT) & u8(ShaderStage::PROPERTY_TYPE)),
+		TASK_EXT			= 1_u32 << (u8(ShaderStage::TASK_EXT) & u8(ShaderStage::PROPERTY_TYPE)),
+		MESH_EXT			= 1_u32 << (u8(ShaderStage::MESH_EXT) & u8(ShaderStage::PROPERTY_TYPE)),
 
-		ACCESS_RAYGEN_FT			= 1_u32 << (u8(ShaderStage::RAYGEN_FT) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_ANY_HIT_FT			= 1_u32 << (u8(ShaderStage::ANY_HIT_FT) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_CLOSEST_HIT_FT		= 1_u32 << (u8(ShaderStage::CLOSEST_HIT_FT) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_MISS_FT				= 1_u32 << (u8(ShaderStage::MISS_FT) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_INTERSECTION_FT		= 1_u32 << (u8(ShaderStage::INTERSECTION_FT) & u8(ShaderStage::PROPERTY_TYPE)),
-		ACCESS_CALLABLE_FT			= 1_u32 << (u8(ShaderStage::CALLABLE_FT) & u8(ShaderStage::PROPERTY_TYPE))
+		RAYGEN_FT			= 1_u32 << (u8(ShaderStage::RAYGEN_FT) & u8(ShaderStage::PROPERTY_TYPE)),
+		ANY_HIT_FT			= 1_u32 << (u8(ShaderStage::ANY_HIT_FT) & u8(ShaderStage::PROPERTY_TYPE)),
+		CLOSEST_HIT_FT		= 1_u32 << (u8(ShaderStage::CLOSEST_HIT_FT) & u8(ShaderStage::PROPERTY_TYPE)),
+		MISS_FT				= 1_u32 << (u8(ShaderStage::MISS_FT) & u8(ShaderStage::PROPERTY_TYPE)),
+		INTERSECTION_FT		= 1_u32 << (u8(ShaderStage::INTERSECTION_FT) & u8(ShaderStage::PROPERTY_TYPE)),
+		CALLABLE_FT			= 1_u32 << (u8(ShaderStage::CALLABLE_FT) & u8(ShaderStage::PROPERTY_TYPE))
 	};
 
 	//Rasterizer enums

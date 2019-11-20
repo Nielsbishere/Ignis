@@ -9,13 +9,10 @@ namespace ignis {
 	const bool Graphics::hasFeature(Feature f) const { return features[usz(f)]; }
 	const bool Graphics::hasExtension(Extension e) const { return extensions[usz(e)]; }
 
-	GraphicsObject *const *Graphics::begin() const { return graphicsObjects.data(); }
-	GraphicsObject *const *Graphics::end() const { return graphicsObjects.data() + graphicsObjects.size(); }
-
 	void Graphics::clean() {
 
-		for (GraphicsObject *go : graphicsObjects)
-			delete go;
+		for (auto &obj : graphicsObjects)
+			delete obj.second;
 
 		graphicsObjects.clear();
 	}

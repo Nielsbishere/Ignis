@@ -27,6 +27,9 @@ namespace ignis {
 
 		inline const String &getName() { return name; }
 
+		inline void addRef() { refCount++; }
+		inline void loseRef() { if (!(--refCount)) delete this; }
+
 	protected:
 
 		inline Graphics &getGraphics() { return g; }
@@ -35,6 +38,8 @@ namespace ignis {
 
 		Graphics &g;
 		String name;
+
+		usz refCount = 1;
 
 	};
 
