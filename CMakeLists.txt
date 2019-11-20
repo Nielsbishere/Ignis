@@ -9,9 +9,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-include_directories(include)
-include_directories(core2/include)
-
 file(GLOB_RECURSE ignisHpp "include/*.hpp")
 file(GLOB_RECURSE ignisCpp "src/*.cpp")
 
@@ -39,26 +36,22 @@ include_directories(api/${graphicsApi}/platform/${platform}/include)
 file(GLOB_RECURSE platformHpp "api/${graphicsApi}/platform/${platform}/include/*.hpp")
 file(GLOB_RECURSE platformCpp "api/${graphicsApi}/platform/${platform}/src/*.cpp")
 
-file(GLOB_RECURSE shaders "res/shaders/*")
-
 # Link library
 
-add_executable(
-	ignis
+add_library(
+	ignis STATIC
 	${ignisHpp}
 	${ignisCpp}
 	${platformHpp}
 	${platformCpp}
 	${apiHpp}
 	${apiCpp}
-	${shaders}
-	test/test.cpp
 	CMakeLists.txt
 )
 
-set_property(TARGET ignis PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/res")
-
-target_link_libraries(ignis ocore)
+target_include_directories(ignis PRIVATE include)
+target_include_directories(ignis PRIVATE core2/include)
+target_link_libraries(ignis PRIVATE ocore)
 
 source_group("Headers" FILES ${ignisHpp})
 source_group("Source" FILES ${ignisCpp})
@@ -66,7 +59,6 @@ source_group("Platform (${platform}) Headers" FILES ${platformHpp})
 source_group("Platform (${platform}) Source" FILES ${platformCpp})
 source_group("Graphics (${graphicsApi}) Headers" FILES ${apiHpp})
 source_group("Graphics (${graphicsApi}) Source" FILES ${apiCpp})
-source_group("Shaders" FILES ${shaders})
 
 if(MSVC)
     target_compile_options(ignis PRIVATE /W4 /WX /MD /MP /wd26812)
