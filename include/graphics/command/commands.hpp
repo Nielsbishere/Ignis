@@ -91,7 +91,6 @@ namespace ignis {
 
 		using SetClearStencil		= DataOp<CMD_SET_CLEAR_STENCIL,			u32>;
 		using SetClearDepth			= DataOp<CMD_SET_CLEAR_DEPTH,			f32>;
-		using SetLineWidth			= DataOp<CMD_SET_LINE_WIDTH,			f32>;
 		using SetBlendConstants		= DataOp<CMD_SET_BLEND_CONSTANTS,		Vec4f>;
 		using SetStencilCompareMask = DataOp<CMD_SET_STENCIL_COMPARE_MASK,	u32>;
 		using SetStencilWriteMask	= DataOp<CMD_SET_STENCIL_WRITE_MASK,	u32>;

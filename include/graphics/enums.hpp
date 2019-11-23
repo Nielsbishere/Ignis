@@ -10,7 +10,10 @@ namespace ignis {
 
 	//An extension that's dependent on the current gpu
 	enum class Extension : u8 { 
-		NONE, CONDITIONAL_RENDERING, INDIRECT_COUNT, COUNT 
+		NONE,
+		CONDITIONAL_RENDERING,
+		INDIRECT_COUNT,
+		COUNT 
 	};
 
 	//0 = NONE
@@ -170,7 +173,7 @@ namespace ignis {
 		TEXTURE_1D, 
 		TEXTURE_2D,
 		TEXTURE_3D,
-		TEXTURE_MS				= 0x6,
+		TEXTURE_MS				= 0x6,		//TODO: Figure out how this works with data and IXGI
 
 		TEXTURE_CUBE_ARRAY		= 0x8, 
 		TEXTURE_1D_ARRAY, 

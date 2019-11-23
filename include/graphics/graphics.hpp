@@ -70,7 +70,7 @@ namespace ignis {
 		}
 
 		template<typename ...args>
-		inline void present(Framebuffer *intermediate, Swapchain *swapchain, args *...arg) {
+		inline void present(Framebuffer *intermediate, Swapchain *swapchain, args ...arg) {
 			List<CommandList*> commands{ arg... };
 			present(intermediate, swapchain, commands);
 		}
