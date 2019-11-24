@@ -18,7 +18,7 @@ Since this is a no-dependency library, it won't provide resource management and 
 ## Builds
 
 ```bat
-git clone --recursive https://github.com/Nielsbishere/Ignis
+git clone --recursive https://github.com/Nielsbishere/ignis
 mkdir builds & cd builds
 cmake ../ -G "Visual Studio 16 2019" -A x64
 cmake --build . -j 8
