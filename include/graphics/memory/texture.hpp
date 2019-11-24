@@ -200,7 +200,7 @@ namespace ignis {
 	):
 		Info(
 			isCubeArray ? TextureType::TEXTURE_CUBE_ARRAY : TextureType::TEXTURE_CUBE, 
-			Vec3u{ u32(val[0].size()[1]), u32(val[0].size()[0]) }, 
+			Vec3u{ u32(val[0].size()[1]), u32(val[0].size()[0]), 1 }, 
 			format, usage, u8(val.size()), layers
 		) {
 

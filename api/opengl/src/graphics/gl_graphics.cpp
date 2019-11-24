@@ -46,10 +46,13 @@ namespace ignis {
 		const List<CommandList*> &commands
 	) {
 
-		if (!intermediate || !swapchain)
+		if (!swapchain)
 			oic::System::log()->fatal("Couldn't present; invalid intermediate or swapchain");
 
-		if(intermediate->getInfo().size != swapchain->getInfo().size)
+		if(!intermediate)
+			oic::System::log()->warn("Presenting without an intermediate is valid but won't provide any results to the swapchain");
+
+		if(intermediate && intermediate->getInfo().size != swapchain->getInfo().size)
 			oic::System::log()->fatal("Couldn't present; swapchain and intermediate aren't same size");
 
 		GLContext &ctx = data->getContext();
@@ -58,15 +61,18 @@ namespace ignis {
 
 		execute(commands);
 
-		Vec2u size = intermediate->getInfo().size;
+		if (intermediate) {
 
-		glBlitNamedFramebuffer(
-			ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->index,
-			ctx.bound[GL_DRAW_FRAMEBUFFER] = 0,
-			0, 0, size[0], size[1],
-			0, 0, size[0], size[1],
-			GL_COLOR_BUFFER_BIT, GL_LINEAR
-		);
+			Vec2u size = intermediate->getInfo().size;
+
+			glBlitNamedFramebuffer(
+				ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->index,
+				ctx.bound[GL_DRAW_FRAMEBUFFER] = 0,
+				0, 0, size[0], size[1],
+				0, 0, size[0], size[1],
+				GL_COLOR_BUFFER_BIT, GL_LINEAR
+			);
+		}
 
 		swapchain->present();
 	}
