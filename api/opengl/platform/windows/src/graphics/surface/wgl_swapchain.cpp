@@ -87,6 +87,12 @@ namespace ignis {
 		#endif
 
 		onResize(getInfo().size);
+
+		//Set it identical to D3D depth system (1 = near, 0 = far), it has better precision
+		//The coordinate system is still flipped, so the final blit should inverse height
+
+		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
+		glDepthRange(1, 0);
 	}
 
 	Swapchain::~Swapchain() {

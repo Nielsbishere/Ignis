@@ -7,8 +7,8 @@ namespace ignis {
 		info.size = size;
 	}
 
-	void Swapchain::begin(const Vec4u &xywh) {
-		glxBeginRenderPass(getGraphics().getData()->getContext(), xywh, info.size, 0);
+	void Swapchain::begin() {
+		glxBeginRenderPass(getGraphics().getData()->getContext(), 0);
 	}
 
 	void Swapchain::end() {

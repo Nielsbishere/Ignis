@@ -24,157 +24,172 @@ namespace ignis {
 
 		switch (c->op) {
 
-			case CMD_BEGIN_FRAMEBUFFER:
-				{
-					auto *bs = (BeginFramebuffer*)c;
+			case CMD_BEGIN_FRAMEBUFFER: {
 
-					auto size = bs->bindObject->getInfo().size;
+				auto *bs = (BeginFramebuffer*)c;
 
-					if(!size[0] || !size[1])
-						oic::System::log()->fatal("Please specify an initialized framebuffer");
+				auto size = bs->bindObject->getInfo().size;
 
-					bs->bindObject->begin(bs->renderArea);
-					ctx.currentFramebuffer = bs->bindObject;
-				}
+				if(!size[0] || !size[1])
+					oic::System::log()->fatal("Please specify an initialized framebuffer");
+
+				bs->bindObject->begin();
+				ctx.currentFramebuffer = bs->bindObject;
 				break;
+			}
+
+			case CMD_SET_SCISSOR: {
+				auto *sc = (SetScissor*)c;
+				glxSetScissor(ctx, sc->size, sc->offset);
+				break;
+			}
+
+			case CMD_SET_VIEWPORT: {
+				auto *sv = (SetViewport*)c;
+				glxSetViewport(ctx, sv->size, sv->offset);
+				break;
+			}
+
+			case CMD_SET_VIEWPORT_AND_SCISSOR: {
+				auto *svc = (SetViewportAndScissor*)c;
+				glxSetViewportAndScissor(ctx, svc->size, svc->offset);
+				break;
+			}
 
 			case CMD_END_FRAMEBUFFER:
 
 				ctx.currentFramebuffer->end();
 				break;
 
-			case CMD_SET_CLEAR_COLOR:
+			case CMD_SET_CLEAR_COLOR: {
 
-				{
-					SetClearColor *cc = (SetClearColor*)c;
-					Vec4f color = cc->rgbaf;
+				SetClearColor *cc = (SetClearColor*)c;
+				Vec4f color = cc->rgbaf;
 
-					if (cc->type == SetClearColor::Type::UNSIGNED_INT)
-						color = Vec4f{ 
-							f32(cc->rgbau[0]), 
-							f32(cc->rgbau[1]),
-							f32(cc->rgbau[2]),
-							f32(cc->rgbau[3]) 
-						};
+				if (cc->type == SetClearColor::Type::UNSIGNED_INT)
+					color = Vec4f{ 
+						f32(cc->rgbau[0]), 
+						f32(cc->rgbau[1]),
+						f32(cc->rgbau[2]),
+						f32(cc->rgbau[3]) 
+					};
 
-					else if(cc->type == SetClearColor::Type::SIGNED_INT)
-						color = Vec4f {
-							f32(cc->rgbai[0]),
-							f32(cc->rgbai[1]),
-							f32(cc->rgbai[2]),
-							f32(cc->rgbai[3])
-						};
+				else if(cc->type == SetClearColor::Type::SIGNED_INT)
+					color = Vec4f {
+						f32(cc->rgbai[0]),
+						f32(cc->rgbai[1]),
+						f32(cc->rgbai[2]),
+						f32(cc->rgbai[3])
+					};
 
-					if (color != ctx.clearColor) {
-						glClearColor(color[0], color[1], color[2], color[3]);
-						ctx.clearColor = color;
-					}
-				}
-				break;
-
-			case CMD_SET_CLEAR_DEPTH:
-
-				{
-					SetClearDepth *cd = (SetClearDepth*)c;
-
-					if (cd->dataObject != ctx.depth)
-						glClearDepth(ctx.depth = cd->dataObject);
-				}
-				break;
-
-			case CMD_SET_CLEAR_STENCIL:
-
-				{
-					SetClearStencil *cd = (SetClearStencil*)c;
-
-					if (cd->dataObject != ctx.stencil)
-						glClearStencil(ctx.stencil = cd->dataObject);
-				}
-				break;
-
-			case CMD_BLIT_FRAMEBUFFER:
-
-				{
-					BlitFramebuffer *bf = (BlitFramebuffer*) c;
-
-					GLenum mask{};
-					GLenum filter = 
-						bf->filter == BlitFramebuffer::BlitFilter::NEAREST ? GL_NEAREST : 
-						GL_LINEAR;
-
-					if (bf->mask & BlitFramebuffer::COLOR)
-						mask |= GL_COLOR_BUFFER_BIT;
-					else if (bf->mask & BlitFramebuffer::DEPTH)
-						mask |= GL_DEPTH_BUFFER_BIT;
-					else
-						mask |= GL_STENCIL_BUFFER_BIT;
-
-					GLuint read = ((Framebuffer*) bf->src)->getData()->index;
-					GLuint write = ((Framebuffer*) bf->dst)->getData()->index;
-
-					Vec4u srcArea = bf->srcArea, dstArea = bf->dstArea;
-
-					if (!srcArea[2]) srcArea[2] = bf->src->getInfo().size[0];
-					if (!srcArea[3]) srcArea[3] = bf->src->getInfo().size[1];
-					if (!dstArea[2]) dstArea[2] = bf->dst->getInfo().size[0];
-					if (!dstArea[3]) dstArea[3] = bf->dst->getInfo().size[1];
-
-					glBlitNamedFramebuffer(
-						ctx.bound[GL_READ_FRAMEBUFFER] = read,
-						ctx.bound[GL_DRAW_FRAMEBUFFER] = write,
-						srcArea[0], srcArea[1], srcArea[2], srcArea[3],
-						dstArea[0], dstArea[1], dstArea[2], dstArea[3],
-						mask,
-						filter
-					);
-
-				}
-				break;
-
-			case CMD_BIND_PRIMITIVE_BUFFER:
-				
-				{
-					auto *pbuffer = ((BindPrimitiveBuffer*) c)->bindObject;
-
-					if (pbuffer != ctx.primitiveBuffer) {
-						ctx.primitiveBuffer = pbuffer;
-
-						if (ctx.vaos.find(pbuffer) == ctx.vaos.end())
-							ctx.vaos[pbuffer] = glxGenerateVao(pbuffer);
-
-						glBindVertexArray(ctx.vaos[pbuffer]);
-					}
-				}
-				break;
-
-			case CMD_BIND_PIPELINE:
-				
-				{
-					auto *pipeline = ((BindPipeline*) c)->bindObject;
-
-					if (pipeline != ctx.pipeline) {
-						ctx.pipeline = pipeline;
-						glxBindPipeline(ctx, pipeline);
-					}
-				}
-				break;
-
-			case CMD_BIND_DESCRIPTORS:
-
-				{
-					auto *descriptors = ((BindDescriptors*) c)->bindObject;
-
-					if (descriptors != ctx.descriptors) {
-
-						ctx.descriptors = descriptors;
-
-						if(descriptors)
-							glxBindDescriptors(ctx, descriptors);
-					}
-
+				if (color != ctx.clearColor) {
+					glClearColor(color[0], color[1], color[2], color[3]);
+					ctx.clearColor = color;
 				}
 
 				break;
+			}
+
+			case CMD_SET_CLEAR_DEPTH: {
+
+				SetClearDepth *cd = (SetClearDepth*)c;
+
+				if (cd->dataObject != ctx.depth)
+					glClearDepth(ctx.depth = cd->dataObject);
+
+				break;
+			}
+
+			case CMD_SET_CLEAR_STENCIL: {
+
+				SetClearStencil *cd = (SetClearStencil*)c;
+
+				if (cd->dataObject != ctx.stencil)
+					glClearStencil(ctx.stencil = cd->dataObject);
+
+				break;
+			}
+
+			case CMD_BLIT_FRAMEBUFFER: {
+
+				BlitFramebuffer *bf = (BlitFramebuffer*) c;
+
+				GLenum mask{};
+				GLenum filter = 
+					bf->filter == BlitFramebuffer::BlitFilter::NEAREST ? GL_NEAREST : 
+					GL_LINEAR;
+
+				if (bf->mask & BlitFramebuffer::COLOR)
+					mask |= GL_COLOR_BUFFER_BIT;
+				else if (bf->mask & BlitFramebuffer::DEPTH)
+					mask |= GL_DEPTH_BUFFER_BIT;
+				else
+					mask |= GL_STENCIL_BUFFER_BIT;
+
+				GLuint read = ((Framebuffer*) bf->src)->getData()->index;
+				GLuint write = ((Framebuffer*) bf->dst)->getData()->index;
+
+				Vec4u srcArea = bf->srcArea, dstArea = bf->dstArea;
+
+				if (!srcArea[2]) srcArea[2] = bf->src->getInfo().size[0];
+				if (!srcArea[3]) srcArea[3] = bf->src->getInfo().size[1];
+				if (!dstArea[2]) dstArea[2] = bf->dst->getInfo().size[0];
+				if (!dstArea[3]) dstArea[3] = bf->dst->getInfo().size[1];
+
+				glBlitNamedFramebuffer(
+					ctx.bound[GL_READ_FRAMEBUFFER] = read,
+					ctx.bound[GL_DRAW_FRAMEBUFFER] = write,
+					srcArea[0], srcArea[1], srcArea[2], srcArea[3],
+					dstArea[0], dstArea[1], dstArea[2], dstArea[3],
+					mask,
+					filter
+				);
+
+				break;
+			}
+
+			case CMD_BIND_PRIMITIVE_BUFFER: {
+
+				auto *pbuffer = ((BindPrimitiveBuffer*) c)->bindObject;
+
+				if (pbuffer != ctx.primitiveBuffer) {
+					ctx.primitiveBuffer = pbuffer;
+
+					if (ctx.vaos.find(pbuffer) == ctx.vaos.end())
+						ctx.vaos[pbuffer] = glxGenerateVao(pbuffer);
+
+					glBindVertexArray(ctx.vaos[pbuffer]);
+				}
+
+				break;
+			}
+
+			case CMD_BIND_PIPELINE: {
+
+				auto *pipeline = ((BindPipeline*) c)->bindObject;
+
+				if (pipeline != ctx.pipeline) {
+					ctx.pipeline = pipeline;
+					glxBindPipeline(ctx, pipeline);
+				}
+
+				break;
+			}
+
+			case CMD_BIND_DESCRIPTORS: {
+
+				auto *descriptors = ((BindDescriptors*) c)->bindObject;
+
+				if (descriptors != ctx.descriptors) {
+
+					ctx.descriptors = descriptors;
+
+					if(descriptors)
+						glxBindDescriptors(ctx, descriptors);
+				}
+
+				break;
+			}
 
 			case CMD_DRAW_INSTANCED:
 
@@ -287,44 +302,39 @@ namespace ignis {
 
 			#ifndef NDEBUG
 
-				case CMD_DEBUG_START_REGION:
+				case CMD_DEBUG_START_REGION: {
 
-					{
+					auto *sr = (DebugStartRegion*)c;
 
-						auto *sr = (DebugStartRegion*)c;
-
-						glPushDebugGroup(
-							GL_DEBUG_SOURCE_APPLICATION,
-							0,
-							GLsizei(sr->size()),
-							sr->string
-						);
-					}
+					glPushDebugGroup(
+						GL_DEBUG_SOURCE_APPLICATION,
+						0,
+						GLsizei(sr->size()),
+						sr->string
+					);
 
 					break;
+				}
 
 				case CMD_DEBUG_END_REGION:
-
 					glPopDebugGroup();
 					break;
 
-				case CMD_DEBUG_INSERT_MARKER:
+				case CMD_DEBUG_INSERT_MARKER: {
 
-					{
+					auto *im = (DebugInsertMarker*)c;
 
-						auto *im = (DebugInsertMarker*)c;
-
-						glDebugMessageInsert(
-							GL_DEBUG_SOURCE_APPLICATION,
-							GL_DEBUG_TYPE_MARKER,
-							0,
-							GL_DEBUG_SEVERITY_NOTIFICATION,
-							GLsizei(im->size()),
-							im->string
-						);
-					}
+					glDebugMessageInsert(
+						GL_DEBUG_SOURCE_APPLICATION,
+						GL_DEBUG_TYPE_MARKER,
+						0,
+						GL_DEBUG_SEVERITY_NOTIFICATION,
+						GLsizei(im->size()),
+						im->string
+					);
 
 					break;
+				}
 
 			#else
 

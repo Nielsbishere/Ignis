@@ -33,6 +33,7 @@ namespace ignis {
 		using BindPipeline			= GraphicsObjOp<CMD_BIND_PIPELINE,			Pipeline>;
 		using BindDescriptors		= GraphicsObjOp<CMD_BIND_DESCRIPTORS,		Descriptors>;
 		using BindPrimitiveBuffer	= GraphicsObjOp<CMD_BIND_PRIMITIVE_BUFFER,  PrimitiveBuffer>;
+		using BeginFramebuffer		= GraphicsObjOp<CMD_BEGIN_FRAMEBUFFER,		Framebuffer>;
 
 		using BeginQuery			= GraphicsObjOp<CMD_BEGIN_QUERY,			Query>;
 		using EndQuery				= NoParamOp<CMD_END_QUERY>;
@@ -117,17 +118,22 @@ namespace ignis {
 				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbai(rgba), type(Type::SIGNED_INT) {}
 		};
 
-		struct BeginFramebuffer : GraphicsObjOp<CMD_BEGIN_FRAMEBUFFER, Framebuffer> {
+		template<CommandOp opCode>
+		struct SetViewRegion : public Command {
 
-			Vec4u renderArea;
+			Vec2i offset;
+			Vec2u size;
 
-			BeginFramebuffer(
-				Framebuffer *framebuffer, 
-				Vec2u renderSize = {}, Vec2u renderOffset = {}
-			):
-				GraphicsObjOp(framebuffer, sizeof(*this)),
-				renderArea{ renderOffset[0], renderOffset[1], renderSize[0], renderSize[1] } {}
+			SetViewRegion(Vec2u size = {}, Vec2i offset = {}) :
+				Command(opCode, sizeof(*this)),
+				offset(offset), size(size) {}
 		};
+
+		using SetScissor = SetViewRegion<CMD_SET_SCISSOR>;
+		using SetViewport = SetViewRegion<CMD_SET_VIEWPORT>;
+		using SetViewportAndScissor = SetViewRegion<CMD_SET_VIEWPORT_AND_SCISSOR>;
+
+		//Copy commands
 
 		struct BlitFramebuffer : Command {
 

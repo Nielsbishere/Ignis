@@ -30,11 +30,83 @@ namespace ignis {
 
 		};
 
+		struct BlendState {
+
+			Vec4f blendFactor;
+
+			enum class LogicOp : u8 {
+
+				CLEAR, AND, AND_REV, COPY,
+				AND_INV, NO_OP, XOR, OR,
+				NOR, EQUIV, INV, OR_REV,
+				COPY_INV, OR_INV, NAND, SET
+
+			} logicOp;
+
+			enum class WriteMask : u8 {
+
+				R = 1, B = 2, G = 4, A = 8,
+
+				NONE = 0x0,
+				ALL = 0xF
+
+			} writeMask;
+
+			enum class BlendOp : u8 {
+
+				ADD, SUBTRACT,
+				REV_SUBTRACT,
+				MIN, MAX
+
+			} blendOp, alphaBlendOp;
+
+			enum class Blend : u8 {
+
+				ZERO, ONE, SRC, SRC_REV,
+				DST, DST_REV, SRC_ALPHA, SRC_ALPHA_REV,
+				DST_ALPHA, DST_ALPHA_REV, FACTOR, FACTOR_REV,
+				FACTOR_ALPHA, FACTOR_ALPHA_REV, SRC_ALPHA_SAT, SRC1,
+				SRC1_REV, SRC1_ALPHA, SRC1_ALPHA_REV
+
+			} srcBlend, dstBlend, alphaSrcBlend, alphaDstBlend;
+
+			bool blendEnable;
+
+			BlendState(
+				bool blendEnable = false,
+				BlendOp blendOp = BlendOp::ADD,
+				Blend srcBlend = Blend::ZERO,
+				Blend dstBlend = Blend::ONE,
+				BlendOp alphaBlendOp = BlendOp::ADD,
+				Blend alphaSrcBlend = Blend::ZERO,
+				Blend alphaDstBlend = Blend::ONE,
+				WriteMask writeMask = WriteMask::ALL,
+				LogicOp logicOp = LogicOp::NO_OP,
+				Vec4f blendFactor = {}
+			) :
+				blendEnable(blendEnable), blendOp(blendOp), alphaBlendOp(alphaBlendOp), writeMask(writeMask),
+				srcBlend(srcBlend), dstBlend(dstBlend), alphaSrcBlend(alphaSrcBlend), alphaDstBlend(alphaDstBlend),
+				logicOp(logicOp), blendFactor(blendFactor) {}
+
+			static BlendState alphaBlend(WriteMask mask = WriteMask::ALL, LogicOp logicOp = LogicOp::NO_OP, Vec4f blendFactor = {}) {
+				return BlendState(
+					true,
+					BlendOp::ADD, Blend::ONE, Blend::SRC_ALPHA_REV,
+					BlendOp::ADD, Blend::ONE, Blend::SRC_ALPHA_REV,
+					mask, logicOp, blendFactor
+				);
+			}
+
+			inline bool logOpEnable() const { return logicOp != LogicOp::NO_OP; }
+
+		};
+
 		struct MSAA {
 
-			u32 samples;
+			u32 samples;			//How many samples are taken for this pipeline
+			f32 minSampleShading;	//How to resolve textures with a MSAA texture (0 = off, closer to one is smoother)
 
-			MSAA(u32 samples = {}) : samples(samples) {}
+			MSAA(u32 samples = {}, f32 minSampleShading = {}) : samples(samples), minSampleShading(minSampleShading) {}
 		};
 
 		struct Info {
@@ -51,6 +123,7 @@ namespace ignis {
 
 			TopologyMode topology{};
 			Rasterizer rasterizer{};
+			BlendState blendState{};
 			MSAA msaa{};
 
 			//Compute attributes
@@ -65,12 +138,13 @@ namespace ignis {
 				const HashMap<ShaderStage, Buffer> &passes,
 				const PipelineLayout &pipelineLayout,
 				MSAA msaa = {},
-				TopologyMode topology = TopologyMode::TRIANGLE_LIST, 
-				Rasterizer rasterizer = {}
+				Rasterizer rasterizer = {},
+				BlendState blendState = {},
+				TopologyMode topology = TopologyMode::TRIANGLE_LIST
 			) : 
 				flag(f), attributeLayout(attributeLayout), topology(topology),
 				passes{ passes }, pipelineLayout(pipelineLayout),
-				rasterizer(rasterizer), msaa(msaa) { }
+				rasterizer(rasterizer), msaa(msaa), blendState(blendState) { }
 
 			Info(
 				Flag f,
@@ -78,12 +152,13 @@ namespace ignis {
 				const List<HashMap<ShaderStage, Buffer>> &passes,
 				const PipelineLayout &pipelineLayout,
 				MSAA msaa = {},
-				TopologyMode topology = TopologyMode::TRIANGLE_LIST,
-				Rasterizer rasterizer = {}
+				Rasterizer rasterizer = {},
+				BlendState blendState = {},
+				TopologyMode topology = TopologyMode::TRIANGLE_LIST
 			) : 
 				flag(f), attributeLayout(attributeLayout), topology(topology), 
 				passes(passes),  pipelineLayout(pipelineLayout), 
-				rasterizer(rasterizer), msaa(msaa) { }
+				rasterizer(rasterizer), msaa(msaa), blendState(blendState) { }
 
 			//Compute
 

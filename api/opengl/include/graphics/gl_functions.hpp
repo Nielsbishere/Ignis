@@ -89,6 +89,11 @@ GL_FUNC(glTextureView, GLTEXTUREVIEW);
 
 GL_FUNC(glDrawArraysInstancedBaseInstance, GLDRAWARRAYSINSTANCEDBASEINSTANCE);
 GL_FUNC(glDispatchCompute, GLDISPATCHCOMPUTE);
+GL_FUNC(glClipControl, GLCLIPCONTROL);
+GL_FUNC(glBlendColor, GLBLENDCOLOR);
+GL_FUNC(glBlendEquationSeparate, GLBLENDEQUATIONSEPARATE);
+GL_FUNC(glBlendFuncSeparate, GLBLENDFUNCSEPARATE);
+GL_FUNC(glMinSampleShading, GLMINSAMPLESHADING);
 
 //Platform dependent calls
 

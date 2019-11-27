@@ -1,5 +1,6 @@
 #pragma once
 #include "graphics/gl_graphics.hpp"
+#include "shader/gl_pipeline.hpp"
 
 namespace ignis {
 
@@ -10,10 +11,28 @@ namespace ignis {
 
 	struct GLContext {
 
+		using BlendState = Pipeline::BlendState;
+		using Rasterizer = Pipeline::Rasterizer;
+
+		//Large objects
+
+		Rasterizer currRaster{};
+		BlendState currBlend{};
+
+		Vec2u viewportSize{}, scissorSize{};
+		Vec2i viewportOff{}, scissorOff{};
+
+		Vec4f clearColor{};
+
 		//VAOs; because they aren't shared
 
 		HashMap<PrimitiveBuffer*, GLuint> vaos;
 		List<PrimitiveBuffer*> deletedVaos;
+
+		//Current bound objects
+
+		HashMap<GLenum, GLuint> bound;
+		HashMap<u64, BoundRange> boundByBase;	//GLenum lower 32-bit, Base upper 32-bit
 
 		//States that have to be set with commands
 
@@ -22,21 +41,11 @@ namespace ignis {
 		Pipeline *pipeline{};
 		Descriptors *descriptors{};
 
-		f32 depth{};
+		f32 depth{}, minSampleShading{};
 		u32 stencil{};
 
-		CullMode cullMode{};
-		WindMode windMode{};
-		FillMode fillMode{};
-
-		HashMap<GLenum, GLuint> bound;
-		HashMap<u64, BoundRange> boundByBase;	//GLenum lower 32-bit, Base upper 32-bit
-
-		Vec4u viewport{}, scissor{};
-
-		Vec4f clearColor{};
-
-		bool scissorEnable{};
+		bool enableScissor{};
+		bool enableMinSampleShading{};
 
 	};
 

@@ -55,6 +55,8 @@ namespace ignis {
 			if (it.buffer->size() != it.size())
 				oic::System::log()->fatal("Invalid primitive buffer size");
 
+			it.buffer->addRef();
+
 			++i;
 		}
 
@@ -68,7 +70,8 @@ namespace ignis {
 				if(info.indexLayout.formats.size() != 1)
 					oic::System::log()->fatal("Index buffer requires one format");
 
-				info.indexLayout.buffer = new GPUBuffer(g, NAME(name + " ibo"),
+				info.indexLayout.buffer = new GPUBuffer(
+					g, NAME(name + " ibo"),
 					GPUBuffer::Info(
 						info.indexLayout.initData,
 						GPUBufferType::INDEX,
@@ -80,15 +83,19 @@ namespace ignis {
 
 			} else if (info.indexLayout.buffer->getInfo().type != GPUBufferType::INDEX)
 				oic::System::log()->fatal("Invalid predefined index buffer");
+
+			else
+				info.indexLayout.buffer->addRef();
 		}
 	}
 
 	PrimitiveBuffer::~PrimitiveBuffer() {
 
 		for (auto &elem : info.vertexLayout)
-			destroy(elem.buffer);
+			elem.buffer->loseRef();
 
-		destroy(info.indexLayout.buffer);
+		if(GPUBuffer *buf = info.indexLayout.buffer)
+			buf->loseRef();
 	}
 
 	const bool PrimitiveBuffer::matchLayout(const List<BufferAttributes> &layout) const {

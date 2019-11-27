@@ -138,10 +138,9 @@ namespace ignis {
 
 	}
 
-	void Framebuffer::begin(const Vec4u &area) {
+	void Framebuffer::begin() {
 		glxBeginRenderPass(
-			getGraphics().getData()->getContext(), 
-			area, info.size, data->index
+			getGraphics().getData()->getContext(), data->index
 		);
 	}
 

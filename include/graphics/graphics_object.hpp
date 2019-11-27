@@ -30,6 +30,8 @@ namespace ignis {
 		inline void addRef() { refCount++; }
 		inline void loseRef() { if (!(--refCount)) delete this; }
 
+		Graphics &getGraphics() const { return g; }
+
 	protected:
 
 		inline Graphics &getGraphics() { return g; }

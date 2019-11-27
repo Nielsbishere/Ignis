@@ -47,7 +47,7 @@ namespace ignis {
 		//Call whenever the screen is resized
 		virtual void onResize(const Vec2u &size) = 0;
 
-		virtual void begin(const Vec4u &xywh) = 0;
+		virtual void begin() = 0;
 		virtual void end() = 0;
 
 		virtual bool isGPUWritable() const;

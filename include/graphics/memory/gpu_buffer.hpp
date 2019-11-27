@@ -41,6 +41,8 @@ namespace ignis {
 		Data *getData() { return data; }
 		const Info &getInfo() const { return info; }
 
+		u8 *getBuffer() const { return (u8*) info.initData.data(); }
+
 	private:
 
 		Info info;

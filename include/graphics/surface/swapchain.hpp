@@ -28,7 +28,7 @@ namespace ignis {
 
 		apimpl void onResize(const Vec2u &size) final override;
 
-		apimpl void begin(const Vec4u &xyzw) final override;
+		apimpl void begin() final override;
 		apimpl void end() final override;
 		plimpl void present();
 		plimpl void bind();

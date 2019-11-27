@@ -68,10 +68,11 @@ namespace ignis {
 		};
 
 		GPUSubresource(): samplerData{} {}
-		GPUSubresource(GPUBuffer *resource, usz offset = 0, usz size = 0);
+		GPUSubresource(GPUBuffer *resource, usz offset, usz size = 0);
 
 		GPUSubresource(
-			Sampler *sampler, Texture *texture, TextureType subType,
+			Sampler *sampler, Texture *texture,
+			TextureType subType = TextureType(0x10),
 			u32 levelCount = 0, u32 layerCount = 0,
 			u32 minLevel = 0, u32 minLayer = 0
 		);

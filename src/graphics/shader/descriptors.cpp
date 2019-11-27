@@ -57,7 +57,7 @@ namespace ignis {
 		u32 minLevel, u32 minLayer
 	) :
 		resource(sampler), 
-		samplerData(texture, minLevel, minLayer, levelCount, layerCount, subType) {
+		samplerData(texture, minLevel, minLayer, levelCount, layerCount, subType == TextureType::ENUM_END ? texture->getInfo().textureType : subType) {
 	
 		if (!levelCount) samplerData.levelCount = samplerData.texture->getInfo().mips;
 		if (!layerCount) samplerData.layerCount = samplerData.texture->getInfo().layers;

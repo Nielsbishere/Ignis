@@ -3,6 +3,7 @@
 #include "system/system.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
+#include "graphics/surface/framebuffer.hpp"
 #include "graphics/memory/gl_gpu_buffer.hpp"
 #include "graphics/memory/gl_texture.hpp"
 #include "graphics/shader/gl_sampler.hpp"
@@ -279,14 +280,14 @@ GLenum glxShaderStage(ShaderStage stage) {
 
 	switch (stage) {
 
-		case ignis::ShaderStage::VERTEX:			return GL_VERTEX_SHADER;
-		case ignis::ShaderStage::GEOMETRY:			return GL_GEOMETRY_SHADER;
-		case ignis::ShaderStage::TESS_CTRL:			return GL_TESS_CONTROL_SHADER;
-		case ignis::ShaderStage::TESS_EVAL:			return GL_TESS_EVALUATION_SHADER;
-		case ignis::ShaderStage::FRAGMENT:			return GL_FRAGMENT_SHADER;
-		case ignis::ShaderStage::COMPUTE:			return GL_COMPUTE_SHADER;
-		case ignis::ShaderStage::TASK_EXT:			return GL_TASK_SHADER_NV;
-		case ignis::ShaderStage::MESH_EXT:			return GL_MESH_SHADER_NV;
+		case ShaderStage::VERTEX:			return GL_VERTEX_SHADER;
+		case ShaderStage::GEOMETRY:			return GL_GEOMETRY_SHADER;
+		case ShaderStage::TESS_CTRL:			return GL_TESS_CONTROL_SHADER;
+		case ShaderStage::TESS_EVAL:			return GL_TESS_EVALUATION_SHADER;
+		case ShaderStage::FRAGMENT:			return GL_FRAGMENT_SHADER;
+		case ShaderStage::COMPUTE:			return GL_COMPUTE_SHADER;
+		case ShaderStage::TASK_EXT:			return GL_TASK_SHADER_NV;
+		case ShaderStage::MESH_EXT:			return GL_MESH_SHADER_NV;
 	}
 
 	oic::System::log()->fatal("Invalid shader stage");
@@ -314,21 +315,21 @@ GLenum glxTextureType(TextureType type) {
 	return {};
 }
 
-GLenum glxSamplerMode(ignis::SamplerMode mode) {
+GLenum glxSamplerMode(SamplerMode mode) {
 
 	switch (mode) {
-		case ignis::SamplerMode::CLAMP_EDGE:			return GL_CLAMP_TO_EDGE;
-		case ignis::SamplerMode::MIRROR_CLAMP_EDGE:		return GL_MIRROR_CLAMP_TO_EDGE;
-		case ignis::SamplerMode::CLAMP_BORDER:			return GL_CLAMP_TO_BORDER;
-		case ignis::SamplerMode::REPEAT:				return GL_REPEAT;
-		case ignis::SamplerMode::MIRROR_REPEAT:			return GL_MIRRORED_REPEAT;
+		case SamplerMode::CLAMP_EDGE:			return GL_CLAMP_TO_EDGE;
+		case SamplerMode::MIRROR_CLAMP_EDGE:		return GL_MIRROR_CLAMP_TO_EDGE;
+		case SamplerMode::CLAMP_BORDER:			return GL_CLAMP_TO_BORDER;
+		case SamplerMode::REPEAT:				return GL_REPEAT;
+		case SamplerMode::MIRROR_REPEAT:			return GL_MIRRORED_REPEAT;
 	}
 
 	oic::System::log()->fatal("Invalid sampler mode");
 	return {};
 }
 
-GLenum glxSamplerMag(ignis::SamplerMag mag) {
+GLenum glxSamplerMag(SamplerMag mag) {
 
 	if (mag == SamplerMag::LINEAR) return GL_LINEAR;
 	else if (mag == SamplerMag::NEAREST) return GL_NEAREST;
@@ -337,25 +338,97 @@ GLenum glxSamplerMag(ignis::SamplerMag mag) {
 	return {};
 }
 
-GLenum glxSamplerMin(ignis::SamplerMin min) {
+GLenum glxSamplerMin(SamplerMin min) {
 
 	switch (min) {
-		case ignis::SamplerMin::LINEAR_MIPS:			return GL_LINEAR_MIPMAP_LINEAR;
-		case ignis::SamplerMin::LINEAR_MIPS_NEAREST:	return GL_LINEAR_MIPMAP_NEAREST;
-		case ignis::SamplerMin::LINEAR:					return GL_LINEAR;
-		case ignis::SamplerMin::NEAREST:				return GL_NEAREST;
-		case ignis::SamplerMin::NEAREST_MIPS_LINEAR:	return GL_NEAREST_MIPMAP_LINEAR;
-		case ignis::SamplerMin::NEAREST_MIPS:			return GL_NEAREST_MIPMAP_NEAREST;
+		case SamplerMin::LINEAR_MIPS:			return GL_LINEAR_MIPMAP_LINEAR;
+		case SamplerMin::LINEAR_MIPS_NEAREST:	return GL_LINEAR_MIPMAP_NEAREST;
+		case SamplerMin::LINEAR:				return GL_LINEAR;
+		case SamplerMin::NEAREST:				return GL_NEAREST;
+		case SamplerMin::NEAREST_MIPS_LINEAR:	return GL_NEAREST_MIPMAP_LINEAR;
+		case SamplerMin::NEAREST_MIPS:			return GL_NEAREST_MIPMAP_NEAREST;
 	}
 
 	oic::System::log()->fatal("Invalid sampler mag");
 	return {};
 }
 
+using BlendState = Pipeline::BlendState;
+using LogicOp = BlendState::LogicOp;
+using BlendOp = BlendState::BlendOp;
+using Blend = BlendState::Blend;
+
+GLenum glxLogicOp(LogicOp logicOp) {
+
+	switch (logicOp) {
+		case LogicOp::CLEAR:					return GL_CLEAR;
+		case LogicOp::AND:						return GL_AND;
+		case LogicOp::AND_REV:					return GL_AND_REVERSE;
+		case LogicOp::COPY:						return GL_COPY;
+		case LogicOp::AND_INV:					return GL_AND_INVERTED;
+		case LogicOp::NO_OP:					return GL_NOOP;
+		case LogicOp::XOR:						return GL_XOR;
+		case LogicOp::OR:						return GL_OR;
+		case LogicOp::NOR:						return GL_NOR;
+		case LogicOp::EQUIV:					return GL_EQUIV;
+		case LogicOp::INV:						return GL_INVERT;
+		case LogicOp::OR_REV:					return GL_OR_REVERSE;
+		case LogicOp::COPY_INV:					return GL_COPY_INVERTED;
+		case LogicOp::OR_INV:					return GL_OR_INVERTED;
+		case LogicOp::NAND:						return GL_NAND;
+		case LogicOp::SET:						return GL_SET;
+	}
+
+	oic::System::log()->fatal("Invalid logic op");
+	return {};
+}
+
+GLenum glxBlendOp(BlendOp blendOp) {
+
+	switch (blendOp) {
+		case BlendOp::ADD:						return GL_FUNC_ADD;
+		case BlendOp::SUBTRACT:					return GL_FUNC_SUBTRACT;
+		case BlendOp::REV_SUBTRACT:				return GL_FUNC_REVERSE_SUBTRACT;
+		case BlendOp::MIN:						return GL_MIN;
+		case BlendOp::MAX:						return GL_MAX;
+	}
+
+	oic::System::log()->fatal("Invalid logic op");
+	return {};
+}
+
+GLenum glxBlend(Blend blend) {
+
+	switch (blend) {
+		case Blend::ZERO:						return GL_ZERO;
+		case Blend::ONE:						return GL_ONE;
+		case Blend::SRC:						return GL_SRC_COLOR;
+		case Blend::SRC_REV:					return GL_ONE_MINUS_SRC_COLOR;
+		case Blend::DST:						return GL_DST_COLOR;
+		case Blend::DST_REV:					return GL_ONE_MINUS_DST_COLOR;
+		case Blend::SRC_ALPHA:					return GL_SRC_ALPHA;
+		case Blend::SRC_ALPHA_REV:				return GL_ONE_MINUS_SRC_ALPHA;
+		case Blend::DST_ALPHA:					return GL_DST_ALPHA;
+		case Blend::DST_ALPHA_REV:				return GL_ONE_MINUS_DST_ALPHA;
+		case Blend::FACTOR:						return GL_CONSTANT_COLOR;
+		case Blend::FACTOR_REV:					return GL_ONE_MINUS_CONSTANT_COLOR;
+		case Blend::FACTOR_ALPHA:				return GL_CONSTANT_ALPHA;
+		case Blend::FACTOR_ALPHA_REV:			return GL_ONE_MINUS_CONSTANT_ALPHA;
+		case Blend::SRC_ALPHA_SAT:				return GL_SRC_ALPHA_SATURATE;
+		case Blend::SRC1:						return GL_SRC1_COLOR;
+		case Blend::SRC1_REV:					return GL_ONE_MINUS_SRC1_COLOR;
+		case Blend::SRC1_ALPHA:					return GL_SRC1_ALPHA;
+		case Blend::SRC1_ALPHA_REV:				return GL_ONE_MINUS_SRC1_ALPHA;
+	}
+
+	oic::System::log()->fatal("Invalid logic op");
+	return {};
+}
+
 //Functionality
 
 void glxBeginRenderPass(
-	GLContext &ctx, const Vec4u &xywh, const Vec2u &size, GLuint framebuffer
+	GLContext &ctx, GLuint framebuffer
 ) {
 
 	if (ctx.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
@@ -363,38 +436,52 @@ void glxBeginRenderPass(
 			GL_DRAW_FRAMEBUFFER, ctx.bound[GL_DRAW_FRAMEBUFFER] = framebuffer
 		);
 
-	Vec4u sc = xywh;
-
-	if (!sc[2])
-		sc[2] = size[0] - sc[0];
-
-	if (!sc[3])
-		sc[3] = size[1] - sc[1];
-
-	Vec4u vp = { 0, 0, size[0] - sc[0], size[1] - sc[1] };
-
-	if (ctx.viewport != vp) {
-		ctx.viewport = vp;
-		glViewport(vp[0], vp[1], vp[2], vp[3]);
-	}
-
-	if (sc == vp) {
-		if (ctx.scissorEnable) {
-			glDisable(GL_SCISSOR_TEST);
-			ctx.scissorEnable = false;
-		}
-	}
-	else if (!ctx.scissorEnable) {
-		glEnable(GL_SCISSOR_TEST);
-		ctx.scissorEnable = true;
-	}
-
-	if (ctx.scissor != sc) {
-		ctx.scissor = sc;
-		glScissor(sc[0], sc[1], sc[2], sc[3]);
-	}
+	//TODO: Make clear optional with render passes
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void glxSetViewport(GLContext &ctx, Vec2u size, Vec2i offset) {
+
+	if (!size[0] || !size[1]) {
+		oicAssert(ctx.currentFramebuffer, "SetViewport can't be called with null size if the framebuffer isn't bound");
+		size = ctx.currentFramebuffer->getInfo().size;
+	}
+
+	if (ctx.viewportOff != offset || ctx.viewportSize != size) {
+		ctx.viewportOff = offset;
+		ctx.viewportSize = size;
+		glViewport(offset[0], offset[1], size[0], size[1]);
+	}
+}
+
+void glxSetScissor(GLContext &ctx, Vec2u size, Vec2i offset) {
+
+	if (!size[0] || !size[1]) {
+		oicAssert(ctx.currentFramebuffer, "SetScissor can't be called with null size if the framebuffer isn't bound");
+		size = ctx.currentFramebuffer->getInfo().size;
+	}
+
+	if (!ctx.enableScissor) {
+		glEnable(GL_SCISSOR_TEST);
+		ctx.enableScissor = true;
+	}
+
+	if (ctx.scissorOff != offset || ctx.scissorSize != size) {
+		ctx.scissorOff = offset;
+		ctx.scissorSize = size;
+		glScissor(offset[0], offset[1], size[0], size[1]);
+	}
+}
+
+void glxSetViewportAndScissor(GLContext &ctx, Vec2u size, Vec2i offset) {
+
+	if (ctx.enableScissor) {
+		glDisable(GL_SCISSOR_TEST);
+		ctx.enableScissor = false;
+	}
+
+	glxSetViewport(ctx, size, offset);
 }
 
 void glxDebugMessage(
@@ -485,29 +572,100 @@ void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 	glUseProgram(pipeline->getData()->handles[0]);
 
 	auto &r = pipeline->getInfo().rasterizer;
+	auto &b = pipeline->getInfo().blendState;
+	auto &msaa = pipeline->getInfo().msaa;
 
-	if (ctx.cullMode != r.cull) {
+	auto &r0 = ctx.currRaster;
+	auto &b0 = ctx.currBlend;
 
-		if (u8(ctx.cullMode) && !u8(r.cull))
+	if (r0.cull != r.cull) {
+
+		if (u8(r0.cull) && !u8(r.cull))
 			glDisable(GL_CULL_FACE);
 
-		if (!u8(ctx.cullMode) && u8(r.cull))
+		if (!u8(r0.cull) && u8(r.cull))
 			glEnable(GL_CULL_FACE);
 
 		if (u8(r.cull))
 			glCullFace(r.cull == CullMode::BACK ? GL_BACK : GL_FRONT);
 
-		ctx.cullMode = r.cull;
+		r0.cull = r.cull;
 	}
 
-	if (ctx.windMode != r.winding && u8(r.cull)) {
+	if (r0.winding != r.winding && u8(r.cull)) {
 		glFrontFace(r.winding == WindMode::CCW ? GL_CCW : GL_CW);
-		ctx.windMode = r.winding;
+		r0.winding = r.winding;
 	}
 
-	if (ctx.fillMode != r.fill) {
+	if (r0.fill != r.fill) {
 		glPolygonMode(GL_FRONT_AND_BACK, r.fill == FillMode::FILL ? GL_FILL : GL_LINE);
-		ctx.fillMode = r.fill;
+		r0.fill = r.fill;
+	}
+
+	if (b0.writeMask != b.writeMask) {
+		glColorMask(u8(b.writeMask) & 1, u8(b.writeMask) & 2, u8(b.writeMask) & 4, u8(b.writeMask) & 8);
+		b0.writeMask = b.writeMask;
+	}
+
+	if (msaa.samples && msaa.minSampleShading) {
+
+		if (!ctx.enableMinSampleShading) {
+			glEnable(GL_SAMPLE_SHADING);
+			ctx.enableMinSampleShading = true;
+		}
+
+		if (ctx.minSampleShading != msaa.minSampleShading) {
+			glMinSampleShading(msaa.minSampleShading);
+			ctx.minSampleShading = msaa.minSampleShading;
+		}
+
+	} else if (ctx.enableMinSampleShading) {
+		glDisable(GL_SAMPLE_SHADING);
+		ctx.enableMinSampleShading = false;
+	}
+
+	if (b0.blendEnable != b.blendEnable) {
+
+		if (b.blendEnable)
+			glEnable(GL_BLEND);
+		else
+			glDisable(GL_BLEND);
+
+		b0.blendEnable = b.blendEnable;
+	}
+
+	if(b0.blendEnable){
+
+		if (b0.blendFactor != b.blendFactor) {
+			glBlendColor(b.blendFactor[0], b.blendFactor[1], b.blendFactor[2], b.blendFactor[3]);
+			b0.blendFactor = b.blendFactor;
+		}
+
+		if (b0.logicOp != b.logicOp) {
+			glLogicOp(glxLogicOp(b.logicOp));
+			b0.logicOp = b.logicOp;
+		}
+
+		if (b0.alphaBlendOp != b.alphaBlendOp || b0.blendOp != b.blendOp) {
+			glBlendEquationSeparate(glxBlendOp(b.blendOp), glxBlendOp(b.alphaBlendOp));
+			b0.alphaBlendOp = b.alphaBlendOp;
+			b0.blendOp = b.blendOp;
+		}
+
+		if(
+			b0.srcBlend != b.srcBlend || b0.dstBlend != b.dstBlend ||
+			b0.alphaSrcBlend != b.alphaSrcBlend || b0.alphaDstBlend != b.alphaDstBlend
+		){
+			glBlendFuncSeparate(
+				glxBlend(b.srcBlend), glxBlend(b.dstBlend),
+				glxBlend(b.alphaSrcBlend), glxBlend(b.alphaDstBlend)
+			);
+
+			b0.srcBlend = b.srcBlend;
+			b0.dstBlend = b.dstBlend;
+			b0.alphaSrcBlend = b.alphaSrcBlend;
+			b0.alphaDstBlend = b.alphaDstBlend;
+		}
 	}
 
 }

@@ -52,7 +52,7 @@ namespace ignis {
 	private:
 
 		Info info;
-		Data *data;
+		Data *data{};
 	};
 
 	inline const BufferLayout &PrimitiveBuffer::operator[](usz i) const {

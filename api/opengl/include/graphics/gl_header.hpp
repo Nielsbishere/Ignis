@@ -1,4 +1,5 @@
 #pragma once
+#include "types/types.hpp"
 
 #define GL_FUNC(x, y) extern PFN##y##PROC x;
 #include "graphics/gl_functions.hpp"
@@ -42,8 +43,12 @@ extern GLenum glxSamplerMag(ignis::SamplerMag mag);
 extern GLenum glxSamplerMin(ignis::SamplerMin min);
 
 extern void glxBeginRenderPass(
-	ignis::GLContext &data, const Vec4u &renderArea, const Vec2u &size, GLuint framebuffer
+	ignis::GLContext &data, GLuint framebuffer
 );
+
+extern void glxSetViewport(ignis::GLContext &ctx, Vec2u size, Vec2i offset);
+extern void glxSetScissor(ignis::GLContext &ctx, Vec2u size, Vec2i offset);
+extern void glxSetViewportAndScissor(ignis::GLContext &ctx, Vec2u size, Vec2i offset);
 
 extern void APIENTRY glxDebugMessage(
 	GLenum, GLenum, GLuint, GLenum,

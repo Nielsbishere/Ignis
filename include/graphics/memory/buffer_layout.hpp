@@ -69,7 +69,7 @@ namespace ignis {
 	protected:
 
 		inline void fillAttrib(u32 &i, u32 &j, const GPUFormat &f) {
-			values[i++] = { i, j, f };
+			values[i++] = { j, i, f };
 			j += u32(FormatHelper::getSizeBytes(f));
 		}
 
