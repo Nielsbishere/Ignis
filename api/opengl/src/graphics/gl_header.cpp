@@ -430,15 +430,10 @@ GLenum glxBlend(Blend blend) {
 void glxBeginRenderPass(
 	GLContext &ctx, GLuint framebuffer
 ) {
-
 	if (ctx.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
 		glBindFramebuffer(
 			GL_DRAW_FRAMEBUFFER, ctx.bound[GL_DRAW_FRAMEBUFFER] = framebuffer
 		);
-
-	//TODO: Make clear optional with render passes
-
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void glxSetViewport(GLContext &ctx, Vec2u size, Vec2i offset) {

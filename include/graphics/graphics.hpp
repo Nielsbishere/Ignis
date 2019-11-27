@@ -107,7 +107,6 @@ namespace ignis {
 
 		inline void erase(GraphicsObject *t);
 		inline void add(GraphicsObject *t);
-		void clean();
 
 		void setFeature(Feature, bool);
 		void setExtension(Extension, bool);

@@ -27,7 +27,6 @@ namespace ignis {
 		apimpl struct Data;
 
 		apimpl GPUBuffer(Graphics &g, const String &name, const Info &info);
-		apimpl ~GPUBuffer();
 
 		//Flush the updates from the CPU to the GPU
 		apimpl void flush(usz offset, usz size);
@@ -42,6 +41,10 @@ namespace ignis {
 		const Info &getInfo() const { return info; }
 
 		u8 *getBuffer() const { return (u8*) info.initData.data(); }
+
+	protected:
+
+		apimpl ~GPUBuffer();
 
 	private:
 

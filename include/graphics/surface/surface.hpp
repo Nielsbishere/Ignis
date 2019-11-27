@@ -42,8 +42,6 @@ namespace ignis {
 		Surface(Graphics &g, const String &name, const Info &info): 
 			GraphicsObject(g, name), info(info) {}
 
-		~Surface() = default;
-
 		//Call whenever the screen is resized
 		virtual void onResize(const Vec2u &size) = 0;
 

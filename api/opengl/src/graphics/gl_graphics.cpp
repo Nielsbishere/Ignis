@@ -6,6 +6,7 @@
 #include "graphics/gl_context.hpp"
 #include "graphics/surface/gl_framebuffer.hpp"
 #include "graphics/surface/swapchain.hpp"
+#include "graphics/shader/descriptors.hpp"
 #include "system/system.hpp"
 
 namespace ignis {
@@ -75,26 +76,61 @@ namespace ignis {
 		}
 
 		swapchain->present();
+		++ctx.frameId;
 	}
 
 	//Keep track of objects for updating gl contexts
+	//It will delete VAOs and unbind bound objects
 
 	void Graphics::onAddOrErase(GraphicsObject *go, bool isDeleted) {
 
+		//TODO: This is not called on construction because the type isn't fully constructed
+
+		if (!isDeleted) {
+
+			if (go->canCast<PrimitiveBuffer>())
+				data->primitiveBuffers[(PrimitiveBuffer*)go];
+
+			return;
+		}
+
+
+		for (auto &context : data->contexts) {
+			if (go->canCast<Pipeline>()) {
+
+				if (context.second.pipeline == (Pipeline*)go)
+					context.second.pipeline = nullptr;
+
+			} else if (go->canCast<Descriptors>()) {
+
+				if (context.second.descriptors == (Descriptors*)go)
+					context.second.descriptors = nullptr;
+
+			} else if (go->canCast<Framebuffer>()) {
+
+				if (context.second.currentFramebuffer == (Framebuffer*)go)
+					context.second.currentFramebuffer = nullptr;
+
+			}
+		} 
+		
+		
 		if (go->canCast<PrimitiveBuffer>()) {
 
 			auto *pb = (PrimitiveBuffer*)go;
 
-			if(!isDeleted)
-				data->primitiveBuffers[pb];
-			else
-				data->primitiveBuffers.erase(pb);
+			data->primitiveBuffers.erase(pb);
 
 			//Remove all referenced VAOs in contexts next time they update
 
-			for (auto &context : data->contexts)
-				if(context.second.vaos.find(pb) != context.second.vaos.end())
+			for (auto &context : data->contexts) {
+
+				if (context.second.primitiveBuffer == pb)
+					context.second.primitiveBuffer = nullptr;
+
+				if (context.second.vaos.find(pb) != context.second.vaos.end())
 					context.second.deletedVaos.push_back(pb);
+			}
 		}
 
 	}

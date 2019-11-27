@@ -7,11 +7,7 @@ namespace ignis {
 		g.add(this);
 	}
 
-	GraphicsObject::~GraphicsObject() {
-
-		if (refCount > 1)
-			oic::System::log()->fatal("The graphics object was still being referenced");
-
+	void GraphicsObject::erase() {
 		g.erase(this);
 	}
 

@@ -12,7 +12,6 @@ namespace ignis {
 		using Info = Surface::Info;
 
 		apimpl Framebuffer(Graphics &g, const String &name, const Info &info);
-		apimpl ~Framebuffer();
 
 		apimpl void onResize(const Vec2u &size) final override;
 
@@ -27,6 +26,8 @@ namespace ignis {
 		Data *getData() { return data; }
 
 	private:
+		
+		apimpl ~Framebuffer();
 
 		Data *data;
 	};

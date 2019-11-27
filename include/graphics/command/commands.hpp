@@ -33,11 +33,19 @@ namespace ignis {
 		using BindPipeline			= GraphicsObjOp<CMD_BIND_PIPELINE,			Pipeline>;
 		using BindDescriptors		= GraphicsObjOp<CMD_BIND_DESCRIPTORS,		Descriptors>;
 		using BindPrimitiveBuffer	= GraphicsObjOp<CMD_BIND_PRIMITIVE_BUFFER,  PrimitiveBuffer>;
-		using BeginFramebuffer		= GraphicsObjOp<CMD_BEGIN_FRAMEBUFFER,		Framebuffer>;
 
 		using BeginQuery			= GraphicsObjOp<CMD_BEGIN_QUERY,			Query>;
 		using EndQuery				= NoParamOp<CMD_END_QUERY>;
 		using EndFramebuffer		= NoParamOp<CMD_END_FRAMEBUFFER>;
+
+		struct BeginFramebuffer : public Command {
+
+			Framebuffer *target;
+
+			BeginFramebuffer(Framebuffer *target):
+				Command(CMD_BEGIN_FRAMEBUFFER, sizeof(*this)), target(target) {}
+
+		};
 
 		//Draw/dispatch commands
 
@@ -108,6 +116,8 @@ namespace ignis {
 				Vec4i rgbai;
 			};
 
+			SetClearColor() : SetClearColor(Vec4f{}) {}
+
 			SetClearColor(const Vec4f &rgba): 
 				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbaf(rgba), type(Type::FLOAT) {}
 
@@ -158,6 +168,21 @@ namespace ignis {
 				Command(CMD_BLIT_FRAMEBUFFER, sizeof(*this)), src(src), dst(dst), 
 				srcArea(srcArea), dstArea(dstArea), mask(mask), filter(filter) {}
 
+		};
+
+		struct ClearFramebuffer : Command {
+
+			Framebuffer *target;
+
+			enum ClearFlags : u8 {
+				COLOR = 1,
+				DEPTH = 2,
+				STENCIL = 4,
+				ALL = 7
+			} clearFlags;
+
+			ClearFramebuffer(Framebuffer *target, ClearFlags clearFlags = ClearFlags::ALL) :
+				Command(CMD_CLEAR_FRAMEBUFFER, sizeof(*this)), target(target), clearFlags(clearFlags) {}
 		};
 		
 		//Debug calls

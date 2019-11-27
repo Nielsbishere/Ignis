@@ -41,7 +41,6 @@ namespace ignis {
 		};
 
 		ShaderBuffer(Graphics &g, const String &name, const ShaderBuffer::Info &info);
-		~ShaderBuffer() = default;
 
 		/*template<typename T>
 		void set(const String &name, const T &t);
@@ -51,6 +50,8 @@ namespace ignis {
 		const Info &getInfo() const { return info; }
 
 	private:
+
+		~ShaderBuffer() = default;
 
 		Info info;
 	};

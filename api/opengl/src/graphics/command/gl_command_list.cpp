@@ -28,13 +28,42 @@ namespace ignis {
 
 				auto *bs = (BeginFramebuffer*)c;
 
-				auto size = bs->bindObject->getInfo().size;
+				auto size = bs->target->getInfo().size;
 
 				if(!size[0] || !size[1])
 					oic::System::log()->fatal("Please specify an initialized framebuffer");
 
-				bs->bindObject->begin();
-				ctx.currentFramebuffer = bs->bindObject;
+				bs->target->begin();
+				ctx.currentFramebuffer = bs->target;
+				break;
+			}
+
+			case CMD_CLEAR_FRAMEBUFFER: {
+
+				auto *cf = (ClearFramebuffer*)c;
+				auto *targ = cf->target;
+				auto *dat = targ->getData();
+
+				if (dat->depth) {
+
+					if(cf->clearFlags & ClearFramebuffer::DEPTH)
+						glClearNamedFramebufferfi(dat->index, GL_DEPTH, 0, ctx.depth, 0);
+
+					if(cf->clearFlags & ClearFramebuffer::STENCIL && FormatHelper::hasStencil(targ->getInfo().depthFormat))
+						glClearNamedFramebufferfi(dat->index, GL_STENCIL, 0, 0, ctx.stencil);
+				}
+
+				if (dat->renderTextures.size() && cf->clearFlags & ClearFramebuffer::COLOR) {
+
+					for(int i = 0, j = int(dat->renderTextures.size()); i < j; ++i)
+						if(ctx.clearColor.type == SetClearColor::Type::FLOAT)
+							glClearNamedFramebufferfv(dat->index, GL_COLOR, i, ctx.clearColor.rgbaf.data());
+						else if(ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
+							glClearNamedFramebufferuiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbau.data());
+						else
+							glClearNamedFramebufferiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbai.data());
+				}
+
 				break;
 			}
 
@@ -61,34 +90,9 @@ namespace ignis {
 				ctx.currentFramebuffer->end();
 				break;
 
-			case CMD_SET_CLEAR_COLOR: {
-
-				SetClearColor *cc = (SetClearColor*)c;
-				Vec4f color = cc->rgbaf;
-
-				if (cc->type == SetClearColor::Type::UNSIGNED_INT)
-					color = Vec4f{ 
-						f32(cc->rgbau[0]), 
-						f32(cc->rgbau[1]),
-						f32(cc->rgbau[2]),
-						f32(cc->rgbau[3]) 
-					};
-
-				else if(cc->type == SetClearColor::Type::SIGNED_INT)
-					color = Vec4f {
-						f32(cc->rgbai[0]),
-						f32(cc->rgbai[1]),
-						f32(cc->rgbai[2]),
-						f32(cc->rgbai[3])
-					};
-
-				if (color != ctx.clearColor) {
-					glClearColor(color[0], color[1], color[2], color[3]);
-					ctx.clearColor = color;
-				}
-
+			case CMD_SET_CLEAR_COLOR: 
+				ctx.clearColor = *(SetClearColor*)c;
 				break;
-			}
 
 			case CMD_SET_CLEAR_DEPTH: {
 
@@ -153,12 +157,14 @@ namespace ignis {
 				auto *pbuffer = ((BindPrimitiveBuffer*) c)->bindObject;
 
 				if (pbuffer != ctx.primitiveBuffer) {
+
 					ctx.primitiveBuffer = pbuffer;
 
 					if (ctx.vaos.find(pbuffer) == ctx.vaos.end())
 						ctx.vaos[pbuffer] = glxGenerateVao(pbuffer);
 
-					glBindVertexArray(ctx.vaos[pbuffer]);
+					GLuint vao = ctx.vaos[pbuffer];
+					glBindVertexArray(vao);
 				}
 
 				break;

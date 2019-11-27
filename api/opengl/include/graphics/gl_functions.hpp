@@ -94,6 +94,10 @@ GL_FUNC(glBlendColor, GLBLENDCOLOR);
 GL_FUNC(glBlendEquationSeparate, GLBLENDEQUATIONSEPARATE);
 GL_FUNC(glBlendFuncSeparate, GLBLENDFUNCSEPARATE);
 GL_FUNC(glMinSampleShading, GLMINSAMPLESHADING);
+GL_FUNC(glClearNamedFramebufferfi, GLCLEARNAMEDFRAMEBUFFERFI);
+GL_FUNC(glClearNamedFramebufferuiv, GLCLEARNAMEDFRAMEBUFFERUIV);
+GL_FUNC(glClearNamedFramebufferiv, GLCLEARNAMEDFRAMEBUFFERIV);
+GL_FUNC(glClearNamedFramebufferfv, GLCLEARNAMEDFRAMEBUFFERFV);
 
 //Platform dependent calls
 

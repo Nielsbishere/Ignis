@@ -100,7 +100,6 @@ namespace ignis {
 		apimpl struct Data;
 
 		apimpl Texture(Graphics &g, const String &name, const Info &info);
-		apimpl ~Texture();
 
 		//If a register (and subresource) are compatible
 		bool isCompatible(
@@ -121,6 +120,8 @@ namespace ignis {
 		const Info &getInfo() const { return info; }
 
 	private:
+
+		apimpl ~Texture();
 
 		Info info;
 		Data *data;

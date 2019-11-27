@@ -37,7 +37,6 @@ namespace ignis {
 
 		CommandList(Graphics &g, const String &name, const Info &info);		//Construct new command list
 		CommandList(Graphics &g, const String &name, const Data &data);		//Copy old command list
-		~CommandList() = default;
 
 		const Info &getInfo() const;
 		Data &getData();
@@ -67,6 +66,8 @@ namespace ignis {
 		apimpl void execute(Command *c);
 
 	private:
+
+		~CommandList() = default;
 
 		Info info;
 		Data data;

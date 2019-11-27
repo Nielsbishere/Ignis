@@ -191,7 +191,6 @@ namespace ignis {
 		apimpl struct Data;
 
 		apimpl Pipeline(Graphics &g, const String &name, const Info &info);
-		apimpl ~Pipeline();
 
 		const Info &getInfo() const { return info; }
 		Data *getData() { return data; }
@@ -200,6 +199,8 @@ namespace ignis {
 		inline bool isGraphics() const { return info.attributeLayout.size(); }
 
 	private:
+
+		apimpl ~Pipeline();
 
 		Info info;
 		Data *data{};

@@ -32,7 +32,6 @@ namespace ignis {
 		apimpl struct Data;
 
 		PrimitiveBuffer(Graphics &g, const String &name, const Info &info);
-		~PrimitiveBuffer();
 
 		inline const BufferLayout &operator[](usz i) const;
 		inline const BufferLayout &getIndexBuffer() const;
@@ -50,6 +49,8 @@ namespace ignis {
 		const bool matchLayout(const List<BufferAttributes> &layout) const;
 
 	private:
+
+		~PrimitiveBuffer();
 
 		Info info;
 		Data *data{};

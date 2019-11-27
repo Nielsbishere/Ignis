@@ -65,7 +65,6 @@ namespace ignis {
 		apimpl struct Data;
 
 		apimpl Sampler(Graphics &g, const String &name, const Info &info);
-		apimpl ~Sampler();
 
 		bool isCompatible(
 			const RegisterLayout &reg, const GPUSubresource &resource
@@ -75,6 +74,8 @@ namespace ignis {
 		const Info &getInfo() const { return info; }
 
 	private:
+
+		apimpl ~Sampler();
 
 		Info info;
 		Data *data;

@@ -24,7 +24,6 @@ namespace ignis {
 		plimpl struct Data;
 
 		plimpl Swapchain(Graphics &g, const String &name, const Info &info);
-		plimpl ~Swapchain();
 
 		apimpl void onResize(const Vec2u &size) final override;
 
@@ -37,6 +36,8 @@ namespace ignis {
 		Data *getData() { return data; }
 
 	private:
+
+		plimpl ~Swapchain();
 
 		Info swapchainInfo;
 		Data *data;

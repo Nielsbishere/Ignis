@@ -11,8 +11,8 @@ namespace ignis {
 
 	public:
 
+		//Creates a GraphicsObject with one reference
 		GraphicsObject(Graphics &g, const String &name);
-		virtual ~GraphicsObject();
 
 		GraphicsObject(const GraphicsObject&) = delete;
 		GraphicsObject(GraphicsObject&&) = delete;
@@ -27,16 +27,26 @@ namespace ignis {
 
 		inline const String &getName() { return name; }
 
+		//When a ref is added; it will have to be removed or the resource will be left over
 		inline void addRef() { refCount++; }
-		inline void loseRef() { if (!(--refCount)) delete this; }
 
-		Graphics &getGraphics() const { return g; }
+		//Lose a reference; only way to destruct the object
+		inline void loseRef() {
+			if (!(--refCount)) {
+				erase();
+				delete this;
+			}
+		}
+
+		inline Graphics &getGraphics() const { return g; }
 
 	protected:
 
-		inline Graphics &getGraphics() { return g; }
+		virtual ~GraphicsObject() {}
 
 	private:
+
+		void erase();
 
 		Graphics &g;
 		String name;

@@ -1,6 +1,7 @@
 #pragma once
 #include "graphics/gl_graphics.hpp"
 #include "shader/gl_pipeline.hpp"
+#include "graphics/command/commands.hpp"
 
 namespace ignis {
 
@@ -22,7 +23,7 @@ namespace ignis {
 		Vec2u viewportSize{}, scissorSize{};
 		Vec2i viewportOff{}, scissorOff{};
 
-		Vec4f clearColor{};
+		cmd::SetClearColor clearColor{};
 
 		//VAOs; because they aren't shared
 
@@ -42,7 +43,7 @@ namespace ignis {
 		Descriptors *descriptors{};
 
 		f32 depth{}, minSampleShading{};
-		u32 stencil{};
+		u32 stencil{}, frameId{};
 
 		bool enableScissor{};
 		bool enableMinSampleShading{};
