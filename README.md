@@ -22,11 +22,8 @@ git clone --recursive https://github.com/Nielsbishere/ignis
 mkdir builds & cd builds
 cmake ../ -G "Visual Studio 16 2019" -A x64
 cmake --build . -j 8
-appveyor exit
 cd ../
 ```
-
-[![Build status](https://ci.appveyor.com/api/projects/status/0lnua7yuxobpi14t?svg=true)](https://ci.appveyor.com/project/Nielsbishere/ignis)
 
 ## Guides
 
