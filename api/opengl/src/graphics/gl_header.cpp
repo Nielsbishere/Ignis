@@ -439,7 +439,7 @@ void glxBeginRenderPass(
 void glxSetViewport(GLContext &ctx, Vec2u size, Vec2i offset) {
 
 	if (!size[0] || !size[1]) {
-		oicAssert(ctx.currentFramebuffer, "SetViewport can't be called with null size if the framebuffer isn't bound");
+		oicAssert("SetViewport can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
 		size = ctx.currentFramebuffer->getInfo().size;
 	}
 
@@ -453,7 +453,7 @@ void glxSetViewport(GLContext &ctx, Vec2u size, Vec2i offset) {
 void glxSetScissor(GLContext &ctx, Vec2u size, Vec2i offset) {
 
 	if (!size[0] || !size[1]) {
-		oicAssert(ctx.currentFramebuffer, "SetScissor can't be called with null size if the framebuffer isn't bound");
+		oicAssert("SetScissor can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
 		size = ctx.currentFramebuffer->getInfo().size;
 	}
 
