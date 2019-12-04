@@ -1,4 +1,8 @@
-## Ignis
+# Ignis
+
+![](https://github.com/Nielsbishere/ignis/workflows/C%2FC++%20CI/badge.svg)
+
+## Description
 
 Ignis is a very minimal abstraction layer (no dependencies needed) between modern graphics APIs; current list of planned APIs:
 
