@@ -106,15 +106,15 @@ namespace ignis {
 
 		struct SetClearColor : public Command {
 
-			enum class Type : u8 {
-				FLOAT, UNSIGNED_INT, SIGNED_INT
-			} type;
-
 			union {
 				Vec4f rgbaf;
 				Vec4u rgbau;
 				Vec4i rgbai;
 			};
+
+			enum class Type : u8 {
+				FLOAT, UNSIGNED_INT, SIGNED_INT
+			} type;
 
 			SetClearColor() : SetClearColor(Vec4f{}) {}
 
