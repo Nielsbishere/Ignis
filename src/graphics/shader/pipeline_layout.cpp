@@ -11,42 +11,41 @@ namespace ignis {
 		const String &name, u32 globalId, GPUBufferType type,
 		u32 localId, ShaderAccess access, usz bufferSize, bool isWritable
 	): 
-		name(name), globalId(globalId), bufferType(type), localId(localId), 
-		access(access), isWritable(isWritable), bufferSize(bufferSize),
+		name(name), bufferSize(bufferSize), globalId(globalId), localId(localId), 
 		type(
 			type == GPUBufferType::UNIFORM ? ResourceType::CBUFFER : 
 			ResourceType::BUFFER
-		) {}
+		),
+		bufferType(type), access(access), isWritable(isWritable) {}
 
 	RegisterLayout::RegisterLayout(
 		const String &name, u32 globalId, TextureType type, u32 localId,
 		ShaderAccess access, GPUFormat textureFormat, bool isWritable
 	):
-		name(name), globalId(globalId), textureType(type), localId(localId), 
-		access(access), isWritable(isWritable), textureFormat(textureFormat),
-		type(ResourceType::TEXTURE) {}
+		name(name), textureFormat(textureFormat), globalId(globalId), localId(localId), 
+		type(ResourceType::TEXTURE), textureType(type), access(access), isWritable(isWritable) {}
 
 	RegisterLayout::RegisterLayout(
 		const String &name, u32 globalId, TextureType type, u32 localId,
 		ShaderAccess access, bool isWritable
 	):
-		name(name), globalId(globalId), textureType(type), localId(localId), 
-		access(access), isWritable(isWritable), textureFormat(textureFormat),
-		type(ResourceType::TEXTURE) {}
+		name(name), textureFormat(GPUFormat::NONE), globalId(globalId), localId(localId), 
+		type(ResourceType::TEXTURE), textureType(type), 
+		access(access), isWritable(isWritable) {}
 
 	RegisterLayout::RegisterLayout(
 		const String &name, u32 globalId, SamplerType type, u32 localId,
 		ShaderAccess access
 	):
-		name(name), globalId(globalId), samplerType(type), localId(localId), 
-		access(access), isWritable(false), 
+		name(name), globalId(globalId), localId(localId), 
 		type(
-			samplerType == SamplerType::SAMPLER ? ResourceType::SAMPLER :
+			type == SamplerType::SAMPLER ? ResourceType::SAMPLER :
 			ResourceType::COMBINED_SAMPLER
-		) {}
+		), samplerType(type),
+		access(access), isWritable(false) {}
 
 	RegisterLayout::RegisterLayout(): 
-		name(), globalId(), type(), localId(), access(), isWritable() { }
+		name(), globalId(), localId(), type(), access(), isWritable() { }
 
 	bool RegisterLayout::operator==(const RegisterLayout &other) const {
 

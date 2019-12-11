@@ -56,9 +56,9 @@ namespace ignis {
 		f32 minLod,
 		f32 maxLod
 	) :
-		borderColor(borderColor), s(s), r(r), t(t),
-		minFilter(min), magFilter(mag), anisotropy(anisotropy),
-		minLod(minLod), maxLod(maxLod) {}
+		borderColor(borderColor), anisotropy(anisotropy),
+		minLod(minLod), maxLod(maxLod),
+		minFilter(min), magFilter(mag), s(s), r(r), t(t) {}
 
 	bool Sampler::isCompatible(
 		const RegisterLayout &rl, const GPUSubresource &sub

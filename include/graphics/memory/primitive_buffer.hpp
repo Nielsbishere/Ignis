@@ -35,18 +35,18 @@ namespace ignis {
 
 		inline const BufferLayout &operator[](usz i) const;
 		inline const BufferLayout &getIndexBuffer() const;
-		inline const bool isIndexed() const;
-		inline const GPUMemoryUsage getUsage() const;
-		inline const u32 indices() const;
-		inline const u32 vertices() const;
-		inline const u32 elements() const;
-		inline const GPUFormat getIndexFormat() const;
+		inline bool isIndexed() const;
+		inline GPUMemoryUsage getUsage() const;
+		inline u32 indices() const;
+		inline u32 vertices() const;
+		inline u32 elements() const;
+		inline GPUFormat getIndexFormat() const;
 
 		inline Data *getData() { return data; }
 		inline const Info &getInfo() const { return info; }
 
 		//Whether or not this primitive buffer matches a layout
-		const bool matchLayout(const List<BufferAttributes> &layout) const;
+		bool matchLayout(const List<BufferAttributes> &layout) const;
 
 	private:
 
@@ -64,27 +64,27 @@ namespace ignis {
 		return info.indexLayout;
 	}
 
-	inline const bool PrimitiveBuffer::isIndexed() const {
+	inline bool PrimitiveBuffer::isIndexed() const {
 		return info.indexLayout.formats.size();
 	}
 
-	inline const GPUMemoryUsage PrimitiveBuffer::getUsage() const {
+	inline GPUMemoryUsage PrimitiveBuffer::getUsage() const {
 		return info.usage;
 	}
 
-	inline const u32 PrimitiveBuffer::indices() const {
+	inline u32 PrimitiveBuffer::indices() const {
 		return info.indexLayout.elements;
 	}
 
-	inline const u32 PrimitiveBuffer::vertices() const {
+	inline u32 PrimitiveBuffer::vertices() const {
 		return info.vertexLayout[0].elements;
 	}
 
-	inline const u32 PrimitiveBuffer::elements() const {
+	inline u32 PrimitiveBuffer::elements() const {
 		return isIndexed() ? indices() : vertices();
 	}
 
-	inline const GPUFormat PrimitiveBuffer::getIndexFormat() const {
+	inline GPUFormat PrimitiveBuffer::getIndexFormat() const {
 		return isIndexed() ? info.indexLayout.formats[0].format : GPUFormat::NONE;
 	}
 

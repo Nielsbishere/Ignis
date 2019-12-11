@@ -35,8 +35,8 @@ namespace ignis {
 		Vec3u xyz, GPUFormat format, GPUMemoryUsage usage,
 		u8 mipCount, u32 layers
 	): 
-		dimensions(xyz), format(format), usage(usage), mips(mipCount), layers(layers),
-		textureType(textureType) {
+		dimensions(xyz), layers(layers), format(format), usage(usage),
+		mips(mipCount), textureType(textureType) {
 
 		if(!layers || !xyz[0] || !xyz[1] || !xyz[2])
 			oic::System::log()->fatal("Texture created with invalid dimensions!");

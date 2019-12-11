@@ -18,7 +18,7 @@ namespace ignis {
 			SamplerMin minFilter;
 			SamplerMag magFilter;
 
-			SamplerMode s, t, r;
+			SamplerMode s, r, t;
 
 			Info(
 				SamplerMin min = SamplerMin::LINEAR_MIPS,

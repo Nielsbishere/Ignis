@@ -77,7 +77,7 @@ namespace ignis {
 
 		for (auto &elem : glFunctionNames) {
 
-			*elem.second = wglGetProcAddress(elem.first.c_str());
+			*elem.second = (void*) wglGetProcAddress(elem.first.c_str());
 
 			if (!elem.second)
 				oic::System::log()->warn(String("GL Function not found ") + elem.first);

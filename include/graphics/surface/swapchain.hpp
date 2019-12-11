@@ -18,7 +18,7 @@ namespace ignis {
 			bool useVSync;
 
 			Info(oic::ViewportInfo *vi, bool useVSync, DepthFormat format): 
-				vi(vi), useVSync(useVSync), format(format) {}
+				vi(vi), format(format), useVSync(useVSync) {}
 		};
 
 		plimpl struct Data;

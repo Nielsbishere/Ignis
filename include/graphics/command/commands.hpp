@@ -60,9 +60,9 @@ namespace ignis {
 			DrawInstanced(
 				u32 count, u32 instanceCount = 1, u32 start = 0, u32 instanceStart = 0
 			): 
-				Command(CMD_DRAW_INSTANCED, sizeof(*this)), isIndexed(false),
-				start(start), count(count), instanceCount(instanceCount), vertexStart(), 
-				instanceStart(instanceStart) {}
+				Command(CMD_DRAW_INSTANCED, sizeof(*this)),
+				start(start), count(count), instanceCount(instanceCount), 
+				instanceStart(instanceStart), vertexStart(), isIndexed(false) {}
 
 			static inline DrawInstanced indexed(u32 count, u32 instanceCount = 1, u32 start = 0, u32 instanceStart = 0, u32 vertexStart = 0) {
 				DrawInstanced di(count, instanceCount, start, instanceStart);

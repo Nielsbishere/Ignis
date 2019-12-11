@@ -6,9 +6,16 @@
 
 namespace ignis {
 
+	//Buffer initData{};
+	//BufferAttributes formats{};
+	//
+	//GPUBuffer *buffer{};
+	//usz bufferOffset{};		//TODO: Require all buffer offsets to adhere to GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT
+	//u32 elements{};
+
 	BufferLayout::BufferLayout(GPUBuffer *b, const BufferAttributes &formats, usz bufferOffset) :
-		buffer(b), formats(formats), elements(u32(b->size() / formats.getStride())),
-		bufferOffset(bufferOffset) {}
+		formats(formats), buffer(b), bufferOffset(bufferOffset),
+		elements(u32(b->size() / formats.getStride())) {}
 
 	PrimitiveBuffer::PrimitiveBuffer(
 		Graphics &g, const String &name, const Info &inf
@@ -98,7 +105,7 @@ namespace ignis {
 			buf->loseRef();
 	}
 
-	const bool PrimitiveBuffer::matchLayout(const List<BufferAttributes> &layout) const {
+	bool PrimitiveBuffer::matchLayout(const List<BufferAttributes> &layout) const {
 
 		if (layout.size() != info.vertexLayout.size())
 			return false;

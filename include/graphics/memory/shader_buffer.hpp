@@ -21,15 +21,16 @@ namespace ignis {
 
 			template<template<typename T2> typename T, typename T2, typename = std::enable_if_t<std::is_pod_v<T2>>>
 			Layout(usz offset, const T<T2> &dat) :
-				offset(offset), format(GPUFormat(0)), array{ dat.size() },
 				initData((u8*)dat.data(), (u8*)(dat.data() + dat.size())),
-				stride(usz(std::ceil(f64(sizeof(T2)) / 16) * 16)), length(sizeof(T2)) { }
+				array{ dat.size() }, offset(offset),
+				stride(usz(std::ceil(f64(sizeof(T2)) / 16) * 16)),
+				length(sizeof(T2)), format(GPUFormat(0)) { }
 
 			template<typename T, typename = std::enable_if_t<std::is_pod_v<T>>>
 			Layout(usz offset, T &dat, const List<usz> &array = {}) :
-				offset(offset), format(GPUFormat(0)), array(array),
-				initData((u8*)&dat, (u8*)(&dat + 1)),
-				stride(usz(std::ceil(f64(sizeof(T)) / 16) * 16)), length(sizeof(T)) { }
+				initData((u8*)&dat, (u8*)(&dat + 1)), array(array),
+				offset(offset), stride(usz(std::ceil(f64(sizeof(T)) / 16) * 16)),
+				length(sizeof(T)), format(GPUFormat(0)) { }
 		};
 
 		struct Info {

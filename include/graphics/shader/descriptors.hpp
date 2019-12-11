@@ -48,9 +48,9 @@ namespace ignis {
 				u32 minLevel, u32 minLayer,
 				u32 levelCount, u32 layerCount,
 				TextureType subType
-			): 
-				texture(texture),
-				TextureRange(minLevel, minLayer, levelCount, layerCount, subType){}
+			) :
+				TextureRange(minLevel, minLayer, levelCount, layerCount, subType),
+				texture(texture) {}
 		};
 
 		struct BufferRange {

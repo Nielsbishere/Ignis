@@ -84,9 +84,9 @@ namespace ignis {
 				LogicOp logicOp = LogicOp::NO_OP,
 				Vec4f blendFactor = {}
 			) :
-				blendEnable(blendEnable), blendOp(blendOp), alphaBlendOp(alphaBlendOp), writeMask(writeMask),
+				blendFactor(blendFactor), logicOp(logicOp), writeMask(writeMask), blendOp(blendOp), alphaBlendOp(alphaBlendOp),
 				srcBlend(srcBlend), dstBlend(dstBlend), alphaSrcBlend(alphaSrcBlend), alphaDstBlend(alphaDstBlend),
-				logicOp(logicOp), blendFactor(blendFactor) {}
+				blendEnable(blendEnable) {}
 
 			static BlendState alphaBlend(WriteMask mask = WriteMask::ALL, LogicOp logicOp = LogicOp::NO_OP, Vec4f blendFactor = {}) {
 				return BlendState(
@@ -142,9 +142,9 @@ namespace ignis {
 				BlendState blendState = {},
 				TopologyMode topology = TopologyMode::TRIANGLE_LIST
 			) : 
-				flag(f), attributeLayout(attributeLayout), topology(topology),
-				passes{ passes }, pipelineLayout(pipelineLayout),
-				rasterizer(rasterizer), msaa(msaa), blendState(blendState) { }
+				passes{ passes }, pipelineLayout(pipelineLayout), flag(f),
+				attributeLayout(attributeLayout), topology(topology),
+				rasterizer(rasterizer), blendState(blendState), msaa(msaa) { }
 
 			Info(
 				Flag f,
@@ -156,9 +156,9 @@ namespace ignis {
 				BlendState blendState = {},
 				TopologyMode topology = TopologyMode::TRIANGLE_LIST
 			) : 
-				flag(f), attributeLayout(attributeLayout), topology(topology), 
-				passes(passes),  pipelineLayout(pipelineLayout), 
-				rasterizer(rasterizer), msaa(msaa), blendState(blendState) { }
+				passes(passes), pipelineLayout(pipelineLayout), flag(f),
+				attributeLayout(attributeLayout), topology(topology), 
+				rasterizer(rasterizer), blendState(blendState), msaa(msaa) { }
 
 			//Compute
 
@@ -168,8 +168,9 @@ namespace ignis {
 				const PipelineLayout &pipelineLayout,
 				Vec3u groupSize
 			) : 
-				flag(f), passes { { { ShaderStage::COMPUTE, computeShader } } },
-				pipelineLayout(pipelineLayout), groupSize(groupSize) { }
+				passes{ { { ShaderStage::COMPUTE, computeShader } } }, 
+				pipelineLayout(pipelineLayout), flag(f),
+				groupSize(groupSize) { }
 
 			Info(
 				Flag f,
@@ -177,8 +178,8 @@ namespace ignis {
 				const PipelineLayout &pipelineLayout,
 				Vec3u groupSize
 			) : 
-				flag(f), passes(computeShaders.size()),
-				pipelineLayout(pipelineLayout), groupSize(groupSize) {
+				passes(computeShaders.size()), pipelineLayout(pipelineLayout),
+				flag(f), groupSize(groupSize) {
 			
 				size_t i{};
 

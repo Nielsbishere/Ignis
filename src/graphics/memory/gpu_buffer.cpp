@@ -6,10 +6,10 @@
 namespace ignis {
 
 	GPUBuffer::Info::Info(usz bufferSize, GPUBufferType type, GPUMemoryUsage usage):
-		type(type), usage(usage), size(bufferSize), initData(bufferSize) {}
+		initData(bufferSize), size(bufferSize), type(type), usage(usage) {}
 
 	GPUBuffer::Info::Info(const Buffer &initData, GPUBufferType type, GPUMemoryUsage usage):
-		type(type), usage(usage), size(initData.size()), initData(initData) {}
+		initData(initData), size(initData.size()), type(type), usage(usage) {}
 
 	bool GPUBuffer::isCompatible(
 		const RegisterLayout &reg, const GPUSubresource &resource

@@ -73,7 +73,7 @@ namespace ignis {
 		}
 
 		//Detect if it is the current version or higher
-		inline const bool version(u32 maj, u32 min) const {
+		inline bool version(u32 maj, u32 min) const {
 			return getVersion(major, minor) >= getVersion(maj, min);
 		}
 	};

@@ -200,6 +200,8 @@ GLenum glxGpuFormatType(GPUFormat type) {
 
 	const GPUFormatType t = FormatHelper::getType(type);
 	const usz stride = FormatHelper::getStrideBits(type);
+
+	const bool isSigned = FormatHelper::isSigned(type);
 	
 	if (t == GPUFormatType::FLOAT) {
 
@@ -211,8 +213,6 @@ GLenum glxGpuFormatType(GPUFormat type) {
 
 		else goto error;
 	}
-
-	const bool isSigned = FormatHelper::isSigned(type);
 
 	switch (stride) {
 
@@ -267,10 +267,11 @@ GLenum glxTopologyMode(TopologyMode topo) {
 		case TopologyMode::LINE_STRIP_ADJ:		return GL_LINE_STRIP_ADJACENCY;
 		case TopologyMode::TRIANGLE_LIST_ADJ:	return GL_TRIANGLES_ADJACENCY;
 		case TopologyMode::TRIANGLE_STRIP_ADJ:	return GL_TRIANGLE_STRIP_ADJACENCY;
-	}
 
-	oic::System::log()->fatal("Unsupported topology mode");
-	return {};
+		default:
+			oic::System::log()->fatal("Unsupported topology mode");
+			return {};
+	}
 }
 
 GLenum glxShaderStage(ShaderStage stage) {
@@ -282,16 +283,17 @@ GLenum glxShaderStage(ShaderStage stage) {
 
 		case ShaderStage::VERTEX:			return GL_VERTEX_SHADER;
 		case ShaderStage::GEOMETRY:			return GL_GEOMETRY_SHADER;
-		case ShaderStage::TESS_CTRL:			return GL_TESS_CONTROL_SHADER;
-		case ShaderStage::TESS_EVAL:			return GL_TESS_EVALUATION_SHADER;
+		case ShaderStage::TESS_CTRL:		return GL_TESS_CONTROL_SHADER;
+		case ShaderStage::TESS_EVAL:		return GL_TESS_EVALUATION_SHADER;
 		case ShaderStage::FRAGMENT:			return GL_FRAGMENT_SHADER;
 		case ShaderStage::COMPUTE:			return GL_COMPUTE_SHADER;
 		case ShaderStage::TASK_EXT:			return GL_TASK_SHADER_NV;
 		case ShaderStage::MESH_EXT:			return GL_MESH_SHADER_NV;
-	}
 
-	oic::System::log()->fatal("Invalid shader stage");
-	return {};
+		default:
+			oic::System::log()->fatal("Invalid shader stage");
+			return {};
+	}
 }
 
 GLenum glxTextureType(TextureType type) {
@@ -309,20 +311,20 @@ GLenum glxTextureType(TextureType type) {
 		case TextureType::TEXTURE_2D_ARRAY:		return GL_TEXTURE_2D_ARRAY;
 		case TextureType::TEXTURE_MS_ARRAY:		return GL_TEXTURE_2D_MULTISAMPLE_ARRAY;
 
+		default:
+			oic::System::log()->fatal("Invalid texture type");
+			return {};
 	}
-
-	oic::System::log()->fatal("Invalid texture type");
-	return {};
 }
 
 GLenum glxSamplerMode(SamplerMode mode) {
 
 	switch (mode) {
 		case SamplerMode::CLAMP_EDGE:			return GL_CLAMP_TO_EDGE;
-		case SamplerMode::MIRROR_CLAMP_EDGE:		return GL_MIRROR_CLAMP_TO_EDGE;
+		case SamplerMode::MIRROR_CLAMP_EDGE:	return GL_MIRROR_CLAMP_TO_EDGE;
 		case SamplerMode::CLAMP_BORDER:			return GL_CLAMP_TO_BORDER;
 		case SamplerMode::REPEAT:				return GL_REPEAT;
-		case SamplerMode::MIRROR_REPEAT:			return GL_MIRRORED_REPEAT;
+		case SamplerMode::MIRROR_REPEAT:		return GL_MIRRORED_REPEAT;
 	}
 
 	oic::System::log()->fatal("Invalid sampler mode");
@@ -331,8 +333,8 @@ GLenum glxSamplerMode(SamplerMode mode) {
 
 GLenum glxSamplerMag(SamplerMag mag) {
 
-	if (mag == SamplerMag::LINEAR) return GL_LINEAR;
-	else if (mag == SamplerMag::NEAREST) return GL_NEAREST;
+	if (mag == SamplerMag::LINEAR)				return GL_LINEAR;
+	else if (mag == SamplerMag::NEAREST)		return GL_NEAREST;
 
 	oic::System::log()->fatal("Invalid sampler mag");
 	return {};

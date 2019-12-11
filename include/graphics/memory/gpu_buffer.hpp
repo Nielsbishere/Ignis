@@ -35,7 +35,7 @@ namespace ignis {
 			const RegisterLayout &reg, const GPUSubresource &resource
 		) const final override;
 
-		inline const usz size() const { return info.size; }
+		inline usz size() const { return info.size; }
 
 		Data *getData() { return data; }
 		const Info &getInfo() const { return info; }
