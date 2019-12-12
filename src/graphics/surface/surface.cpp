@@ -7,7 +7,7 @@
 namespace ignis {
 
 	Surface::Info::Info(
-		const Vec2u &size, const List<GPUFormat> &colorFormats,
+		const Vec2u32 &size, const List<GPUFormat> &colorFormats,
 		DepthFormat depthFormat, bool keepDepth, u32 samples
 	):
 		size(size), colorFormats(colorFormats),
@@ -24,7 +24,7 @@ namespace ignis {
 		DepthFormat depthFormat, bool keepDepth,
 		u32 samples, f64 scale
 	): 
-		Info(Vec2u(), colorFormats, depthFormat, keepDepth, samples)
+		Info(Vec2u32(), colorFormats, depthFormat, keepDepth, samples)
 	{
 		viewportScale = scale;
 	}

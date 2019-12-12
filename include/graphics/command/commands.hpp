@@ -1,6 +1,7 @@
 #pragma once
 #include "graphics/command/command_list.hpp"
 #include "graphics/command/command_ops.hpp"
+#include "types/vec.hpp"
 
 //General GPU commands
 //These have to be implemented for every CommandList implementation
@@ -74,19 +75,19 @@ namespace ignis {
 		//Dispatch call
 		struct Dispatch : public Command {
 
-			Vec3u threadCount;
+			Vec3u32 threadCount;
 
-			Dispatch(Vec3u xyzThreads) :
+			Dispatch(const Vec3u32 &threads) :
 				Command(CMD_DISPATCH, sizeof(*this)),
-				threadCount(xyzThreads) {}
+				threadCount(threads) {}
 
-			Dispatch(u32 xThreads) :
+			Dispatch(u32 threads) :
 				Command(CMD_DISPATCH, sizeof(*this)),
-				threadCount { xThreads, 1, 1 } {}
+				threadCount { threads, 1, 1 } {}
 
-			Dispatch(Vec2u xyThreads) :
+			Dispatch(const Vec2u32 &threads) :
 				Command(CMD_DISPATCH, sizeof(*this)),
-				threadCount { xyThreads[0], xyThreads[1], 1 } {}
+				threadCount { threads.x, threads.y, 1 } {}
 
 		};
 
@@ -100,41 +101,41 @@ namespace ignis {
 
 		using SetClearStencil		= DataOp<CMD_SET_CLEAR_STENCIL,			u32>;
 		using SetClearDepth			= DataOp<CMD_SET_CLEAR_DEPTH,			f32>;
-		using SetBlendConstants		= DataOp<CMD_SET_BLEND_CONSTANTS,		Vec4f>;
+		using SetBlendConstants		= DataOp<CMD_SET_BLEND_CONSTANTS,		Vec4f32>;
 		using SetStencilCompareMask = DataOp<CMD_SET_STENCIL_COMPARE_MASK,	u32>;
 		using SetStencilWriteMask	= DataOp<CMD_SET_STENCIL_WRITE_MASK,	u32>;
 
 		struct SetClearColor : public Command {
 
 			union {
-				Vec4f rgbaf;
-				Vec4u rgbau;
-				Vec4i rgbai;
+				Vec4f32 rgbaf;
+				Vec4u32 rgbau;
+				Vec4i32 rgbai;
 			};
 
 			enum class Type : u8 {
 				FLOAT, UNSIGNED_INT, SIGNED_INT
 			} type;
 
-			SetClearColor() : SetClearColor(Vec4f{}) {}
+			SetClearColor() : SetClearColor(Vec4f32()) {}
 
-			SetClearColor(const Vec4f &rgba): 
+			SetClearColor(const Vec4f32 &rgba): 
 				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbaf(rgba), type(Type::FLOAT) {}
 
-			SetClearColor(const Vec4u &rgba): 
+			SetClearColor(const Vec4u32 &rgba): 
 				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbau(rgba), type(Type::UNSIGNED_INT) {}
 
-			SetClearColor(const Vec4i &rgba): 
+			SetClearColor(const Vec4i32 &rgba): 
 				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbai(rgba), type(Type::SIGNED_INT) {}
 		};
 
 		template<CommandOp opCode>
 		struct SetViewRegion : public Command {
 
-			Vec2i offset;
-			Vec2u size;
+			Vec2i32 offset;
+			Vec2u32 size;
 
-			SetViewRegion(Vec2u size = {}, Vec2i offset = {}) :
+			SetViewRegion(const Vec2u32 &size = {}, const Vec2i32 &offset = {}) :
 				Command(opCode, sizeof(*this)),
 				offset(offset), size(size) {}
 		};
@@ -148,7 +149,7 @@ namespace ignis {
 		struct BlitFramebuffer : Command {
 
 			Framebuffer *src, *dst;
-			Vec4u srcArea, dstArea;
+			Vec4u32 srcArea, dstArea;
 
 			enum BlitMask : u8 {
 				COLOR = 1, DEPTH = 2, STENCIL = 4,
@@ -162,7 +163,7 @@ namespace ignis {
 
 			BlitFramebuffer(
 				Framebuffer *src, Framebuffer *dst, 
-				Vec4u srcArea, Vec4u dstArea,
+				const Vec4u32 &srcArea, const Vec4u32 &dstArea,
 				BlitMask mask, BlitFilter filter
 			): 
 				Command(CMD_BLIT_FRAMEBUFFER, sizeof(*this)), src(src), dst(dst), 

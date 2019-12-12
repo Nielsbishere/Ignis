@@ -3,7 +3,7 @@
 
 namespace ignis {
 
-	void Swapchain::onResize(const Vec2u &size) {
+	void Swapchain::onResize(const Vec2u32 &size) {
 		info.size = size;
 	}
 

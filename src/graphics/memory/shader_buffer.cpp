@@ -22,7 +22,7 @@ namespace ignis {
 		return length;
 	}
 
-	ShaderBuffer::Info::Info(const HashMap<String, Layout> &layout, GPUBufferType type, GPUMemoryUsage usage) :
+	ShaderBuffer::Info::Info(GPUBufferType type, GPUMemoryUsage usage, const HashMap<String, Layout> &layout) :
 		bufferInfo(bufferSize(layout), type, usage) {
 
 		for (auto &l : layout) {

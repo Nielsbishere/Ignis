@@ -28,7 +28,7 @@ namespace ignis {
 
 			List<Buffer> initData;		//[mip] Where each buffer.size = linearSize*layers
 
-			Vec3u dimensions;
+			Vec3u32 dimensions;
 			u32 layers;
 
 			GPUFormat format;
@@ -45,13 +45,13 @@ namespace ignis {
 
 			//Empty Texture2D
 			Info(
-				Vec2u xy, GPUFormat format, GPUMemoryUsage usage,
+				const Vec2u32 &xy, GPUFormat format, GPUMemoryUsage usage,
 				u8 mips, u32 layers
 			);
 
 			//Empty Texture3D
 			Info(
-				Vec3u xyz, GPUFormat format,
+				const Vec3u32 &xyz, GPUFormat format,
 				GPUMemoryUsage usage, u8 mips
 			);
 
@@ -92,7 +92,7 @@ namespace ignis {
 
 			Info(
 				TextureType textureType,
-				Vec3u xyz, GPUFormat format, GPUMemoryUsage usage,
+				const Vec3u32 &xyz, GPUFormat format, GPUMemoryUsage usage,
 				u8 mipCount, u32 layers
 			);
 		};
@@ -154,7 +154,7 @@ namespace ignis {
 		const DataTexture2D<T> &val, GPUFormat format, GPUMemoryUsage usage, u32 layers
 	) : 
 		Info(
-			Vec2u{ u32(val[0].size()[1]), u32(val[0].size()[0]) }, 
+			Vec2u32(u32(val[0].size()[1]), u32(val[0].size()[0])), 
 			format, usage, u8(val.size()), layers
 		) {
 

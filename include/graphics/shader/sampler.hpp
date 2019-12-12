@@ -2,6 +2,7 @@
 #include "graphics/gpu_resource.hpp"
 #include "graphics/graphics_object.hpp"
 #include "graphics/enums.hpp"
+#include "types/vec.hpp"
 
 namespace ignis {
 
@@ -11,7 +12,7 @@ namespace ignis {
 
 		struct Info {
 
-			Vec4f borderColor{};
+			Vec4f32 borderColor{};
 
 			f32 anisotropy, minLod, maxLod;
 
@@ -30,7 +31,7 @@ namespace ignis {
 			);
 
 			Info(
-				Vec4f borderColor,
+				const Vec4f32 &borderColor,
 				SamplerMin min = SamplerMin::LINEAR_MIPS,
 				SamplerMag mag = SamplerMag::LINEAR,
 				f32 anisotropy = 8,
@@ -50,7 +51,7 @@ namespace ignis {
 			);
 
 			Info(
-				Vec4f borderColor,
+				const Vec4f32 &borderColor,
 				SamplerMode sFilter,
 				SamplerMode rFilter,
 				SamplerMode tFilter,

@@ -1,5 +1,5 @@
 #pragma once
-#include "types/types.hpp"
+#include "types/vec.hpp"
 #include "graphics/graphics_object.hpp"
 
 namespace ignis {
@@ -14,7 +14,7 @@ namespace ignis {
 
 		struct Info {
 
-			Vec2u size;						//The size of the surface
+			Vec2u32 size;						//The size of the surface
 			List<GPUFormat> colorFormats;	//The color formats (<= 8)
 
 			DepthFormat depthFormat;		//The depth format (DepthFormat::NONE or DepthFormat::AUTO generally)
@@ -27,7 +27,7 @@ namespace ignis {
 
 			//Static surface; has to call resize after init
 			Info(
-				const Vec2u &size, const List<GPUFormat> &colorFormats,
+				const Vec2u32 &size, const List<GPUFormat> &colorFormats,
 				DepthFormat depthFormat, bool keepDepth, u32 samples = 1
 			);
 
@@ -43,7 +43,7 @@ namespace ignis {
 			GraphicsObject(g, name), info(info) {}
 
 		//Call whenever the screen is resized
-		virtual void onResize(const Vec2u &size) = 0;
+		virtual void onResize(const Vec2u32 &size) = 0;
 
 		virtual void begin() = 0;
 		virtual void end() = 0;

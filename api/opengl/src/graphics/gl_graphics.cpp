@@ -64,7 +64,7 @@ namespace ignis {
 
 		if (intermediate) {
 
-			Vec2u size = intermediate->getInfo().size;
+			Vec2u32 size = intermediate->getInfo().size;
 
 			glBlitNamedFramebuffer(
 				ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->index,

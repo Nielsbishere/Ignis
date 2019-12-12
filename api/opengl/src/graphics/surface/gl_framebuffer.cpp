@@ -20,13 +20,13 @@ namespace ignis {
 	}
 
 	Framebuffer::~Framebuffer() {
-		onResize(Vec2u());
+		onResize(Vec2u32());
 		destroy(data);
 	}
 
-	void Framebuffer::onResize(const Vec2u &siz) {
+	void Framebuffer::onResize(const Vec2u32 &siz) {
 
-		Vec2u size{ u32(siz[0] * info.viewportScale), u32(siz[1] * info.viewportScale) };
+		Vec2u32 size = (siz.cast<Vec2f64>() * info.viewportScale).cast<Vec2u32>();
 
 		if (info.size == size && (info.isDynamic || (!info.isDynamic && data->index)))
 			return;

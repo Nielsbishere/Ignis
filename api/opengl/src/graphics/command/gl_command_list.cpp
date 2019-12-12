@@ -57,11 +57,11 @@ namespace ignis {
 
 					for(int i = 0, j = int(dat->renderTextures.size()); i < j; ++i)
 						if(ctx.clearColor.type == SetClearColor::Type::FLOAT)
-							glClearNamedFramebufferfv(dat->index, GL_COLOR, i, ctx.clearColor.rgbaf.data());
+							glClearNamedFramebufferfv(dat->index, GL_COLOR, i, ctx.clearColor.rgbaf.arr);
 						else if(ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
-							glClearNamedFramebufferuiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbau.data());
+							glClearNamedFramebufferuiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbau.arr);
 						else
-							glClearNamedFramebufferiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbai.data());
+							glClearNamedFramebufferiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbai.arr);
 				}
 
 				break;
@@ -133,7 +133,7 @@ namespace ignis {
 				GLuint read = ((Framebuffer*) bf->src)->getData()->index;
 				GLuint write = ((Framebuffer*) bf->dst)->getData()->index;
 
-				Vec4u srcArea = bf->srcArea, dstArea = bf->dstArea;
+				Vec4u32 srcArea = bf->srcArea, dstArea = bf->dstArea;
 
 				if (!srcArea[2]) srcArea[2] = bf->src->getInfo().size[0];
 				if (!srcArea[3]) srcArea[3] = bf->src->getInfo().size[1];
@@ -269,38 +269,19 @@ namespace ignis {
 					oic::System::log()->fatal("Pipeline bound was invalid; compute expected");
 
 				{
-					Vec3u threads = ((Dispatch*)c)->threadCount;
-					Vec3u count = ctx.pipeline->getInfo().groupSize;
+					Vec3u32 threads = ((Dispatch*)c)->threadCount;
+					Vec3u32 count = ctx.pipeline->getInfo().groupSize;
 
-					//TODO: Use Vec3
+					Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
 
-					Vec3u groups {
-						threads[0] / count[0],
-						threads[1] / count[1],
-						threads[2] / count[2]
-					};
-
-					if (threads[0] % count[0] != 0)
-						++groups[0];
-
-					if (threads[1] % count[1] != 0)
-						++groups[1];
-
-					if (threads[2] % count[2] != 0)
-						++groups[2];
-
-					if (
-						threads[0] % count[0] != 0 ||
-						threads[1] % count[1] != 0 ||
-						threads[2] % count[2] != 0
-					)
+					if ((threads % count).any())
 						oic::System::log()->performance(
 							"Thread count was incompatible with compute shader "
 							"this is fixed by the runtime, but could provide out of "
 							"bounds texture writes or reads"
 						);
 
-					glDispatchCompute(groups[0], groups[1], groups[2]);
+					glDispatchCompute(groups.x, groups.y, groups.z);
 				}
 
 				break;

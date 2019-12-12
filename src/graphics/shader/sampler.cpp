@@ -13,12 +13,12 @@ namespace ignis {
 		f32 maxLod
 	) :
 		Info(
-			Vec4f{}, srt, srt, srt,
+			Vec4f32{}, srt, srt, srt,
 			min, mag, anisotropy, minLod, maxLod
 		) {}
 
 	Sampler::Info::Info(
-		Vec4f borderColor,
+		const Vec4f32 &borderColor,
 		SamplerMin min,
 		SamplerMag mag,
 		f32 anisotropy,
@@ -42,11 +42,11 @@ namespace ignis {
 		f32 maxLod
 	) :
 		Info(
-			Vec4f{}, s, r, t, min, mag, anisotropy, minLod, maxLod
+			Vec4f32{}, s, r, t, min, mag, anisotropy, minLod, maxLod
 		) {}
 
 	Sampler::Info::Info(
-		Vec4f borderColor,
+		const Vec4f32 &borderColor,
 		SamplerMode s,
 		SamplerMode r,
 		SamplerMode t,

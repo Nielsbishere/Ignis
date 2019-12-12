@@ -20,8 +20,8 @@ namespace ignis {
 		Rasterizer currRaster{};
 		BlendState currBlend{};
 
-		Vec2u viewportSize{}, scissorSize{};
-		Vec2i viewportOff{}, scissorOff{};
+		Vec2u32 viewportSize{}, scissorSize{};
+		Vec2i32 viewportOff{}, scissorOff{};
 
 		cmd::SetClearColor clearColor{};
 

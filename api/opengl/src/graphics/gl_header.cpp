@@ -438,7 +438,7 @@ void glxBeginRenderPass(
 		);
 }
 
-void glxSetViewport(GLContext &ctx, Vec2u size, Vec2i offset) {
+void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
 	if (!size[0] || !size[1]) {
 		oicAssert("SetViewport can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
@@ -452,7 +452,7 @@ void glxSetViewport(GLContext &ctx, Vec2u size, Vec2i offset) {
 	}
 }
 
-void glxSetScissor(GLContext &ctx, Vec2u size, Vec2i offset) {
+void glxSetScissor(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
 	if (!size[0] || !size[1]) {
 		oicAssert("SetScissor can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
@@ -471,7 +471,7 @@ void glxSetScissor(GLContext &ctx, Vec2u size, Vec2i offset) {
 	}
 }
 
-void glxSetViewportAndScissor(GLContext &ctx, Vec2u size, Vec2i offset) {
+void glxSetViewportAndScissor(GLContext &ctx, const Vec2u32 &size, const Vec2i32 &offset) {
 
 	if (ctx.enableScissor) {
 		glDisable(GL_SCISSOR_TEST);

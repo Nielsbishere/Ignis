@@ -17,20 +17,10 @@ namespace ignis {
 
 			GPUFormat format;
 
-			//TODO: Multi size arrays
-
-			template<template<typename T2> typename T, typename T2, typename = std::enable_if_t<std::is_pod_v<T2>>>
-			Layout(usz offset, const T<T2> &dat) :
-				initData((u8*)dat.data(), (u8*)(dat.data() + dat.size())),
-				array{ dat.size() }, offset(offset),
-				stride(usz(std::ceil(f64(sizeof(T2)) / 16) * 16)),
-				length(sizeof(T2)), format(GPUFormat(0)) { }
-
-			template<typename T, typename = std::enable_if_t<std::is_pod_v<T>>>
-			Layout(usz offset, T &dat, const List<usz> &array = {}) :
-				initData((u8*)&dat, (u8*)(&dat + 1)), array(array),
-				offset(offset), stride(usz(std::ceil(f64(sizeof(T)) / 16) * 16)),
-				length(sizeof(T)), format(GPUFormat(0)) { }
+			Layout(usz offset, const Buffer &data, usz stride = 0, const List<usz> &array = {}) :
+				initData(data), array(array),
+				offset(offset), stride(stride ? stride : data.size()),
+				length(data.size()), format(GPUFormat(0)) { }
 		};
 
 		struct Info {
@@ -38,7 +28,7 @@ namespace ignis {
 			HashMap<String, Layout> layout;
 			GPUBuffer::Info bufferInfo;
 
-			Info(const HashMap<String, Layout> &layout, GPUBufferType type, GPUMemoryUsage usage);
+			Info(GPUBufferType type, GPUMemoryUsage usage, const HashMap<String, Layout> &layout = {});
 		};
 
 		ShaderBuffer(Graphics &g, const String &name, const ShaderBuffer::Info &info);

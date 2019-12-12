@@ -1,7 +1,8 @@
 #pragma once
-#include "../graphics_object.hpp"
+#include "graphics/graphics_object.hpp"
 #include "graphics/memory/buffer_layout.hpp"
 #include "graphics/shader/pipeline_layout.hpp"
+#include "types/vec.hpp"
 
 namespace ignis {
 
@@ -32,7 +33,7 @@ namespace ignis {
 
 		struct BlendState {
 
-			Vec4f blendFactor;
+			Vec4f32 blendFactor;
 
 			enum class LogicOp : u8 {
 
@@ -82,13 +83,17 @@ namespace ignis {
 				Blend alphaDstBlend = Blend::ONE,
 				WriteMask writeMask = WriteMask::ALL,
 				LogicOp logicOp = LogicOp::NO_OP,
-				Vec4f blendFactor = {}
+				Vec4f32 blendFactor = {}
 			) :
 				blendFactor(blendFactor), logicOp(logicOp), writeMask(writeMask), blendOp(blendOp), alphaBlendOp(alphaBlendOp),
 				srcBlend(srcBlend), dstBlend(dstBlend), alphaSrcBlend(alphaSrcBlend), alphaDstBlend(alphaDstBlend),
 				blendEnable(blendEnable) {}
 
-			static BlendState alphaBlend(WriteMask mask = WriteMask::ALL, LogicOp logicOp = LogicOp::NO_OP, Vec4f blendFactor = {}) {
+			static BlendState alphaBlend(
+				WriteMask mask = WriteMask::ALL,
+				LogicOp logicOp = LogicOp::NO_OP,
+				const Vec4f32 &blendFactor = {}
+			) {
 				return BlendState(
 					true,
 					BlendOp::ADD, Blend::ONE, Blend::SRC_ALPHA_REV,
@@ -128,7 +133,7 @@ namespace ignis {
 
 			//Compute attributes
 
-			Vec3u groupSize{};
+			Vec3u32 groupSize{};
 
 			//Graphics
 
@@ -166,7 +171,7 @@ namespace ignis {
 				Flag f, 
 				const Buffer &computeShader,
 				const PipelineLayout &pipelineLayout,
-				Vec3u groupSize
+				const Vec3u32 &groupSize
 			) : 
 				passes{ { { ShaderStage::COMPUTE, computeShader } } }, 
 				pipelineLayout(pipelineLayout), flag(f),
@@ -176,7 +181,7 @@ namespace ignis {
 				Flag f,
 				const List<Buffer> &computeShaders,
 				const PipelineLayout &pipelineLayout,
-				Vec3u groupSize
+				const Vec3u32 &groupSize
 			) : 
 				passes(computeShaders.size()), pipelineLayout(pipelineLayout),
 				flag(f), groupSize(groupSize) {
