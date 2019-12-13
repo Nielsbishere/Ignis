@@ -69,8 +69,8 @@ namespace ignis {
 			glBlitNamedFramebuffer(
 				ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->index,
 				ctx.bound[GL_DRAW_FRAMEBUFFER] = 0,
-				0, 0, size[0], size[1],
-				0, size[1], size[0], 0,			//Flip image (since framebuffer is flipped)
+				0, 0, size.x, size.y,
+				0, size.y, size.x, 0,			//Flip image (since framebuffer is flipped)
 				GL_COLOR_BUFFER_BIT, GL_LINEAR
 			);
 		}

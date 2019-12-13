@@ -83,7 +83,7 @@ namespace ignis {
 				Blend alphaDstBlend = Blend::ONE,
 				WriteMask writeMask = WriteMask::ALL,
 				LogicOp logicOp = LogicOp::NO_OP,
-				Vec4f32 blendFactor = {}
+				const Vec4f32 &blendFactor = {}
 			) :
 				blendFactor(blendFactor), logicOp(logicOp), writeMask(writeMask), blendOp(blendOp), alphaBlendOp(alphaBlendOp),
 				srcBlend(srcBlend), dstBlend(dstBlend), alphaSrcBlend(alphaSrcBlend), alphaDstBlend(alphaDstBlend),

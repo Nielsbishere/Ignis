@@ -77,10 +77,6 @@ namespace ignis {
 
 			Vec3u32 threadCount;
 
-			Dispatch(const Vec3u32 &threads) :
-				Command(CMD_DISPATCH, sizeof(*this)),
-				threadCount(threads) {}
-
 			Dispatch(u32 threads) :
 				Command(CMD_DISPATCH, sizeof(*this)),
 				threadCount { threads, 1, 1 } {}
@@ -88,6 +84,10 @@ namespace ignis {
 			Dispatch(const Vec2u32 &threads) :
 				Command(CMD_DISPATCH, sizeof(*this)),
 				threadCount { threads.x, threads.y, 1 } {}
+
+			Dispatch(const Vec3u32 &threads) :
+				Command(CMD_DISPATCH, sizeof(*this)),
+				threadCount(threads) {}
 
 		};
 

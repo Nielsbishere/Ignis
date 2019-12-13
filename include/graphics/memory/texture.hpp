@@ -39,19 +39,19 @@ namespace ignis {
 
 			//Empty Texture1D
 			Info(
-				u32 x, GPUFormat format, GPUMemoryUsage usage,
+				u32 res, GPUFormat format, GPUMemoryUsage usage,
 				u8 mips, u32 layers
 			);
 
 			//Empty Texture2D
 			Info(
-				const Vec2u32 &xy, GPUFormat format, GPUMemoryUsage usage,
+				const Vec2u32 &res, GPUFormat format, GPUMemoryUsage usage,
 				u8 mips, u32 layers
 			);
 
 			//Empty Texture3D
 			Info(
-				const Vec3u32 &xyz, GPUFormat format,
+				const Vec3u32 &res, GPUFormat format,
 				GPUMemoryUsage usage, u8 mips
 			);
 
@@ -133,13 +133,13 @@ namespace ignis {
 	) : 
 		Info(u32(val[0].size()), format, usage, u8(val.size()), layers) {
 
-		if (dimensions[0] % layers != 0)
+		if (dimensions.x % layers != 0)
 			oic::System::log()->fatal("Width of Grid1D should encompass layer count");
 
 		if(val.size() > u8_MAX)
 			oic::System::log()->fatal("Texture has too many mips");
 
-		dimensions[0] /= layers;
+		dimensions.x /= layers;
 
 		List<Buffer> buffers(val.size());
 
@@ -158,13 +158,13 @@ namespace ignis {
 			format, usage, u8(val.size()), layers
 		) {
 
-		if (dimensions[1] % layers != 0)
+		if (dimensions.y % layers != 0)
 			oic::System::log()->fatal("Height of Grid2D should encompass layer count");
 
 		if(val.size() > u8_MAX)
 			oic::System::log()->fatal("Texture has too many mips");
 
-		dimensions[1] /= layers;
+		dimensions.y /= layers;
 
 		List<Buffer> buffers(val.size());
 
@@ -179,7 +179,7 @@ namespace ignis {
 		const DataTexture3D<T> &val, GPUFormat format, GPUMemoryUsage usage
 	) : 
 		Info(
-			Vec3u{ u32(val[0].size()[2]), u32(val[0].size()[1]), u32(val[0].size()[0]) }, 
+			Vec3u32{ u32(val[0].size()[2]), u32(val[0].size()[1]), u32(val[0].size()[0]) }, 
 			format, usage, u8(val.size()), 1
 		) {
 
@@ -205,7 +205,7 @@ namespace ignis {
 			format, usage, u8(val.size()), layers
 		) {
 
-		if (dimensions[1] % layers != 0)
+		if (dimensions.y % layers != 0)
 			oic::System::log()->fatal("Height of Grid2D should encompass layer count");
 
 		if ((!isCubeArray && layers != 6) || (isCubeArray && layers % 6 != 0))

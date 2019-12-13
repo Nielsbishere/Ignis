@@ -41,7 +41,7 @@ namespace ignis {
 		if(inf.maxLod != f32_MAX && inf.maxLod != 1000)
 			glSamplerParameterf(h, GL_TEXTURE_MAX_LOD,			inf.maxLod);
 
-		if (inf.borderColor != Vec4f32{})
+		if (inf.borderColor != Vec4f32())
 			glSamplerParameterfv(h, GL_TEXTURE_BORDER_COLOR,	inf.borderColor.arr);
 	}
 

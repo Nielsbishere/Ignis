@@ -48,7 +48,7 @@ namespace ignis {
 			if (renderTexture)
 				glDeleteTextures(1, &renderTexture);
 
-		if (!size[0]) {
+		if (!size.x) {
 			data->index = data->depth = 0;
 			return;
 		}
@@ -77,7 +77,7 @@ namespace ignis {
 
 				glTextureStorage2DMultisample(
 					handle, GLsizei(info.samples),
-					glxDepthFormat(info.depthFormat), size[0], size[1], GL_FALSE
+					glxDepthFormat(info.depthFormat), size.x, size.y, GL_FALSE
 				);
 
 				glNamedFramebufferTexture(fb, GL_DEPTH_ATTACHMENT, handle, 0);
@@ -94,7 +94,7 @@ namespace ignis {
 
 				glNamedRenderbufferStorageMultisample(
 					handle, GLsizei(info.samples),
-					glxDepthFormat(info.depthFormat), size[0], size[1]
+					glxDepthFormat(info.depthFormat), size.x, size.y
 				);
 
 				glNamedFramebufferRenderbuffer(
@@ -121,7 +121,7 @@ namespace ignis {
 
 			glTextureStorage2DMultisample(
 				tex, GLsizei(info.samples),
-				glxColorFormat(info.colorFormats[i]), size[0], size[1], GL_FALSE
+				glxColorFormat(info.colorFormats[i]), size.x, size.y, GL_FALSE
 			);
 
 			String hashed = NAME(getName() + " buffer " + std::to_string(i));

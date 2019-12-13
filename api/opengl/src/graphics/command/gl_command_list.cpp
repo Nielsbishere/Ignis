@@ -135,16 +135,16 @@ namespace ignis {
 
 				Vec4u32 srcArea = bf->srcArea, dstArea = bf->dstArea;
 
-				if (!srcArea[2]) srcArea[2] = bf->src->getInfo().size[0];
-				if (!srcArea[3]) srcArea[3] = bf->src->getInfo().size[1];
-				if (!dstArea[2]) dstArea[2] = bf->dst->getInfo().size[0];
-				if (!dstArea[3]) dstArea[3] = bf->dst->getInfo().size[1];
+				if (!srcArea.z) srcArea.z = bf->src->getInfo().size.x;
+				if (!srcArea.w) srcArea.w = bf->src->getInfo().size.y;
+				if (!dstArea.z) dstArea.z = bf->dst->getInfo().size.x;
+				if (!dstArea.w) dstArea.w = bf->dst->getInfo().size.y;
 
 				glBlitNamedFramebuffer(
 					ctx.bound[GL_READ_FRAMEBUFFER] = read,
 					ctx.bound[GL_DRAW_FRAMEBUFFER] = write,
-					srcArea[0], srcArea[1], srcArea[2], srcArea[3],
-					dstArea[0], dstArea[1], dstArea[2], dstArea[3],
+					srcArea.x, srcArea.y, srcArea.z, srcArea.w,
+					dstArea.x, dstArea.y, dstArea.z, dstArea.w,
 					mask,
 					filter
 				);

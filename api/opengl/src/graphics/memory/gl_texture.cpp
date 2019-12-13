@@ -15,7 +15,7 @@ namespace ignis {
 		GLenum type = glxGpuFormatType(info.format);
 		GLenum format = glxGpuDataFormat(info.format);
 
-		u32 x = info.dimensions[0];
+		Vec3u32 dim = info.dimensions;
 
 		glCreateTextures(glxTextureType(info.textureType), 1, &data->handle);
 		GLuint handle = data->handle;
@@ -29,17 +29,17 @@ namespace ignis {
 		case TextureType::TEXTURE_1D:
 
 			glTextureStorage1D(
-				handle, mipCount, textureFormat, info.dimensions[0]
+				handle, mipCount, textureFormat, dim.x
 			);
 
 			if (info.initData.size())
 				for (u32 i = 0; i < info.mips; ++i) {
 
 					glTextureSubImage1D(
-						handle, i, 0, x, format, type, info.initData[i].data()
+						handle, i, 0, dim.x, format, type, info.initData[i].data()
 					);
 
-					x = u32(oic::Math::ceil(x / 2.0));
+					dim.x = u32(oic::Math::ceil(dim.x / 2.0));
 				}
 			
 			break;
@@ -47,22 +47,21 @@ namespace ignis {
 		case TextureType::TEXTURE_1D_ARRAY:
 		case TextureType::TEXTURE_2D: {
 
-				u32 y = oic::Math::max(info.dimensions[1], info.layers);
-				f64 yDiv = info.layers <= 1 ? 2 : 1;
+				dim.y = oic::Math::max(dim.y, info.layers);
+				Vec3f32 div = { 2, info.layers <= 1 ? 2 : 1, 1 };
 
 				glTextureStorage2D(
-					handle, mipCount, textureFormat, x, y
+					handle, mipCount, textureFormat, dim.x, dim.y
 				);
 
 				if (info.initData.size())
 					for (u32 i = 0; i < info.mips; ++i) {
 
 						glTextureSubImage2D(
-							handle, i, 0, 0, x, y, format, type, info.initData[i].data()
+							handle, i, 0, 0, dim.x, dim.y, format, type, info.initData[i].data()
 						);
 
-						x = u32(oic::Math::ceil(x / 2.0));
-						y = u32(oic::Math::ceil(y / yDiv));
+						dim = (dim.cast<Vec3f32>() / div).ceil().cast<Vec3u32>();
 					}
 
 			}
@@ -73,24 +72,22 @@ namespace ignis {
 		case TextureType::TEXTURE_2D_ARRAY:
 		case TextureType::TEXTURE_3D: {
 
-				u32 y = info.dimensions[1];
-				u32 z = oic::Math::max(info.dimensions[2], info.layers);
-				f64 zDiv = info.layers <= 1 ? 2 : 1;
+				dim.z = oic::Math::max(dim.z, info.layers);
+				Vec3f32 div(2, 2, info.layers <= 1 ? 2 : 1);
 
 				glTextureStorage3D(
-					handle, mipCount, textureFormat, x, y, z
+					handle, mipCount, textureFormat, dim.x, dim.y, dim.z
 				);
 
 				if(info.initData.size())
 					for (u32 i = 0; i < info.mips; ++i) {
 
 						glTextureSubImage3D(
-							handle, i, 0, 0, 0, x, y, z, format, type, info.initData[i].data()
+							handle, i, 0, 0, 0, dim.x, dim.y, dim.z,
+							format, type, info.initData[i].data()
 						);
 
-						x = u32(oic::Math::ceil(x / 2.0));
-						y = u32(oic::Math::ceil(y / 2.0));
-						z = u32(oic::Math::ceil(z / zDiv));
+						dim = (dim.cast<Vec3f32>() / div).ceil().cast<Vec3u32>();
 					}
 
 			}

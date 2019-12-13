@@ -7,28 +7,28 @@
 namespace ignis {
 
 	Texture::Info::Info(
-		u32 x, GPUFormat format, GPUMemoryUsage usage,
+		u32 res, GPUFormat format, GPUMemoryUsage usage,
 		u8 mips, u32 layers
 	) :
 		Info(
 			TextureType(u8(TextureType::TEXTURE_1D) | ((layers > 1) << u8(TextureType::PROPERTY_IS_ARRAY_BIT))), 
-			Vec3u32(x, 1, 1), format, usage, mips, layers
+			Vec3u32(res, 1, 1), format, usage, mips, layers
 		) { }
 
 	Texture::Info::Info(
-		const Vec2u32 &xy, GPUFormat format, GPUMemoryUsage usage,
+		const Vec2u32 &res, GPUFormat format, GPUMemoryUsage usage,
 		u8 mips, u32 layers
 	) :
 		Info(
 			TextureType(u8(TextureType::TEXTURE_2D) | ((layers > 1) << u8(TextureType::PROPERTY_IS_ARRAY_BIT))), 
-			Vec3u32(xy[0], xy[1], 1), format, usage, mips, layers
+			Vec3u32(res.x, res.y, 1), format, usage, mips, layers
 		) { }
 
 	Texture::Info::Info(
-		const Vec3u32 &xyz, GPUFormat format, GPUMemoryUsage usage,
+		const Vec3u32 &res, GPUFormat format, GPUMemoryUsage usage,
 		u8 mipCount
 	): 
-		Info(TextureType::TEXTURE_3D, xyz, format, usage, mipCount, 1) { }
+		Info(TextureType::TEXTURE_3D, res, format, usage, mipCount, 1) { }
 
 	Texture::Info::Info(
 		TextureType textureType,

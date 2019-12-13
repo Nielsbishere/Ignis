@@ -440,7 +440,7 @@ void glxBeginRenderPass(
 
 void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
-	if (!size[0] || !size[1]) {
+	if (!size.x || !size.y) {
 		oicAssert("SetViewport can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
 		size = ctx.currentFramebuffer->getInfo().size;
 	}
@@ -448,13 +448,13 @@ void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 	if (ctx.viewportOff != offset || ctx.viewportSize != size) {
 		ctx.viewportOff = offset;
 		ctx.viewportSize = size;
-		glViewport(offset[0], offset[1], size[0], size[1]);
+		glViewport(offset.x, offset.y, size.x, size.y);
 	}
 }
 
 void glxSetScissor(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
-	if (!size[0] || !size[1]) {
+	if (!size.x || !size.y) {
 		oicAssert("SetScissor can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
 		size = ctx.currentFramebuffer->getInfo().size;
 	}
@@ -467,7 +467,7 @@ void glxSetScissor(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 	if (ctx.scissorOff != offset || ctx.scissorSize != size) {
 		ctx.scissorOff = offset;
 		ctx.scissorSize = size;
-		glScissor(offset[0], offset[1], size[0], size[1]);
+		glScissor(offset.x, offset.y, size.x, size.y);
 	}
 }
 

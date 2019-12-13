@@ -13,7 +13,7 @@ namespace ignis {
 		f32 maxLod
 	) :
 		Info(
-			Vec4f32{}, srt, srt, srt,
+			Vec4f32(), srt, srt, srt,
 			min, mag, anisotropy, minLod, maxLod
 		) {}
 
@@ -42,7 +42,7 @@ namespace ignis {
 		f32 maxLod
 	) :
 		Info(
-			Vec4f32{}, s, r, t, min, mag, anisotropy, minLod, maxLod
+			Vec4f32(), s, r, t, min, mag, anisotropy, minLod, maxLod
 		) {}
 
 	Sampler::Info::Info(
