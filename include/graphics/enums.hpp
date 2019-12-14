@@ -130,7 +130,9 @@ namespace ignis {
 		CLOSEST_HIT_FT		= 1_u32 << (u8(ShaderStage::CLOSEST_HIT_FT) & u8(ShaderStage::PROPERTY_TYPE)),
 		MISS_FT				= 1_u32 << (u8(ShaderStage::MISS_FT) & u8(ShaderStage::PROPERTY_TYPE)),
 		INTERSECTION_FT		= 1_u32 << (u8(ShaderStage::INTERSECTION_FT) & u8(ShaderStage::PROPERTY_TYPE)),
-		CALLABLE_FT			= 1_u32 << (u8(ShaderStage::CALLABLE_FT) & u8(ShaderStage::PROPERTY_TYPE))
+		CALLABLE_FT			= 1_u32 << (u8(ShaderStage::CALLABLE_FT) & u8(ShaderStage::PROPERTY_TYPE)),
+
+		VERTEX_FRAGMENT		= VERTEX | FRAGMENT
 	};
 
 	//Rasterizer enums
