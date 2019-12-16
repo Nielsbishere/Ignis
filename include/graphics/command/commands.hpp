@@ -99,7 +99,7 @@ namespace ignis {
 			DataOp(DataObject dataObject): Command(opCode, sizeof(*this)), dataObject(dataObject) {}
 		};
 
-		using SetClearStencil		= DataOp<CMD_SET_CLEAR_STENCIL,			u32>;
+		using SetClearStencil		= DataOp<CMD_SET_CLEAR_STENCIL,			u8>;
 		using SetClearDepth			= DataOp<CMD_SET_CLEAR_DEPTH,			f32>;
 		using SetBlendConstants		= DataOp<CMD_SET_BLEND_CONSTANTS,		Vec4f32>;
 		using SetStencilCompareMask = DataOp<CMD_SET_STENCIL_COMPARE_MASK,	u32>;
@@ -177,9 +177,8 @@ namespace ignis {
 
 			enum ClearFlags : u8 {
 				COLOR = 1,
-				DEPTH = 2,
-				STENCIL = 4,
-				ALL = 7
+				DEPTH_STENCIL = 2,
+				ALL = 3
 			} clearFlags;
 
 			ClearFramebuffer(Framebuffer *target, ClearFlags clearFlags = ClearFlags::ALL) :

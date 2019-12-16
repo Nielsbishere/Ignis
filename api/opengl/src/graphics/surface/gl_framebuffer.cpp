@@ -84,6 +84,8 @@ namespace ignis {
 
 			} else {
 
+				//TODO: Fix render buffers!
+
 				glCreateRenderbuffers(1, &data->depth);
 				GLuint handle = data->depth;
 
@@ -99,15 +101,14 @@ namespace ignis {
 
 				glNamedFramebufferRenderbuffer(
 					fb,
-					FormatHelper::hasStencil(info.depthFormat) ?
-					GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT,
-					GL_RENDERBUFFER,
-					handle
+					FormatHelper::hasStencil(info.depthFormat) ? 
+					GL_DEPTH_STENCIL_ATTACHMENT : GL_DEPTH_ATTACHMENT, 
+					GL_RENDERBUFFER, handle
 				);
 			}
 		}
 
-		data->renderTextures = decltype(data->renderTextures)(info.colorFormats.size());
+		data->renderTextures = List<GLuint>(info.colorFormats.size());
 		List<GLenum> drawBuffers(info.colorFormats.size());
 
 		glCreateTextures(

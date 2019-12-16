@@ -355,7 +355,6 @@ GLenum glxSamplerMin(SamplerMin min) {
 	return {};
 }
 
-using BlendState = Pipeline::BlendState;
 using LogicOp = BlendState::LogicOp;
 using BlendOp = BlendState::BlendOp;
 using Blend = BlendState::Blend;
@@ -424,6 +423,40 @@ GLenum glxBlend(Blend blend) {
 	}
 
 	oic::System::log()->fatal("Invalid logic op");
+	return {};
+}
+
+GLenum glxCompareFunc(CompareOp compareOp) {
+
+	switch (compareOp) {
+		case CompareOp::NV:						return GL_NEVER;
+		case CompareOp::LE:						return GL_LESS;
+		case CompareOp::EQ:						return GL_EQUAL;
+		case CompareOp::LEQ:					return GL_LEQUAL;
+		case CompareOp::GR:						return GL_GREATER;
+		case CompareOp::NEQ:					return GL_NOTEQUAL;
+		case CompareOp::GEQ:					return GL_GEQUAL;
+		case CompareOp::AL:						return GL_ALWAYS;
+	}
+
+	oic::System::log()->fatal("Invalid compare op");
+	return {};
+}
+
+GLenum glxStencilOp(StencilOp stencilOp) {
+
+	switch (stencilOp) {
+		case StencilOp::KEEP:					return GL_KEEP;
+		case StencilOp::ZERO:					return GL_ZERO;
+		case StencilOp::REPL:					return GL_REPLACE;
+		case StencilOp::INC_CLAMP:				return GL_INCR;
+		case StencilOp::DEC_CLAMP:				return GL_DECR;
+		case StencilOp::INV:					return GL_INVERT;
+		case StencilOp::INC_WRAP:				return GL_INCR_WRAP;
+		case StencilOp::DEC_WRAP:				return GL_DECR_WRAP;
+	}
+
+	oic::System::log()->fatal("Invalid stencil op");
 	return {};
 }
 
@@ -566,14 +599,18 @@ bool glxCheckProgramLog(GLuint program, String &str) {
 
 void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 
-	glUseProgram(pipeline->getData()->handles[0]);
+	glUseProgram(pipeline->getData()->handle);
 
 	auto &r = pipeline->getInfo().rasterizer;
 	auto &b = pipeline->getInfo().blendState;
-	auto &msaa = pipeline->getInfo().msaa;
+	auto &m = pipeline->getInfo().msaa;
+	auto &d = pipeline->getInfo().depthStencil;
 
 	auto &r0 = ctx.currRaster;
 	auto &b0 = ctx.currBlend;
+	auto &d0 = ctx.currDepth;
+
+	//Rasterizer
 
 	if (r0.cull != r.cull) {
 
@@ -604,16 +641,18 @@ void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 		b0.writeMask = b.writeMask;
 	}
 
-	if (msaa.samples && msaa.minSampleShading) {
+	//MSAA
+
+	if (m.samples && m.minSampleShading) {
 
 		if (!ctx.enableMinSampleShading) {
 			glEnable(GL_SAMPLE_SHADING);
 			ctx.enableMinSampleShading = true;
 		}
 
-		if (ctx.minSampleShading != msaa.minSampleShading) {
-			glMinSampleShading(msaa.minSampleShading);
-			ctx.minSampleShading = msaa.minSampleShading;
+		if (ctx.minSampleShading != m.minSampleShading) {
+			glMinSampleShading(m.minSampleShading);
+			ctx.minSampleShading = m.minSampleShading;
 		}
 
 	} else if (ctx.enableMinSampleShading) {
@@ -621,12 +660,12 @@ void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 		ctx.enableMinSampleShading = false;
 	}
 
+	//Blending
+
 	if (b0.blendEnable != b.blendEnable) {
 
-		if (b.blendEnable)
-			glEnable(GL_BLEND);
-		else
-			glDisable(GL_BLEND);
+		if (b.blendEnable) glEnable(GL_BLEND);
+		else glDisable(GL_BLEND);
 
 		b0.blendEnable = b.blendEnable;
 	}
@@ -665,6 +704,83 @@ void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 		}
 	}
 
+	//Depth
+
+	if (d0.enableDepthRead != d.enableDepthRead) {
+
+		if (d.enableDepthRead) glEnable(GL_DEPTH_TEST);
+		else glDisable(GL_DEPTH_TEST);
+
+		d0.enableDepthRead = d.enableDepthRead;
+	}
+
+	if (d0.enableDepthWrite != d.enableDepthWrite) {
+
+		if (d.enableDepthWrite) glDepthMask(true);
+		else glDepthMask(false);
+
+		d0.enableDepthWrite = d.enableDepthWrite;
+	}
+
+	if (d0.enableDepthRead) {
+		if (d0.depthCompare != d.depthCompare)
+			glDepthFunc(glxCompareFunc(d0.depthCompare = d.depthCompare));
+	}
+
+	//Stencil
+
+	if (d0.enableStencilTest != d.enableStencilTest) {
+
+		if (d.enableStencilTest) glEnable(GL_STENCIL_TEST);
+		else glDisable(GL_STENCIL_TEST);
+
+		d0.enableStencilTest = d.enableStencilTest;
+	}
+
+	if (d0.enableStencilTest) {
+
+		if (d0.stencilWriteMask != d.stencilWriteMask)
+			glStencilMask(d0.stencilMask = d.stencilMask);
+
+		bool update = d0.stencilMask != d.stencilMask || d0.stencilReference != d.stencilReference;
+
+		if (update ||d0.front.compare != d.front.compare)
+			glStencilFuncSeparate(
+				GL_FRONT, 
+				glxCompareFunc(d0.front.compare = d.front.compare),
+				d0.stencilReference = d.stencilReference,
+				d0.stencilMask = d.stencilMask
+			);
+
+		if (update || d0.back.compare != d.back.compare)
+			glStencilFuncSeparate(
+				GL_BACK,
+				glxCompareFunc(d0.back.compare = d.back.compare),
+				d0.stencilReference,
+				d0.stencilMask
+			);
+
+		if (d0.front.fail != d.front.fail || d0.front.pass != d.front.pass ||
+			d0.front.depthFail != d.front.depthFail
+		)
+			glStencilOpSeparate(
+				GL_FRONT,
+				glxStencilOp(d0.front.fail = d.front.fail),
+				glxStencilOp(d0.front.depthFail = d.front.depthFail),
+				glxStencilOp(d0.front.pass = d.front.pass)
+			);
+
+		if (d0.back.fail != d.back.fail || d0.back.pass != d.back.pass ||
+			d0.back.depthFail != d.back.depthFail
+		)
+			glStencilOpSeparate(
+				GL_FRONT,
+				glxStencilOp(d0.back.fail = d.back.fail),
+				glxStencilOp(d0.back.depthFail = d.back.depthFail),
+				glxStencilOp(d0.back.pass = d.back.pass)
+			);
+
+	}
 }
 
 void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {

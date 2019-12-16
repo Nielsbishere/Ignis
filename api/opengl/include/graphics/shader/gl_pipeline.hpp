@@ -5,7 +5,7 @@
 namespace ignis {
 
 	struct Pipeline::Data {
-		List<GLuint> handles;
+		GLuint handle{};
 	};
 
 }

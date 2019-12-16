@@ -12,13 +12,11 @@ namespace ignis {
 
 	struct GLContext {
 
-		using BlendState = Pipeline::BlendState;
-		using Rasterizer = Pipeline::Rasterizer;
-
 		//Large objects
 
 		Rasterizer currRaster{};
 		BlendState currBlend{};
+		DepthStencil currDepth{};
 
 		Vec2u32 viewportSize{}, scissorSize{};
 		Vec2i32 viewportOff{}, scissorOff{};
@@ -42,8 +40,9 @@ namespace ignis {
 		Pipeline *pipeline{};
 		Descriptors *descriptors{};
 
-		f32 depth{}, minSampleShading{};
-		u32 stencil{}, frameId{};
+		u64 frameId {};
+		f32 depth = 1, minSampleShading{};
+		u8 stencil {};
 
 		bool enableScissor{};
 		bool enableMinSampleShading{};

@@ -20,6 +20,8 @@ namespace ignis {
 	enum class SamplerMode : u8;
 	enum class SamplerMag : u8;
 	enum class SamplerMin : u8;
+	enum class CompareOp : u8;
+	enum class StencilOp : u8;
 
 	class Descriptors;
 	class Pipeline;
@@ -41,6 +43,8 @@ extern GLenum glxTextureType(ignis::TextureType type);
 extern GLenum glxSamplerMode(ignis::SamplerMode mode);
 extern GLenum glxSamplerMag(ignis::SamplerMag mag);
 extern GLenum glxSamplerMin(ignis::SamplerMin min);
+extern GLenum glxCompareFunc(ignis::CompareOp compareOp);
+extern GLenum glxStencilOp(ignis::StencilOp stencilOp);
 
 extern void glxBeginRenderPass(
 	ignis::GLContext &data, GLuint framebuffer

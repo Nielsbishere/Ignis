@@ -46,11 +46,8 @@ namespace ignis {
 
 				if (dat->depth) {
 
-					if(cf->clearFlags & ClearFramebuffer::DEPTH)
-						glClearNamedFramebufferfi(dat->index, GL_DEPTH, 0, ctx.depth, 0);
-
-					if(cf->clearFlags & ClearFramebuffer::STENCIL && FormatHelper::hasStencil(targ->getInfo().depthFormat))
-						glClearNamedFramebufferfi(dat->index, GL_STENCIL, 0, 0, ctx.stencil);
+					if(cf->clearFlags & ClearFramebuffer::DEPTH_STENCIL)
+						glClearNamedFramebufferfi(dat->index, GL_DEPTH_STENCIL, 0, ctx.depth, ctx.stencil);
 				}
 
 				if (dat->renderTextures.size() && cf->clearFlags & ClearFramebuffer::COLOR) {
