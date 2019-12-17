@@ -177,8 +177,10 @@ namespace ignis {
 
 			enum ClearFlags : u8 {
 				COLOR = 1,
-				DEPTH_STENCIL = 2,
-				ALL = 3
+				DEPTH = 2,
+				STENCIL = 4,
+				DEPTH_STENCIL = 6,
+				ALL = 7
 			} clearFlags;
 
 			ClearFramebuffer(Framebuffer *target, ClearFlags clearFlags = ClearFlags::ALL) :

@@ -42,10 +42,14 @@ namespace ignis {
 
 		u64 frameId {};
 		f32 depth = 1, minSampleShading{};
-		u8 stencil {};
+		u32 stencil {};
 
 		bool enableScissor{};
 		bool enableMinSampleShading{};
+
+		GLContext() {
+			currRaster.cull = CullMode::NONE;
+		}
 
 	};
 

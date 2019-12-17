@@ -60,7 +60,11 @@ namespace ignis {
 			GL_FRAMEBUFFER, fb, GLsizei(getName().size()), getName().c_str()
 		);
 
+		bool fixedSampleLocations = info.depthFormat != DepthFormat::NONE && !info.keepDepth;
+
 		if (info.depthFormat != DepthFormat::NONE) {
+
+			//TODO: Stencil buffers
 
 			if (info.keepDepth) {
 
@@ -122,7 +126,7 @@ namespace ignis {
 
 			glTextureStorage2DMultisample(
 				tex, GLsizei(info.samples),
-				glxColorFormat(info.colorFormats[i]), size.x, size.y, GL_FALSE
+				glxColorFormat(info.colorFormats[i]), size.x, size.y, fixedSampleLocations
 			);
 
 			String hashed = NAME(getName() + " buffer " + std::to_string(i));

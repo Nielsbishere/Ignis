@@ -46,8 +46,28 @@ namespace ignis {
 
 				if (dat->depth) {
 
-					if(cf->clearFlags & ClearFramebuffer::DEPTH_STENCIL)
+					bool depth = cf->clearFlags & ClearFramebuffer::DEPTH;
+
+					bool stencil = 
+						cf->clearFlags & ClearFramebuffer::STENCIL && 
+						FormatHelper::hasStencil(targ->getInfo().depthFormat);
+
+					if(ctx.currDepth.enableDepthWrite != true)
+						glDepthMask(ctx.currDepth.enableDepthWrite = true);
+
+					//TODO: Test stencil buffers, since they might need stencil write to be turned on
+
+					if(depth && stencil)
 						glClearNamedFramebufferfi(dat->index, GL_DEPTH_STENCIL, 0, ctx.depth, ctx.stencil);
+
+					else {
+
+						if(depth)
+							glClearNamedFramebufferfv(dat->index, GL_DEPTH, 0, &ctx.depth);
+
+						if (stencil)
+							glClearNamedFramebufferiv(dat->index, GL_STENCIL, 0, (GLint *)&ctx.stencil);
+					}
 				}
 
 				if (dat->renderTextures.size() && cf->clearFlags & ClearFramebuffer::COLOR) {
