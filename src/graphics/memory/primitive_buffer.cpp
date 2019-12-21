@@ -6,13 +6,6 @@
 
 namespace ignis {
 
-	//Buffer initData{};
-	//BufferAttributes formats{};
-	//
-	//GPUBuffer *buffer{};
-	//usz bufferOffset{};		//TODO: Require all buffer offsets to adhere to GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT
-	//u32 elements{};
-
 	BufferLayout::BufferLayout(GPUBuffer *b, const BufferAttributes &formats, usz bufferOffset) :
 		formats(formats), buffer(b), bufferOffset(bufferOffset),
 		elements(u32(b->size() / formats.getStride())) {}

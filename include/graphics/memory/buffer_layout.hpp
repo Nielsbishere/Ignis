@@ -24,6 +24,8 @@ namespace ignis {
 			}
 		};
 
+		BufferAttributes() : stride(), values(), instanced() {}
+
 		BufferAttributes(bool isInstanced, const List<Attrib> &values) : values(values), stride(), instanced(isInstanced) {
 
 			for (const Attrib &a : values)
@@ -34,17 +36,17 @@ namespace ignis {
 		BufferAttributes(bool isInstanced, const Attrib &v) : BufferAttributes(isInstanced, List<Attrib>{ v }) {}
 
 		template<typename ...args>
-		BufferAttributes(const args &...arg) : values(sizeof...(arg)), instanced(false) {
-			u32 i {}, j {};
-			(fillAttrib(i, j, arg), ...);
-			stride = j;
+		BufferAttributes(u32 startIndex, const args &...arg) : values(sizeof...(arg)), instanced(false) {
+			u32 i{}, offset{};
+			(fillAttrib(i, startIndex, offset, arg), ...);
+			stride = offset;
 		}
 
 		template<typename ...args>
-		BufferAttributes(bool isInstanced, const args &...arg) : values(sizeof...(arg)), instanced(isInstanced) {
-			u32 i {}, j {};
-			(fillAttrib(i, j, arg), ...);
-			stride = j;
+		BufferAttributes(u32 startIndex, bool isInstanced, const args &...arg) : values(sizeof...(arg)), instanced(isInstanced) {
+			u32 i{}, offset{};
+			(fillAttrib(i, startIndex, offset, arg), ...);
+			stride = offset;
 		}
 
 		inline const Attrib &operator[](usz i) const { return values[i]; }
@@ -68,10 +70,11 @@ namespace ignis {
 
 	protected:
 
-		inline void fillAttrib(u32 &i, u32 &j, const GPUFormat &f) {
-			values[i] = { j, i, f };
+		inline void fillAttrib(u32 &i, u32 &index, u32 &offset, const GPUFormat &f) {
+			values[i] = { offset, index, f };
 			++i;
-			j += u32(FormatHelper::getSizeBytes(f));
+			++index;
+			offset += u32(FormatHelper::getSizeBytes(f));
 		}
 
 	private:

@@ -930,6 +930,8 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 			if (v.instanced())
 				glVertexArrayBindingDivisor(handle, elem.index, 1);
 		}
+
+		++i;
 	}
 
 	if(prim->isIndexed())

@@ -88,8 +88,6 @@ namespace ignis {
 
 			} else {
 
-				//TODO: Fix render buffers!
-
 				glCreateRenderbuffers(1, &data->depth);
 				GLuint handle = data->depth;
 
