@@ -941,4 +941,3 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 
 	return handle;
 }
-

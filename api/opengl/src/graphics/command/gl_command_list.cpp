@@ -131,44 +131,6 @@ namespace ignis {
 				break;
 			}
 
-			case CMD_BLIT_FRAMEBUFFER: {
-
-				BlitFramebuffer *bf = (BlitFramebuffer*) c;
-
-				GLenum mask{};
-				GLenum filter = 
-					bf->filter == BlitFramebuffer::BlitFilter::NEAREST ? GL_NEAREST : 
-					GL_LINEAR;
-
-				if (bf->mask & BlitFramebuffer::COLOR)
-					mask |= GL_COLOR_BUFFER_BIT;
-				else if (bf->mask & BlitFramebuffer::DEPTH)
-					mask |= GL_DEPTH_BUFFER_BIT;
-				else
-					mask |= GL_STENCIL_BUFFER_BIT;
-
-				GLuint read = ((Framebuffer*) bf->src)->getData()->index;
-				GLuint write = ((Framebuffer*) bf->dst)->getData()->index;
-
-				Vec4u32 srcArea = bf->srcArea, dstArea = bf->dstArea;
-
-				if (!srcArea.z) srcArea.z = bf->src->getInfo().size.x;
-				if (!srcArea.w) srcArea.w = bf->src->getInfo().size.y;
-				if (!dstArea.z) dstArea.z = bf->dst->getInfo().size.x;
-				if (!dstArea.w) dstArea.w = bf->dst->getInfo().size.y;
-
-				glBlitNamedFramebuffer(
-					ctx.bound[GL_READ_FRAMEBUFFER] = read,
-					ctx.bound[GL_DRAW_FRAMEBUFFER] = write,
-					srcArea.x, srcArea.y, srcArea.z, srcArea.w,
-					dstArea.x, dstArea.y, dstArea.z, dstArea.w,
-					mask,
-					filter
-				);
-
-				break;
-			}
-
 			case CMD_BIND_PRIMITIVE_BUFFER: {
 
 				auto *pbuffer = ((BindPrimitiveBuffer*) c)->bindObject;

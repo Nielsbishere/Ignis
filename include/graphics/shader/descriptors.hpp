@@ -32,8 +32,8 @@ namespace ignis {
 
 			inline bool operator==(const TextureRange &other) const {
 				return
-					(u64&)minLevel == (u64&)other.minLevel && 
-					(u64&)levelCount == (u64&)other.layerCount &&
+					*(const u64*)&minLevel == *(const u64*)&other.minLevel && 
+					*(const u64*)&levelCount == *(const u64*)&other.levelCount &&
 					subType == other.subType;
 			}
 		};

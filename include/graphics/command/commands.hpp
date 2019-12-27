@@ -143,31 +143,6 @@ namespace ignis {
 
 		//Copy commands
 
-		struct BlitFramebuffer : Command {
-
-			Framebuffer *src, *dst;
-			Vec4u32 srcArea, dstArea;
-
-			enum BlitMask : u8 {
-				COLOR = 1, DEPTH = 2, STENCIL = 4,
-				COLOR_DEPTH = 3, COLOR_STENCIL = 5,
-				DEPTH_STENCIL = 6, ALL = 7
-			} mask;
-
-			enum BlitFilter : u8 {
-				NEAREST, LINEAR
-			} filter;
-
-			BlitFramebuffer(
-				Framebuffer *src, Framebuffer *dst, 
-				const Vec4u32 &srcArea, const Vec4u32 &dstArea,
-				BlitMask mask, BlitFilter filter
-			): 
-				Command(CMD_BLIT_FRAMEBUFFER, sizeof(*this)), src(src), dst(dst), 
-				srcArea(srcArea), dstArea(dstArea), mask(mask), filter(filter) {}
-
-		};
-
 		struct ClearFramebuffer : Command {
 
 			Framebuffer *target;

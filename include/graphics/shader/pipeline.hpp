@@ -247,7 +247,7 @@ namespace ignis {
 		Data *getData() { return data; }
 
 		inline bool isCompute() const { return info.groupSize[0]; }
-		inline bool isGraphics() const { return info.attributeLayout.size(); }
+		inline bool isGraphics() const { return !isCompute(); }
 
 	private:
 

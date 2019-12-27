@@ -24,7 +24,7 @@ namespace ignis {
 			}
 		};
 
-		BufferAttributes() : stride(), values(), instanced() {}
+		BufferAttributes() : values(), stride(), instanced() {}
 
 		BufferAttributes(bool isInstanced, const List<Attrib> &values) : values(values), stride(), instanced(isInstanced) {
 

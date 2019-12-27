@@ -34,7 +34,7 @@ namespace ignis {
 	}
 
 	TextureType Surface::getTextureType() const {
-		return info.samples > 1 ? TextureType::TEXTURE_MS : TextureType::TEXTURE_2D;
+		return TextureType::TEXTURE_MS;
 	}
 
 }

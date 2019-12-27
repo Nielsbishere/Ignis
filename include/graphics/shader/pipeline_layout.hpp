@@ -96,6 +96,9 @@ namespace ignis {
 		//lower u32: localId
 		HashMap<u64, RegisterLayout> layoutsByLocalId;
 
+		//Empty layout
+		PipelineLayout() {}
+
 		//Construct a pipeline layout from register layouts
 		PipelineLayout(const List<RegisterLayout> &layout);
 
