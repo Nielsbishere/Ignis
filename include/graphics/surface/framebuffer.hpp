@@ -18,10 +18,7 @@ namespace ignis {
 		apimpl void begin() final override;
 		apimpl void end() final override;
 
-		//TODO:
-		/*bool isCompatible(
-			const RegisterLayout &reg, const GPUSubresource &resource
-		) const final override;*/
+		//TODO: isCompatible
 
 		Data *getData() { return data; }
 

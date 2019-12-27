@@ -175,7 +175,7 @@ namespace ignis {
 		TEXTURE_1D, 
 		TEXTURE_2D,
 		TEXTURE_3D,
-		TEXTURE_MS				= 0x6,		//TODO: Figure out how this works with data and IXGI
+		TEXTURE_MS				= 0x6,		//TODO: Implement this as a layered 2D image
 
 		TEXTURE_CUBE_ARRAY		= 0x8, 
 		TEXTURE_1D_ARRAY, 
