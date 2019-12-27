@@ -1,5 +1,5 @@
 #pragma once 
-#include "types/vec.hpp"
+#include "types/types.hpp"
 #include "graphics/graphics.hpp"
 
 #ifdef _WIN32
@@ -40,13 +40,6 @@ namespace ignis {
 	};
 
 	struct GLContext;
-	class GPUBuffer;
-	class Pipeline;
-
-	struct BlitImageIntoFramebuffer {
-		Vec4f32 start, dim;
-		u32 samples;
-	};
 
 	struct Graphics::Data {
 
@@ -55,9 +48,6 @@ namespace ignis {
 		plimpl struct Platform;
 
 		Platform *platform{};
-
-		GPUBuffer *blitBuffer;
-		Pipeline *blitPipeline;
 
 		//OpenGL constants
 
