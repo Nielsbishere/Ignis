@@ -39,7 +39,7 @@ namespace ignis {
 						handle, i, 0, dim.x, format, type, info.initData[i].data()
 					);
 
-					dim.x = u32(oic::Math::ceil(dim.x / 2.0));
+					dim.x = u16(oic::Math::ceil(dim.x / 2.0));
 				}
 			
 			break;

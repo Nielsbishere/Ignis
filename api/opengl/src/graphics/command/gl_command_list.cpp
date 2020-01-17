@@ -72,7 +72,7 @@ namespace ignis {
 
 				if (cf->clearFlags & ClearFramebuffer::COLOR) {
 
-					for (usz i = 0, j = targ->size(); i < j; ++i) {
+					for (GLint i = 0, j = GLint(targ->size()); i < j; ++i) {
 
 						if (ctx.clearColor.type == SetClearColor::Type::FLOAT)
 							glClearNamedFramebufferfv(dat->index, GL_COLOR, i, ctx.clearColor.rgbaf.arr);
