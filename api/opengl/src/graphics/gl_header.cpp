@@ -3,9 +3,9 @@
 #include "system/system.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
-#include "graphics/surface/framebuffer.hpp"
+#include "graphics/memory/framebuffer.hpp"
 #include "graphics/memory/gl_gpu_buffer.hpp"
-#include "graphics/memory/gl_texture.hpp"
+#include "graphics/memory/gl_texture_object.hpp"
 #include "graphics/shader/gl_sampler.hpp"
 #include "graphics/gl_graphics.hpp"
 #include "graphics/gl_context.hpp"
@@ -475,7 +475,7 @@ void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
 	if (!size.x || !size.y) {
 		oicAssert("SetViewport can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
-		size = ctx.currentFramebuffer->getInfo().size;
+		size = ctx.currentFramebuffer->getInfo().size.cast<Vec2u32>();
 	}
 
 	if (ctx.viewportOff != offset || ctx.viewportSize != size) {
@@ -489,7 +489,7 @@ void glxSetScissor(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
 	if (!size.x || !size.y) {
 		oicAssert("SetScissor can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
-		size = ctx.currentFramebuffer->getInfo().size;
+		size = ctx.currentFramebuffer->getInfo().size.cast<Vec2u32>();
 	}
 
 	if (!ctx.enableScissor) {
@@ -795,7 +795,7 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 			auto &subres = it->second;
 			auto *res = subres.resource;
 
-			Texture *tex = dynamic_cast<Texture*>(res);
+			TextureObject *tex = dynamic_cast<TextureObject*>(res);
 
 			//Bind buffer range
 

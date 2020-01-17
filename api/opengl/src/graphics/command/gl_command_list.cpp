@@ -2,8 +2,8 @@
 #include "graphics/command/command_ops.hpp"
 #include "graphics/command/commands.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
-#include "graphics/surface/swapchain.hpp"
-#include "graphics/surface/gl_framebuffer.hpp"
+#include "graphics/memory/swapchain.hpp"
+#include "graphics/memory/gl_framebuffer.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/shader/pipeline.hpp"
 #include "graphics/gl_context.hpp"
@@ -44,7 +44,7 @@ namespace ignis {
 				auto *targ = cf->target;
 				auto *dat = targ->getData();
 
-				if (dat->depth) {
+				if (DepthTexture *dt = targ->getDepth()) {
 
 					bool depth = cf->clearFlags & ClearFramebuffer::DEPTH;
 
@@ -70,15 +70,17 @@ namespace ignis {
 					}
 				}
 
-				if (dat->renderTextures.size() && cf->clearFlags & ClearFramebuffer::COLOR) {
+				if (cf->clearFlags & ClearFramebuffer::COLOR) {
 
-					for(int i = 0, j = int(dat->renderTextures.size()); i < j; ++i)
-						if(ctx.clearColor.type == SetClearColor::Type::FLOAT)
+					for (usz i = 0, j = targ->size(); i < j; ++i) {
+
+						if (ctx.clearColor.type == SetClearColor::Type::FLOAT)
 							glClearNamedFramebufferfv(dat->index, GL_COLOR, i, ctx.clearColor.rgbaf.arr);
-						else if(ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
+						else if (ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
 							glClearNamedFramebufferuiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbau.arr);
 						else
 							glClearNamedFramebufferiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbai.arr);
+					}
 				}
 
 				break;
@@ -212,7 +214,7 @@ namespace ignis {
 					auto topo = glxTopologyMode(ctx.pipeline->getInfo().topology);
 					auto *di = (DrawInstanced*) c;
 
-					if (ctx.primitiveBuffer->indices())
+					if (di->isIndexed)
 						glDrawElementsInstancedBaseVertexBaseInstance(
 							topo,
 							di->count,

@@ -52,7 +52,7 @@ namespace ignis {
 	}
 
 	GPUSubresource::GPUSubresource(
-		Sampler *sampler, Texture *texture, TextureType subType,
+		Sampler *sampler, TextureObject *texture, TextureType subType,
 		u32 levelCount, u32 layerCount,
 		u32 minLevel, u32 minLayer
 	) :
@@ -64,7 +64,7 @@ namespace ignis {
 	}
 
 	GPUSubresource::GPUSubresource(
-		Texture *resource,  TextureType subType,
+		TextureObject *resource,  TextureType subType,
 		u32 levelCount, u32 layerCount,
 		u32 minLevel, u32 minLayer
 	): 

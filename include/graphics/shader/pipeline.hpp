@@ -155,14 +155,25 @@ namespace ignis {
 
 		static BlendState alphaBlend(
 			WriteMask mask = WriteMask::ALL,
-			LogicOp logicOp = LogicOp::NO_OP,
-			const Vec4f32 &blendFactor = {}
+			LogicOp logicOp = LogicOp::NO_OP
 		) {
 			return BlendState(
 				true,
 				BlendOp::ADD, Blend::ONE, Blend::SRC_ALPHA_REV,
 				BlendOp::ADD, Blend::ONE, Blend::SRC_ALPHA_REV,
-				mask, logicOp, blendFactor
+				mask, logicOp, {}
+			);
+		}
+
+		static BlendState subpixelAlphaBlend(
+			WriteMask mask = WriteMask::ALL,
+			LogicOp logicOp = LogicOp::NO_OP
+		) {
+			return BlendState(
+				true,
+				BlendOp::ADD, Blend::SRC1, Blend::SRC1_REV,
+				BlendOp::ADD, Blend::SRC1_ALPHA, Blend::SRC1_ALPHA_REV,
+				mask, logicOp, {}
 			);
 		}
 

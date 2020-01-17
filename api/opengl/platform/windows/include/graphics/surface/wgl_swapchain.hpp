@@ -1,5 +1,5 @@
 #pragma once
-#include "graphics/surface/swapchain.hpp"
+#include "graphics/memory/swapchain.hpp"
 #include "graphics/gl_graphics.hpp"
 
 namespace ignis {

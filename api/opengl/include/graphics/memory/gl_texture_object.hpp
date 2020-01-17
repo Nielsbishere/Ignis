@@ -5,7 +5,7 @@
 
 namespace ignis {
 
-	struct Texture::Data {
+	struct TextureObject::Data {
 
 		GLuint handle{};
 

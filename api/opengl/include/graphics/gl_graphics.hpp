@@ -51,7 +51,7 @@ namespace ignis {
 
 		//OpenGL constants
 
-		u32 maxSamples;
+		u8 maxSamples;
 		f32 maxAnistropy;
 
 		u32 major, minor;

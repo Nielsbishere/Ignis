@@ -64,7 +64,7 @@ namespace ignis {
 		const RegisterLayout &rl, const GPUSubresource &sub
 	) const {
 
-		Texture *tex = sub.samplerData.texture;
+		TextureObject *tex = sub.samplerData.texture;
 
 		if (rl.type == ResourceType::SAMPLER)
 			return !tex;

@@ -1,5 +1,5 @@
 #pragma once
-#include "graphics/surface/framebuffer.hpp"
+#include "graphics/memory/framebuffer.hpp"
 #include "graphics/gl_graphics.hpp"
 
 namespace ignis {
@@ -8,8 +8,6 @@ namespace ignis {
 
 	struct Framebuffer::Data {
 		GLuint index{};
-		GLuint depth{};
-		List<GLuint> renderTextures;
 	};
 
 }

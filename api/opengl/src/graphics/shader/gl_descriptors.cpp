@@ -14,7 +14,7 @@ namespace ignis {
 
 	void Descriptors::flush(usz, usz) { }
 
-	void Descriptors::bindSubresource(u32 i, const GPUSubresource &range) {
+	void Descriptors::updateDescriptor(u32 i, const GPUSubresource &range) {
 
 		if(!isResourceCompatible(i, range))
 			oic::System::log()->fatal("Couldn't call setResource with incompatible resource");

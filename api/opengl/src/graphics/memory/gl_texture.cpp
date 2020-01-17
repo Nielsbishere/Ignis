@@ -1,4 +1,4 @@
-#include "graphics/memory/gl_texture.hpp"
+#include "graphics/memory/gl_texture_object.hpp"
 #include "utils/math.hpp"
 #include "system/log.hpp"
 #include "system/system.hpp"
@@ -6,7 +6,7 @@
 namespace ignis {
 	
 	Texture::Texture(Graphics &g, const String &name, const Info &info) :
-		GraphicsObject(g, name), info(info) {
+		TextureObject(g, name, info), info(info) {
 
 		data = new Data();
 
@@ -15,7 +15,7 @@ namespace ignis {
 		GLenum type = glxGpuFormatType(info.format);
 		GLenum format = glxGpuDataFormat(info.format);
 
-		Vec3u32 dim = info.dimensions;
+		Vec3u16 dim = info.dimensions;
 
 		glCreateTextures(glxTextureType(info.textureType), 1, &data->handle);
 		GLuint handle = data->handle;
@@ -61,7 +61,7 @@ namespace ignis {
 							handle, i, 0, 0, dim.x, dim.y, format, type, info.initData[i].data()
 						);
 
-						dim = (dim.cast<Vec3f32>() / div).ceil().cast<Vec3u32>();
+						dim = (dim.cast<Vec3f32>() / div).ceil().cast<Vec3u16>();
 					}
 
 			}
@@ -87,7 +87,7 @@ namespace ignis {
 							format, type, info.initData[i].data()
 						);
 
-						dim = (dim.cast<Vec3f32>() / div).ceil().cast<Vec3u32>();
+						dim = (dim.cast<Vec3f32>() / div).ceil().cast<Vec3u16>();
 					}
 
 			}
@@ -102,10 +102,10 @@ namespace ignis {
 
 		for(auto &views : data->textureViews)
 			if(views.second != data->handle)
-				glDeleteTextures(1, &data->handle);
+				glDeleteTextures(1, &views.second);
 
 		glDeleteTextures(1, &data->handle);
-		delete data;
+		destroy(data);
 	}
 
 }

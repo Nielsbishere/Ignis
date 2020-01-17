@@ -13,15 +13,11 @@ using namespace windows;
 namespace ignis {
 
 	//Create a swapchain
-	Swapchain::Swapchain(Graphics &g, const String &name, const Info &info):
-		Surface(g, name, Surface::Info(
-			info.vi->size,
-			{ GPUFormat::RGBA8 },
-			DepthFormat::NONE,
-			false
-		)), swapchainInfo(info)
+	Swapchain::Swapchain(Graphics &g, const String &name, const Info &inf):
+		GraphicsObject(g, name), info(inf)
 	{
 		data = new Swapchain::Data{};
+		info.size = info.vi->size.cast<Vec2u16>();
 
 		//Create context
 
@@ -40,8 +36,8 @@ namespace ignis {
 			WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
 			WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
 			WGL_COLOR_BITS_ARB, 32,
-			WGL_DEPTH_BITS_ARB, int(FormatHelper::getDepthBits(this->info.depthFormat)),
-			WGL_STENCIL_BITS_ARB, int(FormatHelper::getStencilBits(this->info.depthFormat)),
+			WGL_DEPTH_BITS_ARB, 0,
+			WGL_STENCIL_BITS_ARB, 0,
 			0
 		};
 
@@ -59,6 +55,8 @@ namespace ignis {
 		if (!SetPixelFormat(data->dc, pixelFormatId, &pfd))
 			oic::System::log()->fatal("The OpenGL Swapchain's context couldn't be set");
 
+		info.format = GPUFormat::RGBA8;
+
 		#ifndef NO_DEBUG
 			constexpr int enableDebug = WGL_CONTEXT_DEBUG_BIT_ARB;
 		#else
@@ -73,7 +71,7 @@ namespace ignis {
 			0
 		};
 
-		wglSwapIntervalEXT(swapchainInfo.useVSync);
+		wglSwapIntervalEXT(info.useVSync);
 		data->rc = wglCreateContextAttribsARB(data->dc, g.getData()->platform->rc, contextAttribs);
 
 		if (!data->rc || !wglMakeCurrent(data->dc, data->rc))
@@ -86,7 +84,7 @@ namespace ignis {
 			glDebugMessageCallback(glxDebugMessage, nullptr);
 		#endif
 
-		onResize(getInfo().size);
+		onResize(info.vi->size);
 
 		//Set it identical to D3D depth system (1 = near, 0 = far), it has better precision
 		//The coordinate system is still flipped, so the final blit should inverse height
@@ -106,7 +104,7 @@ namespace ignis {
 		wglMakeCurrent(data->dc, NULL);
 		wglDeleteContext(data->rc);
 
-		WWindow *win = ((WViewportManager*)System::viewportManager())->get(swapchainInfo.vi);
+		WWindow *win = ((WViewportManager*)System::viewportManager())->get(info.vi);
 		ReleaseDC(win->hwnd, data->dc);
 
 		destroy(data);

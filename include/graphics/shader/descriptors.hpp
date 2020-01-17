@@ -8,6 +8,7 @@ namespace ignis {
 	class GPUBuffer;
 	class Sampler;
 	class Texture;
+	class TextureObject;
 
 	//Describing which range of the resource has to be bound
 
@@ -38,13 +39,13 @@ namespace ignis {
 			}
 		};
 
-		struct SamplerData : TextureRange {
+		struct SamplerData : public TextureRange {
 
-			Texture *texture{};
+			TextureObject *texture{};
 
 			SamplerData() {}
 			SamplerData(
-				Texture *texture,
+				TextureObject *texture,
 				u32 minLevel, u32 minLayer,
 				u32 levelCount, u32 layerCount,
 				TextureType subType
@@ -71,7 +72,7 @@ namespace ignis {
 		GPUSubresource(GPUBuffer *resource, usz offset, usz size = 0);
 
 		GPUSubresource(
-			Sampler *sampler, Texture *texture,
+			Sampler *sampler, TextureObject *texture,
 			TextureType subType = TextureType(0x10),
 			u32 levelCount = 0, u32 layerCount = 0,
 			u32 minLevel = 0, u32 minLayer = 0
@@ -80,7 +81,7 @@ namespace ignis {
 		GPUSubresource(Sampler *resource);
 
 		GPUSubresource(
-			Texture *resource, TextureType subType,
+			TextureObject *resource, TextureType subType,
 			u32 levelCount = 0, u32 layerCount = 0,
 			u32 minLevel = 0, u32 minLayer = 0
 		);
@@ -115,7 +116,7 @@ namespace ignis {
 		apimpl void flush(usz offset, usz size);
 
 		//Update the CPU-side resource; requires flush to be called afterwards
-		apimpl void bindSubresource(u32 i, const GPUSubresource &range);
+		apimpl void updateDescriptor(u32 i, const GPUSubresource &range);
 
 		//Check if descriptor slots are compatible (and exist)
 		bool isResourceCompatible(u32 i, const GPUSubresource &resource) const;

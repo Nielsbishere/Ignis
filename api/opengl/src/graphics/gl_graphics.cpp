@@ -5,8 +5,8 @@
 #include "graphics/memory/gl_gpu_buffer.hpp"
 #include "graphics/gl_graphics.hpp"
 #include "graphics/gl_context.hpp"
-#include "graphics/surface/gl_framebuffer.hpp"
-#include "graphics/surface/swapchain.hpp"
+#include "graphics/memory/gl_framebuffer.hpp"
+#include "graphics/memory/swapchain.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "system/system.hpp"
 
@@ -66,14 +66,14 @@ namespace ignis {
 		//Copy intermediate to backbuffer
 		if (intermediate) {
 
-			Vec2u32 size = intermediate->getInfo().size;
-			auto rt = intermediate->getData()->renderTextures;
+			Vec2u16 size = intermediate->getInfo().size;
 
-			oicAssert("Framebuffer should have 1 render texture to copy", rt.size() != 0);
+			oicAssert("Framebuffer should have 1 render texture to copy", intermediate->size());
+			oicAssert("Framebuffer should have a proper resolution before blit", size.all());
 
 			//Bind backbuffer
 
-			glxSetViewportAndScissor(ctx, swapchain->getInfo().size, {});
+			glxSetViewportAndScissor(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
 			glBlitNamedFramebuffer(
 				ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->index, 
 				ctx.bound[GL_DRAW_FRAMEBUFFER] = 0,
@@ -81,7 +81,6 @@ namespace ignis {
 				0, size.y, size.x, 0,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR
 			);
-
 		}
 
 		swapchain->present();

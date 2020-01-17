@@ -100,9 +100,6 @@ namespace ignis {
 
 	bool PrimitiveBuffer::matchLayout(const List<BufferAttributes> &layout) const {
 
-		if (layout.size() != info.vertexLayout.size())
-			return false;
-
 		for (usz i = 0, j = layout.size(); i < j; ++i)
 			if (layout[i] != info.vertexLayout[i].formats)
 				return false;

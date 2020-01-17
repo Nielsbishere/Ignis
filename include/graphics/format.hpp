@@ -19,6 +19,7 @@ namespace ignis {
 		NONE = 0x40
 	};
 
+	//1 nibble (0x0-0xF)
 	//& 1			= isSigned
 	//& 2			= isUnnormalized
 	//& 4			= isFloatingPoint
@@ -27,12 +28,16 @@ namespace ignis {
 		UNORM,	SNORM,
 		UINT,	SINT,
 
-		FLOAT = 7
+		FLOAT = 7,
+
+		PROPERTY_IS_SIGNED = 1,
+		PROPERTY_IS_UNNORMALIZED = 2,
+		PROPERTY_IS_FLOATING_POINT = 4
 	};
 
 	//(& 3) + 1			= channel count
 	//1 << ((>> 2) & 3)	= channel stride
-	//(>> 4) & 0x7		= type
+	//(>> 4) & 0xF		= type
 	//& 0x10			= isSigned
 	//& 0x20			= isUnnormalized
 	//& 0x40			= isFloatingPoint
