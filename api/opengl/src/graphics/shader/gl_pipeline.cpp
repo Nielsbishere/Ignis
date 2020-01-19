@@ -38,7 +38,7 @@ namespace ignis {
 			String error;
 
 			if (glxCheckShaderLog(shader, error))
-				oic::System::log()->fatal("Couldn't compile shader");
+				oic::System::log()->fatal("Couldn't compile shader ", error);
 			else
 				glAttachShader(handle, shader);
 
@@ -55,7 +55,7 @@ namespace ignis {
 		String error;
 
 		if (glxCheckProgramLog(handle, error))
-			oic::System::log()->fatal("Couldn't link shader");
+			oic::System::log()->fatal("Couldn't link shader ", error);
 
 	}
 

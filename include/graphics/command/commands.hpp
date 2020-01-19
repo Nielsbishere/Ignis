@@ -35,8 +35,8 @@ namespace ignis {
 		using BindDescriptors		= GraphicsObjOp<CMD_BIND_DESCRIPTORS,		Descriptors>;
 		using BindPrimitiveBuffer	= GraphicsObjOp<CMD_BIND_PRIMITIVE_BUFFER,  PrimitiveBuffer>;
 
-		using BeginQuery			= GraphicsObjOp<CMD_BEGIN_QUERY,			Query>;
-		using EndQuery				= NoParamOp<CMD_END_QUERY>;
+		/*using BeginQuery			= GraphicsObjOp<CMD_BEGIN_QUERY,			Query>;
+		using EndQuery				= NoParamOp<CMD_END_QUERY>;*/
 		using EndFramebuffer		= NoParamOp<CMD_END_FRAMEBUFFER>;
 
 		struct BeginFramebuffer : public Command {
