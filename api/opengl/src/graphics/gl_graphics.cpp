@@ -73,6 +73,8 @@ namespace ignis {
 
 			//Bind backbuffer
 
+			//TODO: Fix this! it should use a shader!
+
 			glxSetViewportAndScissor(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
 			glBlitNamedFramebuffer(
 				ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->index, 
