@@ -101,6 +101,7 @@ GL_FUNC(glClearNamedFramebufferfv, GLCLEARNAMEDFRAMEBUFFERFV);
 GL_FUNC(glClearNamedFramebufferfi, GLCLEARNAMEDFRAMEBUFFERFI);
 GL_FUNC(glStencilOpSeparate, GLSTENCILOPSEPARATE);
 GL_FUNC(glStencilFuncSeparate, GLSTENCILFUNCSEPARATE);
+GL_FUNC(glClearNamedBufferSubData, GLCLEARNAMEDBUFFERSUBDATA);
 
 //Platform dependent calls
 

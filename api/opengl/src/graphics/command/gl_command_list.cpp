@@ -61,6 +61,33 @@ namespace ignis {
 
 				glxSetViewportAndScissor(ctx, size.cast<Vec2u32>(), {});
 				glxClearFramebuffer(ctx, tex->getData()->framebuffer, 0, ctx.clearColor);
+				break;
+			}
+
+			case CMD_CLEAR_BUFFER: {
+
+				auto *cb = (ClearBuffer*)c;
+
+				oicAssert("Clear buffer offset out of bounds", cb->offset < cb->buffer->size());
+
+				usz size = cb->size;
+
+				if (!size)
+					size = cb->buffer->size() - cb->offset;
+
+				oicAssert("ClearBuffer can't clear individual bytes, only a scalar (4 bytes)", !(size % 4));
+
+				glClearNamedBufferSubData(
+					cb->buffer->getData()->handle,
+					GL_R32UI,
+					cb->offset,
+					size,
+					GL_RED_INTEGER,
+					GL_UNSIGNED_INT,
+					nullptr
+				);
+
+				break;
 			}
 			
 			case CMD_CLEAR_FRAMEBUFFER: {

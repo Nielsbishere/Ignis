@@ -25,17 +25,18 @@ namespace ignis {
 	ShaderBuffer::Info::Info(GPUBufferType type, GPUMemoryUsage usage, const HashMap<String, Layout> &layout) :
 		bufferInfo(bufferSize(layout), type, usage) {
 
-		for (auto &l : layout) {
+		if(bufferInfo.initData.size())
+			for (auto &l : layout) {
 
-			usz j = l.second.array.size() ? l.second.array[0] : 1;
+				usz j = l.second.array.size() ? l.second.array[0] : 1;
 
-			for (usz i = 0; i < j; ++i)
-				memcpy(
-					bufferInfo.initData.data() + l.second.offset + l.second.stride * i,
-					l.second.initData.data() + l.second.length * i,
-					l.second.length
-				);
-		}
+				for (usz i = 0; i < j; ++i)
+					memcpy(
+						bufferInfo.initData.data() + l.second.offset + l.second.stride * i,
+						l.second.initData.data() + l.second.length * i,
+						l.second.length
+					);
+			}
 
 	}
 

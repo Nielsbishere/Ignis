@@ -21,6 +21,11 @@ namespace ignis {
 				initData(data), array(array),
 				offset(offset), stride(stride ? stride : data.size()),
 				length(data.size()), format(GPUFormat(0)) { }
+
+			Layout(usz offset, const usz size, usz stride = 0, const List<usz> &array = {}) :
+				initData(), array(array),
+				offset(offset), stride(stride ? stride : size),
+				length(size), format(GPUFormat(0)) { }
 		};
 
 		struct Info {

@@ -177,6 +177,17 @@ namespace ignis {
 				offset(offset), size(size) {}
 
 		};
+
+		struct ClearBuffer : Command {
+
+			GPUBuffer *buffer;
+			usz offset, size;
+
+			ClearBuffer(GPUBuffer *buffer, usz offset = 0, usz size = 0) :
+				Command(CMD_CLEAR_BUFFER, sizeof(*this)),
+				buffer(buffer), offset(offset), size(size) {}
+
+		};
 		
 		//Debug calls
 
