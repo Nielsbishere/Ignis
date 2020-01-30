@@ -1,5 +1,7 @@
 #include "graphics/memory/gl_texture_object.hpp"
+#include "graphics/gl_graphics.hpp"
 #include "utils/math.hpp"
+#include "utils/hash.hpp"
 #include "system/log.hpp"
 #include "system/system.hpp"
 
@@ -96,14 +98,37 @@ namespace ignis {
 		default:
 			oic::System::log()->fatal("TextureType not supported");
 		}
+
+		//Create a framebuffer so copy and clear operations can be done for this texture
+
+		if (u8(info.usage) & u8(GPUMemoryUsage::GPU_WRITE)) {
+
+			String fbName = NAME(name + " framebuffer");
+
+			glCreateFramebuffers(1, &data->framebuffer);
+			glObjectLabel(GL_FRAMEBUFFER, data->framebuffer, GLsizei(fbName.size()), fbName.c_str());
+
+			GLenum colorAttachment = GL_COLOR_ATTACHMENT0;
+			glNamedFramebufferTexture(data->framebuffer, colorAttachment, data->handle, 0);
+
+			glNamedFramebufferDrawBuffers(data->framebuffer, 1, &colorAttachment);
+			GLenum status = glCheckNamedFramebufferStatus(data->framebuffer, GL_FRAMEBUFFER);
+
+			if (status != GL_FRAMEBUFFER_COMPLETE)
+				oic::System::log()->fatal("Couldn't create GPU write target");
+
+		}
 	}
 
 	Texture::~Texture() {
 
 		for(auto &views : data->textureViews)
-			if(views.second != data->handle)
+			if (views.second != data->handle) {
+				g.getData()->removeTexture(views.second);
 				glDeleteTextures(1, &views.second);
+			}
 
+		g.getData()->removeTexture(data->handle);
 		glDeleteTextures(1, &data->handle);
 		destroy(data);
 	}

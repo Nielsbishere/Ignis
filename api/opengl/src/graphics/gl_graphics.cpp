@@ -6,6 +6,7 @@
 #include "graphics/gl_graphics.hpp"
 #include "graphics/gl_context.hpp"
 #include "graphics/memory/gl_framebuffer.hpp"
+#include "graphics/memory/gl_texture_object.hpp"
 #include "graphics/memory/swapchain.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "system/system.hpp"
@@ -34,6 +35,23 @@ namespace ignis {
 		return CommandAvailability::SUPPORTED;
 	}
 
+	void Graphics::Data::removeTexture(GLuint tex) {
+
+		//TODO: Remove buffer
+
+		for (auto &ctx : contexts) {
+
+			for (auto &bound : ctx.second.bound)
+				if (bound.second == tex)
+					bound.second = 0;
+
+			for (auto &bound : ctx.second.boundByBase)
+				if (bound.second.handle == tex)
+					bound.second.handle = 0;
+		}
+
+	}
+
 	void Graphics::execute(const List<CommandList*> &commands) {
 
 		//Updates VAOs and FBOs that have been added/released
@@ -42,6 +60,8 @@ namespace ignis {
 		for (CommandList *cl : commands)
 			cl->execute();
 	}
+
+	//Present framebuffer to swapchain
 
 	void Graphics::present(
 		Framebuffer *intermediate, Swapchain *swapchain,
@@ -82,6 +102,49 @@ namespace ignis {
 				0, 0, size.x, size.y,
 				0, size.y, size.x, 0,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR
+			);
+		}
+
+		swapchain->present();
+		++ctx.frameId;
+	}
+
+	//Present image to swapchain
+
+	void Graphics::present(
+		Texture *intermediate, Swapchain *swapchain,
+		const List<CommandList*> &commands
+	) {
+
+		if (!swapchain)
+			oic::System::log()->fatal("Couldn't present; invalid intermediate or swapchain");
+
+		if(!intermediate)
+			oic::System::log()->warn("Presenting without an intermediate is valid but won't provide any results to the swapchain");
+
+		if(intermediate->getInfo().textureType != TextureType::TEXTURE_2D)
+			oic::System::log()->fatal("Couldn't present; intermediate texture has to be 2D");
+
+		auto size = intermediate->getInfo().dimensions.cast<Vec2u16>();
+
+		if(intermediate && size != swapchain->getInfo().size)
+			oic::System::log()->fatal("Couldn't present; swapchain and intermediate aren't same size");
+
+		GLContext &ctx = data->getContext();
+
+		swapchain->bind();
+
+		execute(commands);
+
+		//Copy intermediate to backbuffer
+		if (intermediate) {
+			glxSetViewportAndScissor(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
+			glBlitNamedFramebuffer(
+				ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->framebuffer,
+				ctx.bound[GL_DRAW_FRAMEBUFFER] = 0,
+				0, 0, size.x, size.y,
+				0, 0, size.x, size.y,
+				GL_COLOR_BUFFER_BIT, GL_NEAREST
 			);
 		}
 

@@ -13,6 +13,8 @@ namespace ignis {
 	class Descriptors;
 	class PrimitiveBuffer;
 	class Query;
+	class GPUBuffer;
+	class Texture;
 
 	namespace cmd {
 
@@ -92,6 +94,8 @@ namespace ignis {
 
 		};
 
+		using DispatchIndirect = GraphicsObjOp<CMD_DISPATCH_INDIRECT, GPUBuffer>;
+
 		//Setting values
 
 		template<CommandOp opCode, typename DataObject>
@@ -158,6 +162,20 @@ namespace ignis {
 
 			ClearFramebuffer(Framebuffer *target, ClearFlags clearFlags = ClearFlags::ALL) :
 				Command(CMD_CLEAR_FRAMEBUFFER, sizeof(*this)), target(target), clearFlags(clearFlags) {}
+		};
+
+		struct ClearImage : Command {
+
+			Texture *texture;
+			Vec3i16 offset;
+			Vec3u16 size;
+			u32 mipLevel;
+
+			ClearImage(Texture* texture, u32 mipLevel = {}, const Vec3u16 &size = {}, const Vec3i16 &offset = {}) :
+				Command(CMD_CLEAR_IMAGE, sizeof(*this)), 
+				texture(texture), mipLevel(mipLevel), 
+				offset(offset), size(size) {}
+
 		};
 		
 		//Debug calls

@@ -4,6 +4,8 @@
 #include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/memory/swapchain.hpp"
 #include "graphics/memory/gl_framebuffer.hpp"
+#include "graphics/memory/gl_gpu_buffer.hpp"
+#include "graphics/memory/gl_texture_object.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/shader/pipeline.hpp"
 #include "graphics/gl_context.hpp"
@@ -15,7 +17,7 @@ namespace ignis {
 
 		using namespace cmd;
 
-		auto &ctx = getGraphics().getData()->getContext();
+		auto &ctx = g.getData()->getContext();
 
 		//TODO: Instead of doing validation here; 
 		//do it whenever a command enters the command buffer!
@@ -38,6 +40,29 @@ namespace ignis {
 				break;
 			}
 
+			case CMD_CLEAR_IMAGE: {
+
+				auto *ci = (ClearImage*)c;
+
+				auto* tex = ci->texture;
+
+				oicAssert(
+					"Clear image can only be invoked on GPU writable textures", 
+					u8(tex->getInfo().usage) & u8(GPUMemoryUsage::GPU_WRITE)
+				);
+
+				Vec3u16 size = ci->size.x;
+
+				if (!size.all()) {
+					Vec3i32 dif = tex->getInfo().dimensions.cast<Vec3i32>() - ci->offset.cast<Vec3i32>();
+					oicAssert("All values of the size should be positive", (dif > Vec3i32{}).all());
+					size = dif.cast<Vec3u16>();
+				}
+
+				glxSetViewportAndScissor(ctx, size.cast<Vec2u32>(), {});
+				glxClearFramebuffer(ctx, tex->getData()->framebuffer, 0, ctx.clearColor);
+			}
+			
 			case CMD_CLEAR_FRAMEBUFFER: {
 
 				auto *cf = (ClearFramebuffer*)c;
@@ -66,21 +91,14 @@ namespace ignis {
 							glClearNamedFramebufferfv(dat->index, GL_DEPTH, 0, &ctx.depth);
 
 						if (stencil)
-							glClearNamedFramebufferiv(dat->index, GL_STENCIL, 0, (GLint *)&ctx.stencil);
+							glClearNamedFramebufferiv(dat->index, GL_STENCIL, 0, (GLint*)&ctx.stencil);
 					}
 				}
 
 				if (cf->clearFlags & ClearFramebuffer::COLOR) {
 
-					for (GLint i = 0, j = GLint(targ->size()); i < j; ++i) {
-
-						if (ctx.clearColor.type == SetClearColor::Type::FLOAT)
-							glClearNamedFramebufferfv(dat->index, GL_COLOR, i, ctx.clearColor.rgbaf.arr);
-						else if (ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
-							glClearNamedFramebufferuiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbau.arr);
-						else
-							glClearNamedFramebufferiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbai.arr);
-					}
+					for (GLint i = 0, j = GLint(targ->size()); i < j; ++i)
+						glxClearFramebuffer(ctx, dat->index, i, ctx.clearColor);
 				}
 
 				break;
@@ -167,13 +185,8 @@ namespace ignis {
 
 				auto *descriptors = ((BindDescriptors*) c)->bindObject;
 
-				if (descriptors != ctx.descriptors) {
-
-					ctx.descriptors = descriptors;
-
-					if(descriptors)
-						glxBindDescriptors(ctx, descriptors);
-				}
+				if((ctx.descriptors = descriptors) != nullptr)
+					glxBindDescriptors(ctx, descriptors);
 
 				break;
 			}
@@ -255,14 +268,22 @@ namespace ignis {
 
 					Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
 
-					if ((threads % count).any())
-						oic::System::log()->performance(
-							"Thread count was incompatible with compute shader "
-							"this is fixed by the runtime, but could provide out of "
-							"bounds texture writes or reads"
-						);
-
 					glDispatchCompute(groups.x, groups.y, groups.z);
+				}
+
+				break;
+
+			case CMD_DISPATCH_INDIRECT:
+
+				if (!ctx.pipeline)
+					oic::System::log()->fatal("No pipeline bound!");
+
+				if (!ctx.pipeline->isCompute())
+					oic::System::log()->fatal("Pipeline bound was invalid; compute expected");
+
+				{
+					GPUBuffer *buffer = ((DispatchIndirect*)c)->bindObject;
+					glDispatchComputeIndirect(buffer->getData()->handle);
 				}
 
 				break;

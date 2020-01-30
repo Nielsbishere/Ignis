@@ -36,6 +36,7 @@ namespace ignis {
 	class CommandList;
 	class Framebuffer;
 	class Swapchain;
+	class Texture;
 
 	class Graphics {
 
@@ -75,6 +76,12 @@ namespace ignis {
 			present(intermediate, swapchain, commands);
 		}
 
+		template<typename ...args>
+		inline void present(Texture *intermediate, Swapchain *swapchain, args ...arg) {
+			List<CommandList*> commands{ arg... };
+			present(intermediate, swapchain, commands);
+		}
+
 		apimpl Graphics();
 		apimpl ~Graphics();
 
@@ -87,6 +94,11 @@ namespace ignis {
 
 		apimpl void present(
 			Framebuffer *intermediate, Swapchain *swapchain, 
+			const List<CommandList*> &commands
+		);
+
+		apimpl void present(
+			Texture *intermediate, Swapchain *swapchain, 
 			const List<CommandList*> &commands
 		);
 

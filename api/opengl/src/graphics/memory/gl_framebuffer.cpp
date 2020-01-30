@@ -124,7 +124,7 @@ namespace ignis {
 
 	void Framebuffer::begin() {
 		glxBeginRenderPass(
-			getGraphics().getData()->getContext(), data->index
+			g.getData()->getContext(), data->index
 		);
 	}
 

@@ -41,7 +41,7 @@ namespace ignis {
 
 	void CommandList::addInternal(const Command *c) {
 
-		auto availability = getGraphics().getCommandAvailability(CommandOp(c->op));
+		auto availability = g.getCommandAvailability(CommandOp(c->op));
 
 		if (availability == CommandAvailability::PERFORMANCE)
 			oic::System::log()->performance("The command is not natively supported and could lead to performance loss");

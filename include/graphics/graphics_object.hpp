@@ -38,17 +38,16 @@ namespace ignis {
 			}
 		}
 
-		inline Graphics &getGraphics() const { return g; }
-
 	protected:
 
 		virtual ~GraphicsObject() {}
+
+		Graphics &g;
 
 	private:
 
 		void erase();
 
-		Graphics &g;
 		String name;
 
 		usz refCount = 1;

@@ -97,7 +97,7 @@ namespace ignis {
 
 		//Destroy all FBOs and VAOs
 
-		getGraphics().getData()->destroyContext();
+		g.getData()->destroyContext();
 
 		//Destroy context
 

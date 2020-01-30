@@ -28,6 +28,8 @@ namespace ignis {
 	class PrimitiveBuffer;
 
 	struct GLContext;
+
+	namespace cmd { struct SetClearColor; }
 }
 
 extern GLenum glxDepthFormat(ignis::DepthFormat format);
@@ -53,6 +55,7 @@ extern void glxBeginRenderPass(
 extern void glxSetViewport(ignis::GLContext &ctx, Vec2u32 size, const Vec2i32 &offset);
 extern void glxSetScissor(ignis::GLContext &ctx, Vec2u32 size, const Vec2i32 &offset);
 extern void glxSetViewportAndScissor(ignis::GLContext &ctx, const Vec2u32 &size, const Vec2i32 &offset);
+extern void glxClearFramebuffer(ignis::GLContext& ctx, GLuint fbo, GLuint index, const ignis::cmd::SetClearColor& clearColor);
 
 extern void APIENTRY glxDebugMessage(
 	GLenum, GLenum, GLuint, GLenum,
