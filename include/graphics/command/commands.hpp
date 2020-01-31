@@ -75,7 +75,8 @@ namespace ignis {
 			}
 		};
 
-		//Dispatch call
+		//Dispatch calls
+
 		struct Dispatch : public Command {
 
 			Vec3u32 threadCount;
@@ -94,7 +95,17 @@ namespace ignis {
 
 		};
 
-		using DispatchIndirect = GraphicsObjOp<CMD_DISPATCH_INDIRECT, GPUBuffer>;
+		struct DispatchIndirect : public Command {
+
+			GPUBuffer *buffer;
+			usz offset;			//in dispatch indirect instructions
+
+			DispatchIndirect(GPUBuffer *buffer, usz offset = 0) :
+				Command(CMD_DISPATCH_INDIRECT, sizeof(*this)),
+				buffer(buffer),
+				offset(offset) {}
+
+		};
 
 		//Setting values
 

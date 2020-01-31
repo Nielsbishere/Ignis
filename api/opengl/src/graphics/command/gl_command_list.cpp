@@ -309,8 +309,13 @@ namespace ignis {
 					oic::System::log()->fatal("Pipeline bound was invalid; compute expected");
 
 				{
-					GPUBuffer *buffer = ((DispatchIndirect*)c)->bindObject;
-					glDispatchComputeIndirect(buffer->getData()->handle);
+					auto *di = (DispatchIndirect*) c;
+					GLuint buffer = di->buffer->getData()->handle;
+
+					if (ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] != buffer)
+						glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] = buffer);
+
+					glDispatchComputeIndirect(di->offset * 12);
 				}
 
 				break;
