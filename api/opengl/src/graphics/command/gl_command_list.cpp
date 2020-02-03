@@ -42,25 +42,28 @@ namespace ignis {
 
 			case CMD_CLEAR_IMAGE: {
 
-				auto *ci = (ClearImage*)c;
+				const auto *ci = (ClearImage*)c;
 
-				auto* tex = ci->texture;
+				const auto* tex = ci->texture;
 
 				oicAssert(
 					"Clear image can only be invoked on GPU writable textures", 
 					u8(tex->getInfo().usage) & u8(GPUMemoryUsage::GPU_WRITE)
 				);
 
-				Vec3u16 size = ci->size.x;
+				Vec2u16 size = ci->size.x;
 
 				if (!size.all()) {
-					Vec3i32 dif = tex->getInfo().dimensions.cast<Vec3i32>() - ci->offset.cast<Vec3i32>();
-					oicAssert("All values of the size should be positive", (dif > Vec3i32{}).all());
-					size = dif.cast<Vec3u16>();
+					const Vec2i32 dif = tex->getInfo().dimensions.cast<Vec2i32>() - ci->offset.cast<Vec2i32>();
+					oicAssert("All values of the size should be positive", (dif > Vec2i32{}).all());
+					size = dif.cast<Vec2u16>();
 				}
 
 				glxSetViewportAndScissor(ctx, size.cast<Vec2u32>(), {});
-				glxClearFramebuffer(ctx, tex->getData()->framebuffer, 0, ctx.clearColor);
+
+				for(u16 l = ci->minSlice; l < ci->maxSlice; ++l)
+					glxClearFramebuffer(ctx, tex->getData()->framebuffer[l], 0, ctx.clearColor);
+
 				break;
 			}
 

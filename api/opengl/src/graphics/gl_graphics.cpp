@@ -112,7 +112,8 @@ namespace ignis {
 	//Present image to swapchain
 
 	void Graphics::present(
-		Texture *intermediate, Swapchain *swapchain,
+		Texture *intermediate, u16 slice, 
+		Swapchain *swapchain,
 		const List<CommandList*> &commands
 	) {
 
@@ -122,13 +123,21 @@ namespace ignis {
 		if(!intermediate)
 			oic::System::log()->warn("Presenting without an intermediate is valid but won't provide any results to the swapchain");
 
-		if(intermediate->getInfo().textureType != TextureType::TEXTURE_2D)
-			oic::System::log()->fatal("Couldn't present; intermediate texture has to be 2D");
+		const TextureType tt = intermediate->getInfo().textureType;
+
+		if(
+			tt == TextureType::TEXTURE_MS || tt == TextureType::TEXTURE_MS_ARRAY || 
+			tt == TextureType::TEXTURE_1D || tt == TextureType::TEXTURE_1D_ARRAY
+		)
+			oic::System::log()->fatal("Couldn't present; intermediate texture has to be 2D/2D[], 3D/3D[] or Cube/Cube[]");
 
 		auto size = intermediate->getInfo().dimensions.cast<Vec2u16>();
 
 		if(intermediate && size != swapchain->getInfo().size)
 			oic::System::log()->fatal("Couldn't present; swapchain and intermediate aren't same size");
+
+		if(slice >= intermediate->getInfo().layers)
+			oic::System::log()->fatal("Couldn't present; array index out of bounds");
 
 		GLContext &ctx = data->getContext();
 
@@ -140,7 +149,7 @@ namespace ignis {
 		if (intermediate) {
 			glxSetViewportAndScissor(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
 			glBlitNamedFramebuffer(
-				ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->framebuffer,
+				ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getData()->framebuffer[slice],
 				ctx.bound[GL_DRAW_FRAMEBUFFER] = 0,
 				0, 0, size.x, size.y,
 				0, 0, size.x, size.y,

@@ -103,20 +103,28 @@ namespace ignis {
 
 		if (u8(info.usage) & u8(GPUMemoryUsage::GPU_WRITE)) {
 
-			String fbName = NAME(name + " framebuffer");
+			const String fbName = NAME(name + " framebuffer");
+			const u16 slices = std::max(info.layers, info.dimensions.z);
 
-			glCreateFramebuffers(1, &data->framebuffer);
-			glObjectLabel(GL_FRAMEBUFFER, data->framebuffer, GLsizei(fbName.size()), fbName.c_str());
+			data->framebuffer.resize(slices);
 
-			GLenum colorAttachment = GL_COLOR_ATTACHMENT0;
-			glNamedFramebufferTexture(data->framebuffer, colorAttachment, data->handle, 0);
+			for (u16 i = 0; i < slices; ++i) {
 
-			glNamedFramebufferDrawBuffers(data->framebuffer, 1, &colorAttachment);
-			GLenum status = glCheckNamedFramebufferStatus(data->framebuffer, GL_FRAMEBUFFER);
+				auto &fb = data->framebuffer[i];
 
-			if (status != GL_FRAMEBUFFER_COMPLETE)
-				oic::System::log()->fatal("Couldn't create GPU write target");
+				glCreateFramebuffers(1, &fb);
+				glObjectLabel(GL_FRAMEBUFFER, fb, GLsizei(fbName.size()), fbName.c_str());
 
+				GLenum colorAttachment = GL_COLOR_ATTACHMENT0;
+				glNamedFramebufferTextureLayer(fb, colorAttachment, data->handle, 0, i);
+
+				glNamedFramebufferDrawBuffers(fb, 1, &colorAttachment);
+				GLenum status = glCheckNamedFramebufferStatus(fb, GL_FRAMEBUFFER);
+
+				if (status != GL_FRAMEBUFFER_COMPLETE)
+					oic::System::log()->fatal("Couldn't create GPU write target");
+
+			}
 		}
 	}
 

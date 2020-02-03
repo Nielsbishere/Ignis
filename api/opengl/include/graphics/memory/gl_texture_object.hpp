@@ -9,7 +9,7 @@ namespace ignis {
 
 		GLuint handle{};
 
-		GLuint framebuffer{};	//Only if it's GPU_WRITABLE
+		List<GLuint> framebuffer;		//Only if it's GPU_WRITABLE
 
 		//Subresources
 		List<std::pair<GPUSubresource::TextureRange, GLuint>> textureViews;

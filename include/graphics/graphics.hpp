@@ -77,9 +77,9 @@ namespace ignis {
 		}
 
 		template<typename ...args>
-		inline void present(Texture *intermediate, Swapchain *swapchain, args ...arg) {
+		inline void present(Texture *intermediate, u16 slice, Swapchain *swapchain, args ...arg) {
 			List<CommandList*> commands{ arg... };
-			present(intermediate, swapchain, commands);
+			present(intermediate, slice, swapchain, commands);
 		}
 
 		apimpl Graphics();
@@ -98,7 +98,7 @@ namespace ignis {
 		);
 
 		apimpl void present(
-			Texture *intermediate, Swapchain *swapchain, 
+			Texture *intermediate, u16 slice, Swapchain *swapchain, 
 			const List<CommandList*> &commands
 		);
 

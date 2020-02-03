@@ -178,14 +178,19 @@ namespace ignis {
 		struct ClearImage : Command {
 
 			Texture *texture;
-			Vec3i16 offset;
-			Vec3u16 size;
-			u32 mipLevel;
+			Vec2i16 offset;
+			Vec2u16 size;
+			u16 mipLevel;
+			u16 minSlice, maxSlice;
 
-			ClearImage(Texture* texture, u32 mipLevel = {}, const Vec3u16 &size = {}, const Vec3i16 &offset = {}) :
+			ClearImage(
+				Texture *texture,
+				u16 mipLevel = {}, u16 minSlice = {}, u16 maxSlice = {},
+				const Vec2u16 &size = {}, const Vec2i16 &offset = {}
+			) :
 				Command(CMD_CLEAR_IMAGE, sizeof(*this)), 
-				texture(texture), mipLevel(mipLevel), 
-				offset(offset), size(size) {}
+				texture(texture), mipLevel(mipLevel), minSlice(minSlice),
+				offset(offset), size(size), maxSlice(maxSlice) {}
 
 		};
 
