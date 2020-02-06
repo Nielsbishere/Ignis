@@ -313,12 +313,16 @@ namespace ignis {
 
 				{
 					auto *di = (DispatchIndirect*) c;
-					GLuint buffer = di->buffer->getData()->handle;
+					auto *buf = di->buffer;
+					GLuint buffer = buf->getData()->handle;
+
+					if(buf->size() % 16)
+						oic::System::log()->fatal("Buffer should be 16-byte aligned!");
 
 					if (ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] != buffer)
 						glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] = buffer);
 
-					glDispatchComputeIndirect(di->offset * 12);
+					glDispatchComputeIndirect(di->offset * 16);
 				}
 
 				break;
