@@ -116,7 +116,11 @@ namespace ignis {
 				glObjectLabel(GL_FRAMEBUFFER, fb, GLsizei(fbName.size()), fbName.c_str());
 
 				GLenum colorAttachment = GL_COLOR_ATTACHMENT0;
-				glNamedFramebufferTextureLayer(fb, colorAttachment, data->handle, 0, i);
+
+				if (slices > 1)
+					glNamedFramebufferTextureLayer(fb, colorAttachment, data->handle, 0, i);
+				else
+					glNamedFramebufferTexture(fb, colorAttachment, data->handle, 0);
 
 				glNamedFramebufferDrawBuffers(fb, 1, &colorAttachment);
 				GLenum status = glCheckNamedFramebufferStatus(fb, GL_FRAMEBUFFER);

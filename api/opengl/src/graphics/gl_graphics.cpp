@@ -132,9 +132,7 @@ namespace ignis {
 			oic::System::log()->fatal("Couldn't present; intermediate texture has to be 2D/2D[], 3D/3D[] or Cube/Cube[]");
 
 		auto size = intermediate->getInfo().dimensions.cast<Vec2u16>();
-
-		if(intermediate && size != swapchain->getInfo().size)
-			oic::System::log()->fatal("Couldn't present; swapchain and intermediate aren't same size");
+		size = size.min(swapchain->getInfo().size.cast<Vec2u16>());			//Copy the smallest region to the swapchain; the intermediate may be bigger
 
 		if(slice >= intermediate->getInfo().layers)
 			oic::System::log()->fatal("Couldn't present; array index out of bounds");

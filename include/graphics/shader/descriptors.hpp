@@ -1,6 +1,7 @@
 #pragma once
 #include "graphics/graphics_object.hpp"
 #include "pipeline_layout.hpp"
+#include "types/vec.hpp"
 
 namespace ignis {
 
@@ -113,7 +114,7 @@ namespace ignis {
 		apimpl Descriptors(Graphics &g, const String &name, const Info &info);
 
 		//Flush the updates from the CPU to the GPU
-		apimpl void flush(usz offset, usz size);
+		apimpl void flush(const List<Vec2usz> &offsetsAndSizes);
 
 		//Update the CPU-side resource; requires flush to be called afterwards
 		apimpl void updateDescriptor(u32 i, const GPUSubresource &range);
