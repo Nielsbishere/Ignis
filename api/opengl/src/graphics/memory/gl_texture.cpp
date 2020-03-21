@@ -7,64 +7,57 @@
 
 namespace ignis {
 	
-	Texture::Texture(Graphics &g, const String &name, const Info &info) :
-		TextureObject(g, name, info), info(info) {
+	Texture::Texture(Graphics &g, const String &name, const Info &inf) :
+		TextureObject(g, name, inf), info(inf) {
 
 		data = new Data();
 
-		GLint mipCount = info.mips;
-		GLenum textureFormat = glxColorFormat(info.format);
-		GLenum type = glxGpuFormatType(info.format);
-		GLenum format = glxGpuDataFormat(info.format);
+		GLint mipCount = inf.mips;
+		GLenum textureFormat = glxColorFormat(inf.format);
+		GLenum type = glxGpuFormatType(inf.format);
+		GLenum format = glxGpuDataFormat(inf.format);
 
-		Vec3u16 dim = info.dimensions;
-
-		glCreateTextures(glxTextureType(info.textureType), 1, &data->handle);
+		glCreateTextures(glxTextureType(inf.textureType), 1, &data->handle);
 		GLuint handle = data->handle;
 
-		data->textureViews.push_back({ GPUSubresource::TextureRange(0, 0, info.mips, info.layers, info.textureType), handle });
+		data->textureViews.push_back({ GPUSubresource::TextureRange(0, 0, inf.mips, inf.layers, inf.textureType), handle });
 		
 		glObjectLabel(GL_TEXTURE, handle, GLsizei(name.size()), name.c_str());
 
-		switch (info.textureType) {
+		switch (inf.textureType) {
 
 		case TextureType::TEXTURE_1D:
 
 			glTextureStorage1D(
-				handle, mipCount, textureFormat, dim.x
+				handle, mipCount, textureFormat, inf.dimensions.x
 			);
 
-			if (info.initData.size())
-				for (u32 i = 0; i < info.mips; ++i) {
-
+			if (inf.initData.size())
+				for (u32 i = 0; i < inf.mips; ++i)
 					glTextureSubImage1D(
-						handle, i, 0, dim.x, format, type, info.initData[i].data()
+						handle, i, 0, inf.mipSizes[i].x, format, type, inf.initData[i].data()
 					);
-
-					dim.x = u16(oic::Math::ceil(dim.x / 2.0));
-				}
 			
 			break;
 
 		case TextureType::TEXTURE_1D_ARRAY:
 		case TextureType::TEXTURE_2D: {
 
-				dim.y = oic::Math::max(dim.y, info.layers);
-				Vec3f32 div = { 2, info.layers <= 1 ? 2 : 1, 1 };
-
 				glTextureStorage2D(
-					handle, mipCount, textureFormat, dim.x, dim.y
+					handle, mipCount, textureFormat,
+					inf.dimensions.x,
+					std::max(inf.dimensions.y, inf.layers)
 				);
 
-				if (info.initData.size())
-					for (u32 i = 0; i < info.mips; ++i) {
-
+				if (inf.initData.size())
+					for (u32 i = 0; i < inf.mips; ++i)
 						glTextureSubImage2D(
-							handle, i, 0, 0, dim.x, dim.y, format, type, info.initData[i].data()
+							handle, i, 0, 0,
+							inf.mipSizes[i].x,
+							std::max(inf.mipSizes[i].y, inf.layers),
+							format, type,
+							inf.initData[i].data()
 						);
-
-						dim = (dim.cast<Vec3f32>() / div).ceil().cast<Vec3u16>();
-					}
 
 			}
 			break;
@@ -74,23 +67,21 @@ namespace ignis {
 		case TextureType::TEXTURE_2D_ARRAY:
 		case TextureType::TEXTURE_3D: {
 
-				dim.z = oic::Math::max(dim.z, info.layers);
-				Vec3f32 div(2, 2, info.layers <= 1 ? 2 : 1);
-
 				glTextureStorage3D(
-					handle, mipCount, textureFormat, dim.x, dim.y, dim.z
+					handle, mipCount, textureFormat,
+					inf.dimensions.x, inf.dimensions.y,
+					std::max(inf.dimensions.z, inf.layers)
 				);
 
-				if(info.initData.size())
-					for (u32 i = 0; i < info.mips; ++i) {
-
+				if(inf.initData.size())
+					for (u32 i = 0; i < inf.mips; ++i)
 						glTextureSubImage3D(
-							handle, i, 0, 0, 0, dim.x, dim.y, dim.z,
-							format, type, info.initData[i].data()
+							handle, i, 0, 0, 0,
+							inf.mipSizes[i].x,
+							inf.mipSizes[i].y,
+							std::max(inf.mipSizes[i].z, inf.layers),
+							format, type, inf.initData[i].data()
 						);
-
-						dim = (dim.cast<Vec3f32>() / div).ceil().cast<Vec3u16>();
-					}
 
 			}
 			break;
@@ -101,14 +92,13 @@ namespace ignis {
 
 		//Create a framebuffer so copy and clear operations can be done for this texture
 
-		if (u8(info.usage) & u8(GPUMemoryUsage::GPU_WRITE)) {
+		if (u8(inf.usage) & u8(GPUMemoryUsage::GPU_WRITE)) {
 
 			const String fbName = NAME(name + " framebuffer");
-			const u16 slices = std::max(info.layers, info.dimensions.z);
 
-			data->framebuffer.resize(slices);
+			data->framebuffer.resize(inf.layers);
 
-			for (u16 i = 0; i < slices; ++i) {
+			for (u16 i = 0; i < inf.layers; ++i) {
 
 				auto &fb = data->framebuffer[i];
 
@@ -117,7 +107,7 @@ namespace ignis {
 
 				GLenum colorAttachment = GL_COLOR_ATTACHMENT0;
 
-				if (slices > 1)
+				if (inf.layers > 1)
 					glNamedFramebufferTextureLayer(fb, colorAttachment, data->handle, 0, i);
 				else
 					glNamedFramebufferTexture(fb, colorAttachment, data->handle, 0);
@@ -129,6 +119,17 @@ namespace ignis {
 					oic::System::log()->fatal("Couldn't create GPU write target");
 
 			}
+		}
+
+		//Make sure CPU can write into the buffer
+
+		if (u8(inf.usage & GPUMemoryUsage::CPU_WRITE) && inf.initData.empty()) {
+
+			info.initData.resize(inf.mips);
+
+			for (u8 i = 0; i < inf.mips; ++i)
+				info.initData[i].resize(info.mipSizes[i].prod<usz>() * inf.layers * FormatHelper::getSizeBytes(inf.format));
+
 		}
 	}
 
@@ -143,6 +144,61 @@ namespace ignis {
 		g.getData()->removeTexture(data->handle);
 		glDeleteTextures(1, &data->handle);
 		destroy(data);
+	}
+
+	void Texture::flush(const List<Vec2u8> &ranges) {
+
+		if (!u8(info.usage & GPUMemoryUsage::CPU_WRITE))
+			throw std::runtime_error("Flush can only be called on a CPU writable texture");
+
+		GLuint handle = data->handle;
+		GLenum type = glxGpuFormatType(info.format);
+		GLenum format = glxGpuDataFormat(info.format);
+
+		for (auto& range : ranges)
+			for (u8 i = range.x, j = i + range.y; i < j; ++i) 
+				switch (info.textureType) {
+
+					case TextureType::TEXTURE_1D:
+
+						glTextureSubImage1D(
+							handle, i, 0, 
+							info.mipSizes[i].x, 
+							format, type,
+							info.initData[i].data()
+						);
+
+						break;
+
+					case TextureType::TEXTURE_1D_ARRAY:
+					case TextureType::TEXTURE_2D:
+
+						glTextureSubImage2D(
+							handle, i, 0, 0,
+							info.mipSizes[i].x,
+							std::max(info.mipSizes[i].y, info.layers),
+							format, type,
+							info.initData[i].data()
+						);
+
+						break;
+
+					case TextureType::TEXTURE_CUBE:
+					case TextureType::TEXTURE_CUBE_ARRAY:
+					case TextureType::TEXTURE_2D_ARRAY:
+					case TextureType::TEXTURE_3D:
+
+						glTextureSubImage3D(
+							handle, i, 0, 0, 0,
+							info.mipSizes[i].x, info.mipSizes[i].y,
+							std::max(info.mipSizes[i].z, info.layers),
+							format, type,
+							info.initData[i].data()
+						);
+
+						break;
+
+				}
 	}
 
 }

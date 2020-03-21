@@ -74,7 +74,7 @@ namespace ignis {
 
 		GPUSubresource(
 			Sampler *sampler, TextureObject *texture,
-			TextureType subType = TextureType(0x10),
+			TextureType subType,
 			u32 levelCount = 0, u32 layerCount = 0,
 			u32 minLevel = 0, u32 minLayer = 0
 		);

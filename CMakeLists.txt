@@ -14,8 +14,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 file(GLOB_RECURSE ignisHpp "include/*.hpp")
 file(GLOB_RECURSE ignisCpp "src/*.cpp")
 
-add_subdirectory(core2)
-
 set(graphicsApi opengl CACHE STRING "Graphics API")
 
 set(graphicsApis vulkan opengl directx)
@@ -67,3 +65,14 @@ if(MSVC)
 else()
     target_compile_options(ignis PRIVATE -Wall -Wpedantic -Wextra -Werror)
 endif()
+
+if(TARGET ocore)
+	get_target_property(CORE2_SOURCE_DIR ocore SOURCE_DIR)
+	message("-- Enabling core2 support (${CORE2_SOURCE_DIR})")
+	target_include_directories(ignis PRIVATE ${CORE2_SOURCE_DIR}/include)
+else()
+	add_subdirectory(core2)
+	target_include_directories(ignis PRIVATE core2/include)
+endif()
+
+target_link_libraries(ignis PRIVATE ocore)

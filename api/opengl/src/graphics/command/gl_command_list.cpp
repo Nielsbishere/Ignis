@@ -223,16 +223,16 @@ namespace ignis {
 
 			case CMD_DRAW_INSTANCED:
 
-				if (!ctx.primitiveBuffer)
-					oic::System::log()->fatal("No primitive buffer bound!");
-
 				if (!ctx.pipeline)
 					oic::System::log()->fatal("No pipeline bound!");
 
 				if (!ctx.pipeline->isGraphics())
 					oic::System::log()->fatal("Pipeline bound was invalid; graphics expected");
 
-				if(!ctx.primitiveBuffer->matchLayout(
+				if (!ctx.primitiveBuffer && ctx.pipeline->getInfo().attributeLayout.size())
+					oic::System::log()->fatal("No primitive buffer bound!");
+
+				if(ctx.primitiveBuffer && !ctx.primitiveBuffer->matchLayout(
 					ctx.pipeline->getInfo().attributeLayout
 				))
 					oic::System::log()->fatal("Pipeline vertex layout doesn't match primitive buffer!");
@@ -257,22 +257,35 @@ namespace ignis {
 					auto topo = glxTopologyMode(ctx.pipeline->getInfo().topology);
 					auto *di = (DrawInstanced*) c;
 
-					if (di->isIndexed)
+					if (di->isIndexed) {
+
+						if (!ctx.primitiveBuffer)
+							oic::System::log()->fatal("Indexed draw calls require a primitive buffer to be bound");
+
 						glDrawElementsInstancedBaseVertexBaseInstance(
 							topo,
 							di->count,
 							glxGpuFormatType(ctx.primitiveBuffer->getIndexFormat()),
 							(void*) (
-										usz(di->start) * 
-										FormatHelper::getSizeBytes(
-											ctx.primitiveBuffer->getIndexFormat()
-										)
-									 ),
+								usz(di->start) * 
+								FormatHelper::getSizeBytes(ctx.primitiveBuffer->getIndexFormat())
+							),
 							di->instanceCount,
 							di->vertexStart,
 							di->instanceStart
 						);
-					else
+
+					} else {
+
+						if (!ctx.primitiveBuffer) {
+
+							if (ctx.vaos.find(nullptr) == ctx.vaos.end())
+								glCreateVertexArrays(1, &ctx.vaos[nullptr]);
+
+							GLuint vao = ctx.vaos[nullptr];
+							glBindVertexArray(vao);
+						}
+
 						glDrawArraysInstancedBaseInstance(
 							topo,
 							di->start,
@@ -280,6 +293,7 @@ namespace ignis {
 							di->instanceCount,
 							di->instanceStart
 						);
+					}
 				}
 
 				break;

@@ -72,10 +72,11 @@ namespace ignis {
 		else if(rl.type != ResourceType::COMBINED_SAMPLER)
 			return false;
 
+		auto samplerTexture = TextureType(rl.samplerType & SamplerType::PROPERTY_AS_TEXTURE);
+
 		return 
 			tex && 
-			tex->getInfo().textureType != 
-			TextureType(u8(rl.samplerType) & u8(SamplerType::PROPERTY_AS_TEXTURE)) &&
+			tex->getInfo().textureType == samplerTexture &&
 			tex->validSubresource(sub, true);
 	}
 
