@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.13.0)
 project(ignis)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,6 +18,11 @@ file(GLOB_RECURSE ignisCpp "src/*.cpp")
 add_subdirectory(core2)
 
 set(graphicsApi opengl CACHE STRING "Graphics API")
+
+if(NOT DEFINED ENV{VULKAN_SDK})
+	set(graphicsApi opengl CACHE STRING "Graphics API")
+	message("-- Vulkan SDK not found, falling back to OpenGL")
+endif()
 
 set(graphicsApis vulkan opengl directx)
 set_property(CACHE graphicsApi PROPERTY STRINGS ${graphicsApis})
@@ -55,6 +61,21 @@ target_include_directories(ignis PRIVATE include)
 target_include_directories(ignis PRIVATE core2/include)
 target_link_libraries(ignis PRIVATE ocore)
 
+if(${graphicsApi} STREQUAL "vulkan")
+
+	message("-- Vulkan SDK found at $ENV{VULKAN_SDK}")
+	target_include_directories(ignis PUBLIC Vulkan-Headers/include)
+
+	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+		target_link_directories(ignis PUBLIC $ENV{VULKAN_SDK}/Lib)
+	else()
+		target_link_directories(ignis PUBLIC $ENV{VULKAN_SDK}/Lib32)
+	endif()
+
+	target_link_libraries(ignis PUBLIC vulkan-1)
+
+endif()
+
 source_group("Headers" FILES ${ignisHpp})
 source_group("Source" FILES ${ignisCpp})
 source_group("Platform (${platform}) Headers" FILES ${platformHpp})
@@ -65,5 +86,5 @@ source_group("Graphics (${graphicsApi}) Source" FILES ${apiCpp})
 if(MSVC)
     target_compile_options(ignis PRIVATE /W4 /WX /MD /MP /wd26812 /wd4201 /EHsc /GR)
 else()
-    target_compile_options(ignis PRIVATE -Wall -Wpedantic -Wextra -Werror)
+    target_compile_options(ignis PRIVATE -Wall -fms-extensions -Wextra -Werror)
 endif()

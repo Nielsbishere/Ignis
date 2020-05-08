@@ -1,6 +1,5 @@
 #pragma once
-#include "../graphics_object.hpp"
-#include "../enums.hpp"
+#include "../graphics.hpp"
 #include "types/vec.hpp"
 
 namespace oic {
@@ -11,7 +10,7 @@ namespace ignis {
 
 	class SwapchainImage;
 
-	class Swapchain : public GraphicsObject {
+	class Swapchain : public GPUObject {
 
 	public:
 

@@ -5,7 +5,7 @@
 namespace ignis {
 
 	RenderTexture::RenderTexture(Graphics &g, const String &name, const Info &info) :
-		TextureObject(g, name, info)
+		TextureObject(g, name, info, GPUObjectType::RENDER_TEXTURE)
 	{
 		data = new Data();
 

@@ -8,7 +8,7 @@ namespace ignis {
 	//They are instead bound runtime
 
 	Descriptors::Descriptors(Graphics &g, const String &name, const Info &info) :
-		GraphicsObject(g, name), info(info) {}
+		GPUObject(g, name, GPUObjectType::DESCRIPTORS), info(info) {}
 
 	Descriptors::~Descriptors() {}
 

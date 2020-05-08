@@ -5,7 +5,7 @@
 namespace ignis {
 
 	DepthTexture::DepthTexture(Graphics &g, const String &name, const Info &info) :
-		TextureObject(g, name, info), format(info.format), storeData(info.storeData)
+		TextureObject(g, name, info, GPUObjectType::DEPTH_TEXTURE), format(info.format), storeData(info.storeData)
 	{
 		data = new Data();
 

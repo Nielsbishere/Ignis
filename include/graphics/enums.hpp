@@ -3,12 +3,18 @@
 
 namespace ignis {
 
-	//A feature that's dependent on the current platform
+	//A major feature that's dependent on the current platform
 	enum class Feature : u8 { 
-		NONE, RAYTRACING, MESH_SHADERS, COUNT 
+		NONE,
+		RAY_TRACING,
+		MESH_SHADERS,
+		MULTI_VIEW,
+		VARIABLE_RATE_SHADING,
+		SAMPLER_FEEDBACK,
+		COUNT 
 	};
 
-	//An extension that's dependent on the current gpu
+	//An minor extension that's dependent on the current gpu
 	enum class Extension : u8 { 
 		NONE,
 		CONDITIONAL_RENDERING,

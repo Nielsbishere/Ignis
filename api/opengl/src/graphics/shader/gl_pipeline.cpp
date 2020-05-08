@@ -5,7 +5,8 @@
 
 namespace ignis {
 
-	Pipeline::Pipeline(Graphics &g, const String &name, const Info &info): GraphicsObject(g, name), info(info) { 
+	Pipeline::Pipeline(Graphics &g, const String &name, const Info &info):
+		GPUObject(g, name, GPUObjectType::PIPELINE), info(info) { 
 
 		data = new Data();
 

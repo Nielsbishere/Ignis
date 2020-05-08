@@ -1,5 +1,5 @@
 #pragma once
-#include "../graphics_object.hpp"
+#include "../graphics.hpp"
 #include "../enums.hpp"
 #include "types/vec.hpp"
 
@@ -8,7 +8,7 @@ namespace ignis {
 	class RenderTexture;
 	class DepthTexture;
 	
-	class Framebuffer : public GraphicsObject {
+	class Framebuffer : public GPUObject {
 
 	public:
 

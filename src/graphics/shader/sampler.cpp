@@ -11,24 +11,11 @@ namespace ignis {
 		f32 anisotropy,
 		f32 minLod,
 		f32 maxLod
-	) :
+	):
 		Info(
-			Vec4f32(), srt, srt, srt,
-			min, mag, anisotropy, minLod, maxLod
-		) {}
-
-	Sampler::Info::Info(
-		const Vec4f32 &borderColor,
-		SamplerMin min,
-		SamplerMag mag,
-		f32 anisotropy,
-		f32 minLod,
-		f32 maxLod
-	) :
-		Info(
-			borderColor, SamplerMode::CLAMP_BORDER,
-			SamplerMode::CLAMP_BORDER, SamplerMode::CLAMP_BORDER,
-			min, mag, anisotropy, minLod, maxLod
+			srt, srt, srt,
+			min, mag, anisotropy,
+			minLod, maxLod
 		) {}
 
 	Sampler::Info::Info(
@@ -40,25 +27,10 @@ namespace ignis {
 		f32 anisotropy,
 		f32 minLod,
 		f32 maxLod
-	) :
-		Info(
-			Vec4f32(), s, r, t, min, mag, anisotropy, minLod, maxLod
-		) {}
-
-	Sampler::Info::Info(
-		const Vec4f32 &borderColor,
-		SamplerMode s,
-		SamplerMode r,
-		SamplerMode t,
-		SamplerMin min,
-		SamplerMag mag,
-		f32 anisotropy,
-		f32 minLod,
-		f32 maxLod
-	) :
-		borderColor(borderColor), anisotropy(anisotropy),
+	):
+		anisotropy(anisotropy),
 		minLod(minLod), maxLod(maxLod),
-		minFilter(min), magFilter(mag), s(s), r(r), t(t) {}
+		minFilter(min), magFilter(mag), s(s), r(r), t(t){}
 
 	bool Sampler::isCompatible(
 		const RegisterLayout &rl, const GPUSubresource &sub

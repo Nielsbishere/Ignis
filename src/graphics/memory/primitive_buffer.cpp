@@ -13,7 +13,7 @@ namespace ignis {
 	PrimitiveBuffer::PrimitiveBuffer(
 		Graphics &g, const String &name, const Info &inf
 	):
-		GraphicsObject(g, name), info(inf)
+		GPUObject(g, name, GPUObjectType::PRIMITIVE_BUFFER), info(inf)
 	{
 		usz i{}, elements{};
 

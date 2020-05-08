@@ -2,6 +2,7 @@
 #include "graphics/command/command_list.hpp"
 #include "graphics/command/command_ops.hpp"
 #include "types/vec.hpp"
+#include <cstring>
 
 //General GPU commands
 //These have to be implemented for every CommandList implementation
@@ -25,28 +26,22 @@ namespace ignis {
 
 		template<CommandOp opCode, typename BindObject>
 		struct GraphicsObjOp : public Command {
-			BindObject *bindObject;
-			GraphicsObjOp(BindObject *bindObject, usz size = 0): 
+
+			GPUObjectId bindObject;
+
+			GraphicsObjOp(const BindObject *bindObject, usz size = 0): 
 				Command(opCode, size == 0 ? sizeof(*this) : size), 
-				bindObject(bindObject) {}
+				bindObject(getGPUObjectId(bindObject)) {}
 		};
 
-		using BindPipeline			= GraphicsObjOp<CMD_BIND_PIPELINE,			Pipeline>;
-		using BindDescriptors		= GraphicsObjOp<CMD_BIND_DESCRIPTORS,		Descriptors>;
-		using BindPrimitiveBuffer	= GraphicsObjOp<CMD_BIND_PRIMITIVE_BUFFER,  PrimitiveBuffer>;
+		using BindPipeline			= GraphicsObjOp<CMD_BIND_PIPELINE, Pipeline>;
+		using BindDescriptors		= GraphicsObjOp<CMD_BIND_DESCRIPTORS, Descriptors>;
+		using BeginFramebuffer		= GraphicsObjOp<CMD_BEGIN_FRAMEBUFFER, Framebuffer>;
+		using BindPrimitiveBuffer	= GraphicsObjOp<CMD_BIND_PRIMITIVE_BUFFER, PrimitiveBuffer>;
 
 		/*using BeginQuery			= GraphicsObjOp<CMD_BEGIN_QUERY,			Query>;
 		using EndQuery				= NoParamOp<CMD_END_QUERY>;*/
 		using EndFramebuffer		= NoParamOp<CMD_END_FRAMEBUFFER>;
-
-		struct BeginFramebuffer : public Command {
-
-			Framebuffer *target;
-
-			BeginFramebuffer(Framebuffer *target):
-				Command(CMD_BEGIN_FRAMEBUFFER, sizeof(*this)), target(target) {}
-
-		};
 
 		//Draw/dispatch commands
 
@@ -146,7 +141,7 @@ namespace ignis {
 
 		struct ClearFramebuffer : Command {
 
-			Framebuffer *target;
+			GPUObjectId target;
 
 			enum ClearFlags : u8 {
 				COLOR = 1,
@@ -157,7 +152,7 @@ namespace ignis {
 			} clearFlags;
 
 			ClearFramebuffer(Framebuffer *target, ClearFlags clearFlags = ClearFlags::ALL) :
-				Command(CMD_CLEAR_FRAMEBUFFER, sizeof(*this)), target(target), clearFlags(clearFlags) {}
+				Command(CMD_CLEAR_FRAMEBUFFER, sizeof(*this)), target(getGPUObjectId(target)), clearFlags(clearFlags) {}
 		};
 		
 		//Debug calls
@@ -175,8 +170,8 @@ namespace ignis {
 				memcpy(string, str.data(), str.size());
 			}
 
-			usz size() const {
-				usz size = strlen(string);
+			inline usz size() const {
+				usz size = std::strlen(string);
 				return size >= maxStringLength ? maxStringLength : size;
 			}
 

@@ -1,6 +1,7 @@
 #include "graphics/command/command_list.hpp"
 #include "graphics/graphics.hpp"
 #include "system/system.hpp"
+#include <cstring>
 
 namespace ignis {
 
@@ -10,10 +11,10 @@ namespace ignis {
 	}
 
 	CommandList::CommandList(Graphics &g, const String &name, const Info &info):
-		GraphicsObject(g, name), info(info), data(info) {}
+		GPUObject(g, name, GPUObjectType::COMMAND_LIST), info(info), data(info) {}
 
 	CommandList::CommandList(Graphics &g, const String &name, const Data &data):
-		GraphicsObject(g, name), info(u32(data.commandBuffer.size())), data(data) {}
+		GPUObject(g, name, GPUObjectType::COMMAND_LIST), info(u32(data.commandBuffer.size())), data(data) {}
 
 	const CommandList::Info &CommandList::getInfo() const { return info; }
 	CommandList::Data &CommandList::getData() { return data; }
@@ -28,15 +29,6 @@ namespace ignis {
 			oic::System::log()->fatal("The command list resize would result into loss of data");
 
 		data.commandBuffer.resize(newSize);
-	}
-
-	void CommandList::execute() {
-
-		for (u8 *ptr = (u8*)data.commandBuffer.data(), *end = ptr + data.next; ptr < end; ) {
-			Command *c = (Command*)ptr;
-			execute(c);
-			ptr += c->size;
-		}
 	}
 
 	void CommandList::addInternal(const Command *c) {
@@ -54,7 +46,7 @@ namespace ignis {
 		if (data.next + size >= info.bufferSize)
 			oic::System::log()->fatal("The command list couldn't hold the commands");
 
-		memcpy(data.commandBuffer.data() + data.next, c, size);
+		std::memcpy(data.commandBuffer.data() + data.next, c, size);
 		data.next += size;
 	}
 

@@ -47,7 +47,7 @@ extern GLenum glxCompareFunc(ignis::CompareOp compareOp);
 extern GLenum glxStencilOp(ignis::StencilOp stencilOp);
 
 extern void glxBeginRenderPass(
-	ignis::GLContext &data, GLuint framebuffer
+	ignis::GLContext &data, const ignis::GPUObjectId &framebuffer, GLuint i
 );
 
 extern void glxSetViewport(ignis::GLContext &ctx, Vec2u32 size, const Vec2i32 &offset);

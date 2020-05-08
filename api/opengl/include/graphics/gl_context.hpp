@@ -23,26 +23,32 @@ namespace ignis {
 
 		cmd::SetClearColor clearColor{};
 
-		//VAOs; because they aren't shared
+		//VAOs; because they aren't shared (by object id)
 
-		HashMap<PrimitiveBuffer*, GLuint> vaos;
-		List<PrimitiveBuffer*> deletedVaos;
+		HashMap<GPUObjectId, GLuint> vaos;
 
 		//Current bound objects
 
-		HashMap<GLenum, GLuint> bound;
-		HashMap<u64, BoundRange> boundByBase;	//GLenum lower 32-bit, Base upper 32-bit
+		HashMap<GLenum, GPUObjectId> bound;
+		HashMap<u64, BoundRange> boundByBaseId;	//GLenum lower 32-bit, Base upper 32-bit
 
 		//States that have to be set with commands
 
-		Framebuffer *currentFramebuffer{};
+		GPUObjectId framebufferId{};
+		GPUObjectId primitiveBufferId{};
+		GPUObjectId pipelineId{};
+		GPUObjectId descriptorsId{};
+
+		//CommandList cache of active objects
+
+		Framebuffer *framebuffer{};
 		PrimitiveBuffer *primitiveBuffer{};
 		Pipeline *pipeline{};
 		Descriptors *descriptors{};
 
-		u64 frameId {};
+		u64 frameId{};
 		f32 depth = 1, minSampleShading{};
-		u32 stencil {};
+		u32 stencil{};
 
 		bool enableScissor{};
 		bool enableMinSampleShading{};

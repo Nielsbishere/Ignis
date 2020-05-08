@@ -7,7 +7,7 @@
 	#define WIN32_LEAN_AND_MEAN
 
 	#include <Windows.h>
-	#include <gl/GL.h>
+	#include <GL/gl.h>
 	#include "graphics/wglext.h"
 
 	#undef ERROR
@@ -17,9 +17,18 @@
 	#undef max
 	#undef DOMAIN
 
-#endif
+	#include "glext.h"
 
-#include "glext.h"
+#else
+
+	#include <X11/Xlib.h>
+	#include <X11/Xutil.h>
+	#include <GL/gl.h>
+	#include <GL/glext.h>
+	#include <GL/glu.h>
+	#include <GL/glx.h>
+
+#endif
 
 namespace ignis {
 
@@ -35,8 +44,9 @@ namespace ignis {
 	//Graphics data
 
 	struct BoundRange {
-		GLuint handle{};
+		GPUObjectId id;
 		usz offset{}, size{};
+		u32 subId{};
 	};
 
 	struct GLContext;
@@ -59,11 +69,12 @@ namespace ignis {
 
 		//Per context info
 
-		HashMap<usz, GLContext> contexts;
+		HashMap<usz, GLContext*> contexts;
 		HashMap<PrimitiveBuffer*, bool> primitiveBuffers;
 
-		void updateContext();
+		void updateContext(Graphics &g);
 		void destroyContext();
+		void storeContext();
 		GLContext &getContext();
 
 		//Helper functions

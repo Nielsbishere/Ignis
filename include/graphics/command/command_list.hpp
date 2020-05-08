@@ -1,6 +1,6 @@
 #pragma once
 #include "system/log.hpp"
-#include "graphics/graphics_object.hpp"
+#include "graphics/graphics.hpp"
 
 namespace ignis {
 
@@ -17,7 +17,7 @@ namespace ignis {
 	};
 
 	//Storing a list of GPU commands that can be executed by the interface
-	class CommandList : public GraphicsObject {
+	class CommandList : public GPUObject {
 
 	public:
 
@@ -58,7 +58,7 @@ namespace ignis {
 		template<typename T, typename = std::enable_if<std::is_base_of_v<Command, T> && std::is_pod_v<T> && sizeof(T) <= u16_MAX>>
 		inline void add(const T *t);
 
-		void execute();
+		apimpl void execute();
 
 	protected:
 

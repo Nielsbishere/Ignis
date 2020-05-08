@@ -1,5 +1,5 @@
 #pragma once
-#include "graphics/graphics_object.hpp"
+#include "graphics/graphics.hpp"
 #include "graphics/memory/buffer_layout.hpp"
 #include "graphics/shader/pipeline_layout.hpp"
 #include "types/vec.hpp"
@@ -189,7 +189,7 @@ namespace ignis {
 		MSAA(u32 samples = {}, f32 minSampleShading = {}) : samples(samples), minSampleShading(minSampleShading) {}
 	};
 
-	class Pipeline : public GraphicsObject {
+	class Pipeline : public GPUObject {
 
 	public:
 

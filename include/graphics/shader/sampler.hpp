@@ -1,18 +1,15 @@
 #pragma once
 #include "graphics/gpu_resource.hpp"
-#include "graphics/graphics_object.hpp"
 #include "graphics/enums.hpp"
 #include "types/vec.hpp"
 
 namespace ignis {
 
-	class Sampler : public GraphicsObject, public GPUResource {
+	class Sampler : public GPUObject, public GPUResource {
 
 	public:
 
 		struct Info {
-
-			Vec4f32 borderColor{};
 
 			f32 anisotropy, minLod, maxLod;
 
@@ -31,27 +28,6 @@ namespace ignis {
 			);
 
 			Info(
-				const Vec4f32 &borderColor,
-				SamplerMin min = SamplerMin::LINEAR_MIPS,
-				SamplerMag mag = SamplerMag::LINEAR,
-				f32 anisotropy = 8,
-				f32 minLod = -f32_MAX,
-				f32 maxLod = f32_MAX
-			);
-
-			Info(
-				SamplerMode sFilter,
-				SamplerMode rFilter,
-				SamplerMode tFilter,
-				SamplerMin min = SamplerMin::LINEAR_MIPS,
-				SamplerMag mag = SamplerMag::LINEAR,
-				f32 anisotropy = 8,
-				f32 minLod = -f32_MAX,
-				f32 maxLod = f32_MAX
-			);
-
-			Info(
-				const Vec4f32 &borderColor,
 				SamplerMode sFilter,
 				SamplerMode rFilter,
 				SamplerMode tFilter,

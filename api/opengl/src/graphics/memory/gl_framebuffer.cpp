@@ -13,7 +13,7 @@
 namespace ignis {
 
 	Framebuffer::Framebuffer(Graphics &g, const String &name, const Info &inf): 
-		GraphicsObject(g, name), info(inf) {
+		GPUObject(g, name, GPUObjectType::FRAMEBUFFER), info(inf) {
 		
 		data = new Data();
 		info.samples = oic::Math::min(g.getData()->maxSamples, info.samples);
@@ -123,9 +123,7 @@ namespace ignis {
 	}
 
 	void Framebuffer::begin() {
-		glxBeginRenderPass(
-			getGraphics().getData()->getContext(), data->index
-		);
+		glxBeginRenderPass(getGraphics().getData()->getContext(), getId(), data->index);
 	}
 
 	void Framebuffer::end() {}

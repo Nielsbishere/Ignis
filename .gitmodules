@@ -1,3 +1,6 @@
 [submodule "core2"]
 	path = core2
 url=https://github.com/Oxsomi/core2
+[submodule "Vulkan-Headers"]
+	path = Vulkan-Headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers

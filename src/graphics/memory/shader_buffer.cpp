@@ -1,4 +1,5 @@
 #include "graphics/memory/shader_buffer.hpp"
+#include <cstring>
 
 namespace ignis {
 
@@ -30,7 +31,7 @@ namespace ignis {
 			usz j = l.second.array.size() ? l.second.array[0] : 1;
 
 			for (usz i = 0; i < j; ++i)
-				memcpy(
+				std::memcpy(
 					bufferInfo.initData.data() + l.second.offset + l.second.stride * i,
 					l.second.initData.data() + l.second.length * i,
 					l.second.length

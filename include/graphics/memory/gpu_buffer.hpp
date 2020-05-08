@@ -1,5 +1,4 @@
 #pragma once
-#include "graphics/graphics_object.hpp"
 #include "graphics/gpu_resource.hpp"
 
 namespace ignis {
@@ -7,7 +6,7 @@ namespace ignis {
 	enum class GPUBufferType : u8;
 	enum class GPUMemoryUsage : u8;
 
-	class GPUBuffer : public GraphicsObject, public GPUResource {
+	class GPUBuffer : public GPUObject, public GPUResource {
 
 	public:
 

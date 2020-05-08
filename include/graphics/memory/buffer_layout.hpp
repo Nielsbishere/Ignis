@@ -1,5 +1,6 @@
 #pragma once
 #include "../enums.hpp"
+#include <cstring>
 
 namespace ignis {
 
@@ -20,7 +21,7 @@ namespace ignis {
 			Attrib() : offset {}, index {}, format {} {}
 
 			inline bool operator==(const Attrib &other) const {
-				return memcmp(this, &other, sizeof(*this)) == 0;
+				return std::memcmp(this, &other, sizeof(*this)) == 0;
 			}
 		};
 

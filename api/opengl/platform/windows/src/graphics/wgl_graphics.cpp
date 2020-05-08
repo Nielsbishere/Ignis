@@ -90,6 +90,8 @@ namespace ignis {
 
 		glClipControl(GL_LOWER_LEFT, GL_ZERO_TO_ONE);
 		glDepthRange(1, 0);
+
+		enabledThreads[oic::Thread::getCurrentId()].enabled = true;
 	}
 
 	void Graphics::release() {
@@ -106,11 +108,19 @@ namespace ignis {
 	}
 
 	void Graphics::pause() {
-		wglMakeCurrent(data->platform->dc, NULL);
+
+		if(data->platform->dc)
+			wglMakeCurrent(data->platform->dc, NULL);
+
+		enabledThreads[oic::Thread::getCurrentId()].enabled = false;
 	}
 
 	void Graphics::resume() {
-		wglMakeCurrent(data->platform->dc, data->platform->rc);
+
+		if(data->platform->rc)
+			wglMakeCurrent(data->platform->dc, data->platform->rc);
+
+		enabledThreads[oic::Thread::getCurrentId()].enabled = true;
 	}
 
 }

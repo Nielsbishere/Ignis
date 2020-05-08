@@ -1,5 +1,5 @@
 #pragma once
-#include "graphics_object.hpp"
+#include "graphics.hpp"
 
 namespace ignis {
 

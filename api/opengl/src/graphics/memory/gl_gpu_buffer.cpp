@@ -3,11 +3,12 @@
 #include "graphics/memory/gpu_buffer.hpp"
 #include "graphics/enums.hpp"
 #include "graphics/memory/gl_gpu_buffer.hpp"
+#include <cstring>
 
 namespace ignis {
 
 	GPUBuffer::GPUBuffer(Graphics &g, const String &name, const Info &info):
-		GraphicsObject(g, name), info(info) {
+		GPUObject(g, name, GPUObjectType::GPU_BUFFER), info(info) {
 
 		//Initialize buffer
 
@@ -57,7 +58,7 @@ namespace ignis {
 
 			if (data->unmapped) {
 
-				memcpy(data->unmapped, info.initData.data() + offset, size);
+				std::memcpy(data->unmapped, info.initData.data() + offset, size);
 				glFlushMappedNamedBufferRange(data->handle, offset, size);
 
 			} else 

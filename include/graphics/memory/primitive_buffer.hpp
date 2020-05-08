@@ -1,10 +1,10 @@
 #pragma once
-#include "../graphics_object.hpp"
+#include "../graphics.hpp"
 #include "buffer_layout.hpp"
 
 namespace ignis {
 
-	class PrimitiveBuffer : public GraphicsObject {
+	class PrimitiveBuffer : public GPUObject {
 
 	public:
 

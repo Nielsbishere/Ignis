@@ -74,15 +74,10 @@ namespace ignis {
 			oic::System::log()->fatal("Texture created with too many or no mips!");
 	}
 
-	TextureObject::Info::Info(
-		const Vec3u16 &res, GPUFormat format, GPUMemoryUsage usage,
-		u8 mipCount
-	): 
+	TextureObject::Info::Info(const Vec3u16 &res, GPUFormat format, GPUMemoryUsage usage, u8 mipCount): 
 		Info(TextureType::TEXTURE_3D, res, format, usage, mipCount, 1, 1, true) { }
 
-	bool TextureObject::isCompatible(
-		const RegisterLayout &reg, const GPUSubresource &sub
-	) const {
+	bool TextureObject::isCompatible(const RegisterLayout &reg, const GPUSubresource &sub) const {
 		return
 			reg.type == ResourceType::TEXTURE &&
 			reg.textureType == info.textureType &&
@@ -104,13 +99,13 @@ namespace ignis {
 
 		if (info.textureType == TextureType::TEXTURE_CUBE)
 			return
-			type == TextureType::TEXTURE_2D || type == TextureType::TEXTURE_2D_ARRAY ||
-			type == TextureType::TEXTURE_CUBE;
+				type == TextureType::TEXTURE_2D || type == TextureType::TEXTURE_2D_ARRAY ||
+				type == TextureType::TEXTURE_CUBE;
 
 		if (info.textureType == TextureType::TEXTURE_CUBE_ARRAY)
 			return 
-			type == TextureType::TEXTURE_2D || type == TextureType::TEXTURE_2D_ARRAY ||
-			type == TextureType::TEXTURE_CUBE || type == TextureType::TEXTURE_CUBE_ARRAY;
+				type == TextureType::TEXTURE_2D || type == TextureType::TEXTURE_2D_ARRAY ||
+				type == TextureType::TEXTURE_CUBE || type == TextureType::TEXTURE_CUBE_ARRAY;
 
 		return info.textureType == type || TextureType(u8(info.textureType) & ~u8(TextureType::PROPERTY_IS_ARRAY)) == type;
 	}

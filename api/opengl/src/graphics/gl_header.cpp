@@ -130,6 +130,7 @@ GLenum glxColorFormat(GPUFormat format){
 		case GPUFormat::RGB64f: case GPUFormat::RGB64u: case GPUFormat::RGB64i:
 		case GPUFormat::RGBA64f: case GPUFormat::RGBA64u: case GPUFormat::RGBA64i:
 			oic::System::log()->fatal("OpenGL doesn't support 64-bit buffers");
+			return GL_RGBA8;
 
 		default:
 			oic::System::log()->fatal("Invalid depth format");
@@ -463,19 +464,24 @@ GLenum glxStencilOp(StencilOp stencilOp) {
 //Functionality
 
 void glxBeginRenderPass(
-	GLContext &ctx, GLuint framebuffer
+	GLContext &ctx, const GPUObjectId &framebuffer, GLuint i
 ) {
-	if (ctx.bound[GL_DRAW_FRAMEBUFFER] != framebuffer)
-		glBindFramebuffer(
-			GL_DRAW_FRAMEBUFFER, ctx.bound[GL_DRAW_FRAMEBUFFER] = framebuffer
-		);
+	if (ctx.bound[GL_DRAW_FRAMEBUFFER] != framebuffer) {
+		ctx.bound[GL_DRAW_FRAMEBUFFER] = framebuffer;
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, i);
+	}
 }
 
 void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
 	if (!size.x || !size.y) {
-		oicAssert("SetViewport can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
-		size = ctx.currentFramebuffer->getInfo().size.cast<Vec2u32>();
+
+		if (!ctx.framebuffer) {
+			oic::System::log()->warn("SetViewport can't be called with null size if the framebuffer isn't bound");
+			return;
+		}
+
+		size = ctx.framebuffer->getInfo().size.cast<Vec2u32>();
 	}
 
 	if (ctx.viewportOff != offset || ctx.viewportSize != size) {
@@ -488,8 +494,13 @@ void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 void glxSetScissor(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
 	if (!size.x || !size.y) {
-		oicAssert("SetScissor can't be called with null size if the framebuffer isn't bound", ctx.currentFramebuffer);
-		size = ctx.currentFramebuffer->getInfo().size.cast<Vec2u32>();
+
+		if (!ctx.framebuffer) {
+			oic::System::log()->warn("SetScissor can't be called with null size if the framebuffer isn't bound");
+			return;
+		}
+
+		size = ctx.framebuffer->getInfo().size.cast<Vec2u32>();
 	}
 
 	if (!ctx.enableScissor) {
@@ -600,6 +611,9 @@ bool glxCheckProgramLog(GLuint program, String &str) {
 void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 
 	glUseProgram(pipeline->getData()->handle);
+
+	if (!pipeline->isGraphics())
+		return;
 
 	auto &r = pipeline->getInfo().rasterizer;
 	auto &b = pipeline->getInfo().blendState;
@@ -795,6 +809,8 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 			auto &subres = it->second;
 			auto *res = subres.resource;
 
+			//TODO: Handle nullptr!
+
 			TextureObject *tex = dynamic_cast<TextureObject*>(res);
 
 			//Bind buffer range
@@ -804,27 +820,28 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 				usz offset = subres.bufferRange.offset, size = subres.bufferRange.size;
 
 				GLenum bindPoint = resource.type == ResourceType::CBUFFER ? GL_UNIFORM_BUFFER : GL_SHADER_STORAGE_BUFFER;
-				auto &bound = ctx.boundByBase[(u64(resource.localId) << 32) | bindPoint];
+				auto &bound = ctx.boundByBaseId[(u64(resource.localId) << 32) | bindPoint];
 
-				if (bound.handle == buffer->getData()->handle && bound.offset == offset && bound.size == size)
+				if (bound.id == buffer->getId() && bound.offset == offset && bound.size == size)
 					continue;
 
 				glBindBufferRange(
 					bindPoint, resource.localId, buffer->getData()->handle, offset, size
 				);
-				bound = { buffer->getData()->handle, offset, size };
+
+				bound = { buffer->getId(), offset, size };
 			}
 
 			//Bind sampler range
 
 			else if (Sampler *sampler = dynamic_cast<Sampler*>(res)) {
 
-				auto &bound = ctx.boundByBase[(u64(resource.localId) << 32) | GL_SAMPLER];
+				auto &bound = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_SAMPLER];
 
-				if (bound.handle != sampler->getData()->handle)
-					glBindSampler(
-						resource.localId, bound.handle = sampler->getData()->handle
-					);
+				if (bound.id != sampler->getId()) {
+					glBindSampler(resource.localId, sampler->getData()->handle);
+					bound.id = sampler->getId();
+				}
 
 				tex = subres.samplerData.texture;
 			}
@@ -836,11 +853,14 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 				auto &textureViews = tex->getData()->textureViews;
 				GLuint textureView{};
 
-				for(auto &view : textureViews)
+				u32 subId{};
+
+				for (auto &view : textureViews)
 					if (view.first == subres.textureRange) {
 						textureView = view.second;
 						break;
 					}
+					else ++subId;
 
 				if (!textureView) {
 
@@ -869,24 +889,31 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 
 				if (!resource.isWritable) {
 
-					auto &boundTex = ctx.boundByBase[(u64(resource.localId) << 32) | GL_TEXTURE];
+					auto &boundTex = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_TEXTURE];
 
-					if (boundTex.handle != textureView)
-						glBindTextureUnit(resource.localId, boundTex.handle = textureView);
+					if (boundTex.id != tex->getId() || boundTex.subId != subId) {
+						glBindTextureUnit(resource.localId, textureView);
+						boundTex.subId = subId;
+						boundTex.id = tex->getId();
+					}
 
 				} else {
 
-					auto &boundImg = ctx.boundByBase[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but GL_IMAGE doesn't exist*/];
+					auto &boundImg = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but GL_IMAGE doesn't exist*/];
 
-					if (boundImg.handle != textureView)
+					if (boundImg.id != tex->getId() || boundImg.subId != subId) {
+
 						glBindImageTexture(
-							resource.localId, boundImg.handle = textureView, 0,
+							resource.localId, textureView, 0,
 							GL_TRUE, 0, GL_WRITE_ONLY,
 							glxColorFormat(tex->getInfo().format)
 						);
+
+						boundImg.subId = subId;
+						boundImg.id = tex->getId();
+					}
 				}
 			}
-
 		}
 	}
 }
@@ -898,6 +925,10 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 	GLuint handle;
 
 	glCreateVertexArrays(1, &handle);
+
+	if (!prim)
+		return handle;
+
 	glObjectLabel(
 		GL_VERTEX_ARRAY, handle,
 		GLsizei(prim->getName().size()), prim->getName().c_str()

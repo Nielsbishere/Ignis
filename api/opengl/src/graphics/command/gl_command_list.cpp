@@ -11,46 +11,59 @@
 
 namespace ignis {
 
+	void CommandList::execute() {
+
+		//Detect if contents are different, then revalidate command list
+
+		for (u8 *ptr = (u8*)data.commandBuffer.data(), *end = ptr + data.next; ptr < end; ) {
+			Command *c = (Command*)ptr;
+			execute(c);
+			ptr += c->size;
+		}
+	}
+
 	void CommandList::execute(Command *c) {
 
 		using namespace cmd;
 
 		auto &ctx = getGraphics().getData()->getContext();
 
-		//TODO: Instead of doing validation here; 
-		//do it whenever a command enters the command buffer!
-		//Also make the arguments invalid so they can pass through
-		//Also things like begin/end without a framebuffer set
-
 		switch (c->op) {
 
 			case CMD_BEGIN_FRAMEBUFFER: {
 
-				auto *bs = (BeginFramebuffer*)c;
+				auto *fb = ((BeginFramebuffer*)c)->bindObject.get<Framebuffer>();
 
-				auto size = bs->target->getInfo().size;
+				if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
+					oic::System::log()->warn("Invalid framebuffer. Ignoring all calls that require it");
+					ctx.framebuffer = nullptr;
+					break;
+				}
 
-				if(!size[0] || !size[1])
-					oic::System::log()->fatal("Please specify an initialized framebuffer");
-
-				bs->target->begin();
-				ctx.currentFramebuffer = bs->target;
+				fb->begin();
+				ctx.framebuffer = fb;
 				break;
 			}
 
 			case CMD_CLEAR_FRAMEBUFFER: {
 
 				auto *cf = (ClearFramebuffer*)c;
-				auto *targ = cf->target;
-				auto *dat = targ->getData();
+				Framebuffer *fb = cf->target.get<Framebuffer>();
 
-				if (DepthTexture *dt = targ->getDepth()) {
+				if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
+					oic::System::log()->warn("Invalid framebuffer. Ignoring clear call");
+					break;
+				}
+
+				auto *dat = fb->getData();
+
+				if (fb->getDepth()) {
 
 					bool depth = cf->clearFlags & ClearFramebuffer::DEPTH;
 
 					bool stencil = 
 						cf->clearFlags & ClearFramebuffer::STENCIL && 
-						FormatHelper::hasStencil(targ->getInfo().depthFormat);
+						FormatHelper::hasStencil(fb->getInfo().depthFormat);
 
 					if(ctx.currDepth.enableDepthWrite != true)
 						glDepthMask(ctx.currDepth.enableDepthWrite = true);
@@ -72,7 +85,7 @@ namespace ignis {
 
 				if (cf->clearFlags & ClearFramebuffer::COLOR) {
 
-					for (GLint i = 0, j = GLint(targ->size()); i < j; ++i) {
+					for (GLint i = 0, j = GLint(fb->size()); i < j; ++i) {
 
 						if (ctx.clearColor.type == SetClearColor::Type::FLOAT)
 							glClearNamedFramebufferfv(dat->index, GL_COLOR, i, ctx.clearColor.rgbaf.arr);
@@ -106,7 +119,9 @@ namespace ignis {
 
 			case CMD_END_FRAMEBUFFER:
 
-				ctx.currentFramebuffer->end();
+				if(Framebuffer *fb = ctx.framebuffer)
+					fb->end();
+
 				break;
 
 			case CMD_SET_CLEAR_COLOR: 
@@ -135,16 +150,24 @@ namespace ignis {
 
 			case CMD_BIND_PRIMITIVE_BUFFER: {
 
-				auto *pbuffer = ((BindPrimitiveBuffer*) c)->bindObject;
+				auto b = ((BindPrimitiveBuffer*)c)->bindObject;
+				auto *pbuffer = b.get<PrimitiveBuffer>();
+
+				//Check if the primitive buffer disappeared since the buffer can be nullptr and still be valid
+				if (!b.null() && !pbuffer) {
+					oic::System::log()->warn("Invalid primitive buffer. Ignoring draw calls");
+					ctx.primitiveBuffer = nullptr;
+					break;
+				}
 
 				if (pbuffer != ctx.primitiveBuffer) {
 
 					ctx.primitiveBuffer = pbuffer;
 
-					if (ctx.vaos.find(pbuffer) == ctx.vaos.end())
-						ctx.vaos[pbuffer] = glxGenerateVao(pbuffer);
+					if (ctx.vaos.find(b) == ctx.vaos.end())
+						ctx.vaos[b] = glxGenerateVao(pbuffer);
 
-					GLuint vao = ctx.vaos[pbuffer];
+					GLuint vao = ctx.vaos[b];
 					glBindVertexArray(vao);
 				}
 
@@ -153,11 +176,16 @@ namespace ignis {
 
 			case CMD_BIND_PIPELINE: {
 
-				auto *pipeline = ((BindPipeline*) c)->bindObject;
+				auto *pipeline = ((BindPipeline*)c)->bindObject.get<Pipeline>();
 
 				if (pipeline != ctx.pipeline) {
+
 					ctx.pipeline = pipeline;
-					glxBindPipeline(ctx, pipeline);
+
+					if(pipeline)
+						glxBindPipeline(ctx, pipeline);
+					else
+						oic::System::log()->warn("Invalid pipeline. Ignoring dispatch & draw calls");
 				}
 
 				break;
@@ -165,108 +193,100 @@ namespace ignis {
 
 			case CMD_BIND_DESCRIPTORS: {
 
-				auto *descriptors = ((BindDescriptors*) c)->bindObject;
+				auto *bd = ((BindDescriptors*)c)->bindObject.get<Descriptors>();
 
-				if (descriptors != ctx.descriptors) {
+				if (ctx.descriptors != bd) {
 
-					ctx.descriptors = descriptors;
+					ctx.descriptors = bd;
 
-					if(descriptors)
-						glxBindDescriptors(ctx, descriptors);
+					if(bd)
+						glxBindDescriptors(ctx, bd);		//TODO: Check descriptors resources
+					else
+						oic::System::log()->warn("Invalid descriptors. Ignoring dispatch & draw calls");
 				}
 
 				break;
 			}
 
-			case CMD_DRAW_INSTANCED:
+			case CMD_DRAW_INSTANCED: {
 
-				if (!ctx.primitiveBuffer)
-					oic::System::log()->fatal("No primitive buffer bound!");
-
-				if (!ctx.pipeline)
-					oic::System::log()->fatal("No pipeline bound!");
-
-				if (!ctx.pipeline->isGraphics())
-					oic::System::log()->fatal("Pipeline bound was invalid; graphics expected");
-
-				if(!ctx.primitiveBuffer->matchLayout(
-					ctx.pipeline->getInfo().attributeLayout
-				))
-					oic::System::log()->fatal("Pipeline vertex layout doesn't match primitive buffer!");
-
-				if (ctx.descriptors && 
-					!ctx.descriptors->isShaderCompatible(
-						ctx.pipeline->getInfo().pipelineLayout
-					)
-				)
-					oic::System::log()->fatal("Pipeline layout doesn't match descriptors!");
-
-				if(!ctx.currentFramebuffer)
-					oic::System::log()->fatal("No surface bound");
+				if (!ctx.pipeline || !ctx.pipeline->isGraphics() || !ctx.framebuffer) {
+					oic::System::log()->warn("Draw call issued without framebuffer and/or graphics pipeline");
+					return;
+				}
 
 				if(
-					ctx.currentFramebuffer->getInfo().samples != 
-					ctx.pipeline->getInfo().msaa.samples
-				)
-					oic::System::log()->fatal("Surface didn't have the same number of samples as pipeline");
-
-				{
-					auto topo = glxTopologyMode(ctx.pipeline->getInfo().topology);
-					auto *di = (DrawInstanced*) c;
-
-					if (di->isIndexed)
-						glDrawElementsInstancedBaseVertexBaseInstance(
-							topo,
-							di->count,
-							glxGpuFormatType(ctx.primitiveBuffer->getIndexFormat()),
-							(void*) (
-										usz(di->start) * 
-										FormatHelper::getSizeBytes(
-											ctx.primitiveBuffer->getIndexFormat()
-										)
-									 ),
-							di->instanceCount,
-							di->vertexStart,
-							di->instanceStart
-						);
-					else
-						glDrawArraysInstancedBaseInstance(
-							topo,
-							di->start,
-							di->count,
-							di->instanceCount,
-							di->instanceStart
-						);
+					ctx.pipeline->getInfo().attributeLayout.size() &&
+					(!ctx.primitiveBuffer || !ctx.primitiveBuffer->matchLayout(ctx.pipeline->getInfo().attributeLayout))
+				) {
+					oic::System::log()->warn("Draw call issued with mismatching pipeline and primitive buffer layout");
+					return;
 				}
 
-				break;
-
-			case CMD_DISPATCH:
-
-				if (!ctx.pipeline)
-					oic::System::log()->fatal("No pipeline bound!");
-
-				if (!ctx.pipeline->isCompute())
-					oic::System::log()->fatal("Pipeline bound was invalid; compute expected");
-
-				{
-					Vec3u32 threads = ((Dispatch*)c)->threadCount;
-					Vec3u32 count = ctx.pipeline->getInfo().groupSize;
-
-					Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
-
-					if ((threads % count).any())
-						oic::System::log()->performance(
-							"Thread count was incompatible with compute shader "
-							"this is fixed by the runtime, but could provide out of "
-							"bounds texture writes or reads"
-						);
-
-					glDispatchCompute(groups.x, groups.y, groups.z);
+				if (ctx.pipeline->getInfo().pipelineLayout.size() && 
+					(!ctx.descriptors || !ctx.descriptors->isShaderCompatible(
+						ctx.pipeline->getInfo().pipelineLayout
+					))
+				) {
+					oic::System::log()->warn("Pipeline layout doesn't match descriptors!");
+					return;
 				}
 
-				break;
+				if(ctx.framebuffer->getInfo().samples != ctx.pipeline->getInfo().msaa.samples) {
+					oic::System::log()->warn("Surface didn't have the same number of samples as pipeline");
+					return;
+				}
 
+				auto topo = glxTopologyMode(ctx.pipeline->getInfo().topology);
+				auto *di = (DrawInstanced*) c;
+
+				if (di->isIndexed)
+					glDrawElementsInstancedBaseVertexBaseInstance(
+						topo,
+						di->count,
+						glxGpuFormatType(ctx.primitiveBuffer->getIndexFormat()),
+						(void*)(
+							usz(di->start) * 
+							FormatHelper::getSizeBytes(ctx.primitiveBuffer->getIndexFormat())
+						),
+						di->instanceCount,
+						di->vertexStart,
+						di->instanceStart
+					);
+				else
+					glDrawArraysInstancedBaseInstance(
+						topo,
+						di->start,
+						di->count,
+						di->instanceCount,
+						di->instanceStart
+					);
+
+				break;
+			}
+
+			case CMD_DISPATCH: {
+
+				if (!ctx.pipeline || !ctx.pipeline->isCompute()) {
+					oic::System::log()->warn("Dispatch issued without compute pipeline");
+					return;
+				}
+
+				Vec3u32 threads = ((Dispatch*)c)->threadCount;
+				Vec3u32 count = ctx.pipeline->getInfo().groupSize;
+
+				Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
+
+				if ((threads % count).any())
+					oic::System::log()->performance(
+						"Thread count was incompatible with compute shader "
+						"this is fixed by the runtime, but could provide out of "
+						"bounds texture writes or reads"
+					);
+
+				glDispatchCompute(groups.x, groups.y, groups.z);
+				break;
+			}
 
 			#ifndef NDEBUG
 
@@ -314,7 +334,7 @@ namespace ignis {
 			#endif
 
 			default:
-				oic::System::log()->fatal("Unsupported operation");
+				oic::System::log()->warn("Unsupported operation");
 
 		}
 

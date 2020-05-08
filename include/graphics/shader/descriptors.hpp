@@ -1,5 +1,5 @@
 #pragma once
-#include "graphics/graphics_object.hpp"
+#include "graphics/graphics.hpp"
 #include "pipeline_layout.hpp"
 
 namespace ignis {
@@ -89,7 +89,7 @@ namespace ignis {
 
 	//Which ranges of resources have to be bound
 
-	class Descriptors : public GraphicsObject {
+	class Descriptors : public GPUObject {
 
 	public:
 

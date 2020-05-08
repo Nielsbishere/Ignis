@@ -1,5 +1,4 @@
 #pragma once
-#include "graphics/graphics_object.hpp"
 #include "graphics/gpu_resource.hpp"
 #include "graphics/enums.hpp"
 #include "types/vec.hpp"
@@ -12,7 +11,7 @@ namespace ignis {
 		DEPTH
 	};
 
-	class TextureObject : public GraphicsObject, public GPUResource {
+	class TextureObject : public GPUObject, public GPUResource {
 
 	public:
 
@@ -66,7 +65,6 @@ namespace ignis {
 			);
 		};
 
-		TextureObject(Graphics &g, const String &name, const Info &info) : GraphicsObject(g, name), info(info) {}
 		~TextureObject() {}
 
 		virtual TextureObjectType getTextureObjectType() const = 0;
@@ -86,13 +84,15 @@ namespace ignis {
 			const TextureType type
 		) const;
 
-
 		inline const Info &getInfo() const { return info; }
 
 		plimpl struct Data;
 		inline Data *getData() const { return data; }
 
 	protected:
+
+		TextureObject(Graphics &g, const String &name, const Info &info, const GPUObjectType objectType): 
+			GPUObject(g, name, objectType), info(info) {}
 
 		Info info;
 		Data *data;

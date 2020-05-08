@@ -14,8 +14,9 @@ namespace ignis {
 
 	//Create a swapchain
 	Swapchain::Swapchain(Graphics &g, const String &name, const Info &inf):
-		GraphicsObject(g, name), info(inf)
+		GPUObject(g, name, GPUObjectType::SWAPCHAIN), info(inf)
 	{
+
 		data = new Swapchain::Data{};
 		info.size = info.vi->size.cast<Vec2u16>();
 

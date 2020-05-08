@@ -8,7 +8,7 @@ namespace ignis {
 	}
 
 	void Swapchain::begin() {
-		glxBeginRenderPass(getGraphics().getData()->getContext(), 0);
+		glxBeginRenderPass(getGraphics().getData()->getContext(), {}, 0);
 	}
 
 	void Swapchain::end() {
