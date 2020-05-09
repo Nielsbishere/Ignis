@@ -12,7 +12,7 @@ namespace ignis {
 		u8 mips, u16 layers
 	) :
 		Info(
-			TextureType(u8(TextureType::TEXTURE_1D) | ((layers > 1) << u8(TextureType::PROPERTY_IS_ARRAY_BIT))), 
+			layers > 1 ? TextureType::TEXTURE_1D_ARRAY : TextureType::TEXTURE_1D, 
 			Vec3u16(res, 1, 1), format, usage, mips, layers, 1, true
 		) { }
 
@@ -21,7 +21,7 @@ namespace ignis {
 		u8 mips, u16 layers
 	) :
 		Info(
-			TextureType(u8(TextureType::TEXTURE_2D) | ((layers > 1) << u8(TextureType::PROPERTY_IS_ARRAY_BIT))), 
+			layers > 1 ? TextureType::TEXTURE_2D_ARRAY : TextureType::TEXTURE_2D, 
 			Vec3u16(res.x, res.y, 1), format, usage, mips, layers, 1, true
 		) { }
 
@@ -30,10 +30,8 @@ namespace ignis {
 		u8 mips, u16 layers, u8 samples, bool useFixedSampleLocations
 	) :
 		Info(
-			TextureType(
-				u8(samples > 1 ? TextureType::TEXTURE_MS : TextureType::TEXTURE_2D) | 
-				((layers > 1) << u8(TextureType::PROPERTY_IS_ARRAY_BIT))
-			), 
+				(samples > 1 ? TextureType::TEXTURE_MS : TextureType::TEXTURE_2D) | 
+				(layers > 1 ? TextureType::PROPERTY_IS_ARRAY_BIT : TextureType::ENUM_START), 
 			Vec3u16(res.x, res.y, 1), format, usage, mips, layers, samples, useFixedSampleLocations
 		) { }
 
@@ -72,6 +70,23 @@ namespace ignis {
 
 		if (!mips || mips > biggestMip)
 			oic::System::log()->fatal("Texture created with too many or no mips!");
+
+		mipSizes.resize(mips);
+
+		Vec3u16 dims = dimensions;
+		Vec3f32 div = { 2, 2, layers > 1 ? 1 : 2 };
+
+		if ((textureType & ~TextureType::PROPERTY_IS_ARRAY) == TextureType::TEXTURE_1D) {
+			div = { 2, 1, 1 };
+			dims.y = layers;
+		}
+		else 
+			dims.z = std::max(dims.z, layers);
+
+		for (u8 i = 0; i < mips; ++i) {
+			mipSizes[i] = dims;
+			dims = (dims.cast<Vec3f32>() / div).ceil().cast<Vec3u16>();
+		}
 	}
 
 	TextureObject::Info::Info(const Vec3u16 &res, GPUFormat format, GPUMemoryUsage usage, u8 mipCount): 
@@ -107,7 +122,8 @@ namespace ignis {
 				type == TextureType::TEXTURE_2D || type == TextureType::TEXTURE_2D_ARRAY ||
 				type == TextureType::TEXTURE_CUBE || type == TextureType::TEXTURE_CUBE_ARRAY;
 
-		return info.textureType == type || TextureType(u8(info.textureType) & ~u8(TextureType::PROPERTY_IS_ARRAY)) == type;
+		return
+			info.textureType == type || TextureType(u8(info.textureType) & ~u8(TextureType::PROPERTY_IS_ARRAY)) == type;
 	}
 
 }

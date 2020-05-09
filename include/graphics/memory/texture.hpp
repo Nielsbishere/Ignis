@@ -62,11 +62,23 @@ namespace ignis {
 
 		apimpl Texture(Graphics &g, const String &name, const Info &info);
 
-		const Info &getInfo() const { return info; }
+		inline const Info &getInfo() const { return info; }
+		inline u8 *getTextureData(usz mip = 0) { return info.initData[mip].data(); }
 
-		TextureObjectType getTextureObjectType() const final override {
+		template<typename T>
+		inline oic::Grid1D<T> getTextureData1D(usz mip = 0);
+
+		template<typename T>
+		inline oic::Grid2D<T> getTextureData2D(usz mip = 0);
+
+		template<typename T>
+		inline oic::Grid3D<T> getTextureData3D(usz mip = 0);
+
+		inline TextureObjectType getTextureObjectType() const final override {
 			return TextureObjectType::TEXTURE;
 		}
+
+		apimpl void flush(const List<Vec2u8> &mips);	//mipStart, mipCount
 
 	private:
 
@@ -169,6 +181,51 @@ namespace ignis {
 
 		if(val.size() > u8_MAX)
 			oic::System::log()->fatal("Texture has too many mips");
+	}
+
+	template<typename T>
+	inline oic::Grid1D<T> Texture::getTextureData1D(usz mip) {
+
+		if(!u8(info.usage & GPUMemoryUsage::CPU_WRITE))
+			oic::System::log()->fatal("Can't get texture data of a non CPU writable texture");
+
+		if (info.textureType != TextureType::TEXTURE_1D)
+			oic::System::log()->fatal("Can't get 1D texture data of a non 1D texture");
+
+		return oic::Grid1D<T>(info.initData[mip].data(), info.initData[mip].size());
+	}
+
+	template<typename T>
+	inline oic::Grid2D<T> Texture::getTextureData2D(usz mip) {
+
+		if(!u8(info.usage & GPUMemoryUsage::CPU_WRITE))
+			oic::System::log()->fatal("Can't get texture data of a non CPU writable texture");
+
+		if (
+			info.textureType != TextureType::TEXTURE_2D && 
+			info.textureType != TextureType::TEXTURE_1D_ARRAY
+		)
+			oic::System::log()->fatal("Can't get 2D texture data of a non 2D texture");
+
+		return oic::Grid2D<T>(info.initData[mip].data(), info.initData[mip].size(), info.mipSizes[mip].x);
+	}
+
+	template<typename T>
+	inline oic::Grid3D<T> Texture::getTextureData3D(usz mip) {
+
+		if(!u8(info.usage & GPUMemoryUsage::CPU_WRITE))
+			oic::System::log()->fatal("Can't get texture data of a non CPU writable texture");
+
+		if (
+			info.textureType == TextureType::TEXTURE_1D ||
+			info.textureType == TextureType::TEXTURE_2D || 
+			info.textureType == TextureType::TEXTURE_1D_ARRAY
+		)
+			oic::System::log()->fatal("Can't get 3D texture data of a non 3D texture");
+
+		return oic::Grid3D<T>(
+			info.initData[mip].data(), info.initData[mip].size(), info.mipSizes[mip].xy().cast<Vec2usz>()
+		);
 	}
 
 }

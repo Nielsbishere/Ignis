@@ -44,6 +44,8 @@ namespace ignis {
 		void clear();
 		void resize(usz newSize);
 
+		inline bool empty() const { return !data.next; }
+
 		//Add commands to the command list
 
 		template<typename ...args>

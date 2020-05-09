@@ -38,8 +38,10 @@ namespace ignis {
 		if (availability == CommandAvailability::PERFORMANCE)
 			oic::System::log()->performance("The command is not natively supported and could lead to performance loss");
 
-		else if (availability == CommandAvailability::UNSUPPORTED)
-			oic::System::log()->fatal("The command is not supported and will result in undefined behavior");
+		else if (availability == CommandAvailability::UNSUPPORTED) {
+			oic::System::log()->fatal("The command is not supported and will be ignored");
+			return;
+		}
 
 		usz size = c->size;
 

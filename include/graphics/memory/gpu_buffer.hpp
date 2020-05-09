@@ -1,5 +1,6 @@
 #pragma once
 #include "graphics/gpu_resource.hpp"
+#include "types/vec.hpp"
 
 namespace ignis {
 
@@ -28,7 +29,7 @@ namespace ignis {
 		apimpl GPUBuffer(Graphics &g, const String &name, const Info &info);
 
 		//Flush the updates from the CPU to the GPU
-		apimpl void flush(usz offset, usz size);
+		apimpl void flush(const List<Vec2usz> &offsetsAndSizes);
 
 		bool isCompatible(
 			const RegisterLayout &reg, const GPUSubresource &resource

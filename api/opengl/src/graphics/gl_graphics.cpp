@@ -6,6 +6,7 @@
 #include "graphics/gl_graphics.hpp"
 #include "graphics/gl_context.hpp"
 #include "graphics/memory/gl_framebuffer.hpp"
+#include "graphics/memory/gl_texture_object.hpp"
 #include "graphics/memory/swapchain.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "system/system.hpp"
@@ -59,6 +60,8 @@ namespace ignis {
 		//TODO: unlock mutex
 	}
 
+	//Present framebuffer to swapchain
+
 	void Graphics::present(
 		Framebuffer *intermediate, Swapchain *swapchain,
 		const List<CommandList *> &commands
@@ -101,6 +104,61 @@ namespace ignis {
 				0,
 				0, 0, size.x, size.y,
 				0, size.y, size.x, 0,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR
+			);
+		}
+
+		swapchain->present();
+		++ctx.frameId;
+	}
+
+	//Present image to swapchain
+
+	void Graphics::present(
+		Texture *intermediate, u16 slice, 
+		Swapchain *swapchain,
+		const List<CommandList*> &commands
+	) {
+
+		if (!swapchain)
+			oic::System::log()->fatal("Couldn't present; invalid intermediate or swapchain");
+
+		if(!intermediate)
+			oic::System::log()->warn("Presenting without an intermediate is valid but won't provide any results to the swapchain");
+
+		const TextureType tt = intermediate->getInfo().textureType;
+
+		if(
+			tt == TextureType::TEXTURE_MS || tt == TextureType::TEXTURE_MS_ARRAY || 
+			tt == TextureType::TEXTURE_1D || tt == TextureType::TEXTURE_1D_ARRAY
+		)
+			oic::System::log()->fatal("Couldn't present; intermediate texture has to be 2D/2D[], 3D/3D[] or Cube/Cube[]");
+
+		auto size = intermediate->getInfo().dimensions.cast<Vec2u16>();
+		size = size.min(swapchain->getInfo().size.cast<Vec2u16>());			//Copy the smallest region to the swapchain; the intermediate may be bigger
+
+		if(slice >= intermediate->getInfo().layers)
+			oic::System::log()->fatal("Couldn't present; array index out of bounds");
+
+		GLContext &ctx = data->getContext();
+
+		swapchain->bind();
+
+		execute(commands);
+
+		//Copy intermediate to backbuffer
+		if (intermediate) {
+
+			glxSetViewportAndScissor(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
+
+			ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getId();
+			ctx.bound[GL_DRAW_FRAMEBUFFER] = {};
+
+			glBlitNamedFramebuffer(
+				intermediate->getData()->framebuffer[slice],
+				0,
+				0, 0, size.x, size.y,
+				0, 0, size.x, size.y,
 				GL_COLOR_BUFFER_BIT, GL_LINEAR
 			);
 		}

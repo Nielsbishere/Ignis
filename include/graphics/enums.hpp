@@ -1,5 +1,6 @@
 #pragma once
 #include "format.hpp"
+#include "types/enum.hpp"
 
 namespace ignis {
 
@@ -56,6 +57,8 @@ namespace ignis {
 		GPU_WRITE			= 0x4,
 		CPU_WRITE			= 0x8
 	};
+
+	enumFlagOverloads(GPUMemoryUsage, u8);
 
 	//This is the topology that should be assembled
 	//Flags (& types):
@@ -141,6 +144,8 @@ namespace ignis {
 		VERTEX_FRAGMENT		= VERTEX | FRAGMENT
 	};
 
+	enumFlagOverloads(ShaderAccess, u8);
+
 	//Rasterizer enums
 
 	enum class FillMode : u8 {
@@ -193,8 +198,11 @@ namespace ignis {
 		PROPERTY_IS_ARRAY		= 0x8,	//1 << PROPERTY_IS_ARRAY_BIT
 		PROPERTY_IS_ARRAY_BIT	= 0x3,
 
+		ENUM_START				= 0x00,
 		ENUM_END				= 0x10
 	};
+
+	enumFlagOverloads(TextureType, u8);
 
 	//& 0x03 = dimension (CUBE, 1D, 2D, 3D)
 	//& 0x04 = isMultisampled
@@ -222,6 +230,8 @@ namespace ignis {
 		PROPERTY_IS_COMBINED	= 0x10,
 		PROPERTY_AS_TEXTURE		= 0x0F
 	};
+
+	enumFlagOverloads(SamplerType, u8);
 
 	//Minification filter
 	//& 1 = useNearestFilter

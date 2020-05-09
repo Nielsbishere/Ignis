@@ -491,6 +491,21 @@ void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 	}
 }
 
+void glxClearFramebuffer(GLContext &ctx, GLuint fbo, GLuint index, const cmd::SetClearColor &clearColor) {
+
+	using namespace cmd;
+
+	if (ctx.clearColor.type == SetClearColor::Type::FLOAT)
+		glClearNamedFramebufferfv(fbo, GL_COLOR, index, clearColor.rgbaf.arr);
+
+	else if (ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
+		glClearNamedFramebufferuiv(fbo, GL_COLOR, index, clearColor.rgbau.arr);
+
+	else
+		glClearNamedFramebufferiv(fbo, GL_COLOR, index, clearColor.rgbai.arr);
+
+}
+
 void glxSetScissor(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
 	if (!size.x || !size.y) {
@@ -925,10 +940,6 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 	GLuint handle;
 
 	glCreateVertexArrays(1, &handle);
-
-	if (!prim)
-		return handle;
-
 	glObjectLabel(
 		GL_VERTEX_ARRAY, handle,
 		GLsizei(prim->getName().size()), prim->getName().c_str()

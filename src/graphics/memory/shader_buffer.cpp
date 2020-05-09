@@ -28,6 +28,9 @@ namespace ignis {
 
 		for (auto &l : layout) {
 
+			if (l.second.initData.empty())
+				continue;
+
 			usz j = l.second.array.size() ? l.second.array[0] : 1;
 
 			for (usz i = 0; i < j; ++i)

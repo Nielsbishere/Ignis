@@ -12,7 +12,7 @@ namespace ignis {
 
 	Descriptors::~Descriptors() {}
 
-	void Descriptors::flush(usz, usz) { }
+	void Descriptors::flush(const List<Vec2usz>&) { }
 
 	void Descriptors::updateDescriptor(u32 i, const GPUSubresource &range) {
 

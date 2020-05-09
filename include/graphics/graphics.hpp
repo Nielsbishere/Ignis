@@ -178,7 +178,6 @@ namespace std {
 namespace ignis {
 
 	//Graphics
-
 	class Graphics {
 
 		friend class GPUObject;
@@ -234,6 +233,12 @@ namespace ignis {
 			const u32 engineVersion
 		) throw();
 
+		template<typename ...args>
+		inline void present(Texture *intermediate, u16 slice, Swapchain *swapchain, args ...arg) {
+			List<CommandList*> commands{ arg... };
+			present(intermediate, slice, swapchain, commands);
+		}
+
 		apimpl ~Graphics();
 
 		apimpl GraphicsApi getCurrentApi() const;
@@ -245,6 +250,11 @@ namespace ignis {
 
 		apimpl void present(
 			Framebuffer *intermediate, Swapchain *swapchain, 
+			const List<CommandList*> &commands
+		);
+
+		apimpl void present(
+			Texture *intermediate, u16 slice, Swapchain *swapchain, 
 			const List<CommandList*> &commands
 		);
 

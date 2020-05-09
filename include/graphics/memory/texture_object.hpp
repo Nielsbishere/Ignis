@@ -31,6 +31,8 @@ namespace ignis {
 
 			bool useFixedSampleLocations;
 
+			List<Vec3u16> mipSizes;
+
 			Info(
 				u16 res, GPUFormat format, GPUMemoryUsage usage,
 				u8 mips, u16 layers

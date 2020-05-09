@@ -87,6 +87,7 @@ namespace ignis {
 		inline bool version(u32 maj, u32 min) const {
 			return getVersion(major, minor) >= getVersion(maj, min);
 		}
+
 	};
 
 }

@@ -186,7 +186,7 @@ namespace ignis {
 		u32 samples;			//How many samples are taken for this pipeline
 		f32 minSampleShading;	//How to resolve textures with a MSAA texture (0 = off, closer to one is smoother)
 
-		MSAA(u32 samples = {}, f32 minSampleShading = {}) : samples(samples), minSampleShading(minSampleShading) {}
+		MSAA(u32 samples = 1, f32 minSampleShading = {}) : samples(samples), minSampleShading(minSampleShading) {}
 	};
 
 	class Pipeline : public GPUObject {

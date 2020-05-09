@@ -47,22 +47,26 @@ namespace ignis {
 		delete data;
 	}
 
-	void GPUBuffer::flush(usz offset, usz size) {
+	void GPUBuffer::flush(const List<Vec2usz> &offsetsAndSizes) {
 
-		if (offset > info.size || offset + size > info.size) {
-			oic::System::log()->fatal("GPUBuffer out of range");
-			return;
-		}
+		for(auto &offsetAndSize : offsetsAndSizes)
+			if (offsetAndSize.x > info.size || offsetAndSize.x + offsetAndSize.y > info.size) {
+				oic::System::log()->fatal("GPUBuffer out of range");
+				return;
+			}
 
 		if (u8(info.usage) & u8(GPUMemoryUsage::CPU_WRITE)) {
 
-			if (data->unmapped) {
+			//TODO: Detect if they need separate flushes or one giant flush
 
-				std::memcpy(data->unmapped, info.initData.data() + offset, size);
-				glFlushMappedNamedBufferRange(data->handle, offset, size);
+			for(auto &offsetAndSize : offsetsAndSizes)
+				if (data->unmapped) {
 
-			} else 
-				glNamedBufferSubData(data->handle, offset, size, info.initData.data() + offset);
+					std::memcpy(data->unmapped, info.initData.data() + offsetAndSize.x, offsetAndSize.y);
+					glFlushMappedNamedBufferRange(data->handle, offsetAndSize.x, offsetAndSize.y);
+
+				} else 
+					glNamedBufferSubData(data->handle, offsetAndSize.x, offsetAndSize.y, info.initData.data() + offsetAndSize.x);
 
 		} else
 			oic::System::log()->fatal("GPUBuffer wasn't created with CPU write flags");

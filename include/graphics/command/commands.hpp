@@ -14,6 +14,8 @@ namespace ignis {
 	class Descriptors;
 	class PrimitiveBuffer;
 	class Query;
+	class GPUBuffer;
+	class Texture;
 
 	namespace cmd {
 
@@ -68,7 +70,8 @@ namespace ignis {
 			}
 		};
 
-		//Dispatch call
+		//Dispatch calls
+
 		struct Dispatch : public Command {
 
 			Vec3u32 threadCount;
@@ -84,6 +87,18 @@ namespace ignis {
 			Dispatch(const Vec3u32 &threads) :
 				Command(CMD_DISPATCH, sizeof(*this)),
 				threadCount(threads) {}
+
+		};
+
+		struct DispatchIndirect : public Command {
+
+			GPUObjectId buffer;
+			usz offset;			//in dispatch indirect instructions
+
+			DispatchIndirect(GPUBuffer *buffer, usz offset = 0) :
+				Command(CMD_DISPATCH_INDIRECT, sizeof(*this)),
+				buffer(getGPUObjectId(buffer)),
+				offset(offset) {}
 
 		};
 
@@ -153,6 +168,36 @@ namespace ignis {
 
 			ClearFramebuffer(Framebuffer *target, ClearFlags clearFlags = ClearFlags::ALL) :
 				Command(CMD_CLEAR_FRAMEBUFFER, sizeof(*this)), target(getGPUObjectId(target)), clearFlags(clearFlags) {}
+		};
+
+		struct ClearImage : Command {
+
+			GPUObjectId texture;
+			Vec2i16 offset;
+			Vec2u16 size;
+			u16 mipLevel;
+			u16 minSlice, maxSlice;
+
+			ClearImage(
+				Texture *texture,
+				u16 mipLevel = {}, u16 minSlice = {}, u16 maxSlice = {},
+				const Vec2u16 &size = {}, const Vec2i16 &offset = {}
+			) :
+				Command(CMD_CLEAR_IMAGE, sizeof(*this)), 
+				texture(getGPUObjectId(texture)), mipLevel(mipLevel), minSlice(minSlice),
+				offset(offset), size(size), maxSlice(maxSlice) {}
+
+		};
+
+		struct ClearBuffer : Command {
+
+			GPUObjectId buffer;
+			usz offset, size;
+
+			ClearBuffer(GPUBuffer *buffer, usz offset = 0, usz size = 0) :
+				Command(CMD_CLEAR_BUFFER, sizeof(*this)),
+				buffer(getGPUObjectId(buffer)), offset(offset), size(size) {}
+
 		};
 		
 		//Debug calls

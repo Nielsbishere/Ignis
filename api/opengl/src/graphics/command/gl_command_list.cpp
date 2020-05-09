@@ -4,6 +4,8 @@
 #include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/memory/swapchain.hpp"
 #include "graphics/memory/gl_framebuffer.hpp"
+#include "graphics/memory/gl_gpu_buffer.hpp"
+#include "graphics/memory/gl_texture_object.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "graphics/shader/pipeline.hpp"
 #include "graphics/gl_context.hpp"
@@ -45,6 +47,82 @@ namespace ignis {
 				break;
 			}
 
+			case CMD_CLEAR_IMAGE: {
+
+				const auto *ci = (ClearImage*)c;
+
+				const auto* tex = ci->texture.get<Texture>();
+
+				if (!tex) {
+					oic::System::log()->warn("Clear image ignored; texture was invalid");
+					break;
+				}
+
+				if (!(u8(tex->getInfo().usage) & u8(GPUMemoryUsage::GPU_WRITE))) {
+					oic::System::log()->warn("Clear image can only be invoked on GPU writable textures");
+					break;
+				}
+
+				Vec2u16 size = ci->size.x;
+
+				if (!size.all()) {
+
+					const Vec2i32 dif = tex->getInfo().dimensions.cast<Vec2i32>() - ci->offset.cast<Vec2i32>();
+
+					if (!(dif > Vec2i32{}).all()) {
+						oic::System::log()->warn("All values of the size should be positive");
+						break;
+					}
+
+					size = dif.cast<Vec2u16>();
+				}
+
+				glxSetViewportAndScissor(ctx, size.cast<Vec2u32>(), {});
+
+				for(u16 l = ci->minSlice; l < ci->maxSlice; ++l)
+					glxClearFramebuffer(ctx, tex->getData()->framebuffer[l], 0, ctx.clearColor);
+
+				break;
+			}
+
+			case CMD_CLEAR_BUFFER: {
+
+				auto *cb = (ClearBuffer*)c;
+				auto *buf = cb->buffer.get<GPUBuffer>();
+
+				if (!buf) {
+					oic::System::log()->warn("Clear buffer ignored; buffer was invalid");
+					break;
+				}
+
+				if (cb->offset >= buf->size()) {
+					oic::System::log()->warn("Clear buffer offset out of bounds");
+					break;
+				}
+
+				usz size = cb->size;
+
+				if (!size)
+					size = buf->size() - cb->offset;
+
+				if (size % 4) {
+					oic::System::log()->warn("ClearBuffer can't clear individual bytes, only a scalar (4 bytes)");
+					break;
+				}
+
+				glClearNamedBufferSubData(
+					buf->getData()->handle,
+					GL_R32UI,
+					cb->offset,
+					size,
+					GL_RED_INTEGER,
+					GL_UNSIGNED_INT,
+					nullptr
+				);
+
+				break;
+			}
+			
 			case CMD_CLEAR_FRAMEBUFFER: {
 
 				auto *cf = (ClearFramebuffer*)c;
@@ -79,22 +157,13 @@ namespace ignis {
 							glClearNamedFramebufferfv(dat->index, GL_DEPTH, 0, &ctx.depth);
 
 						if (stencil)
-							glClearNamedFramebufferiv(dat->index, GL_STENCIL, 0, (GLint *)&ctx.stencil);
+							glClearNamedFramebufferiv(dat->index, GL_STENCIL, 0, (GLint*)&ctx.stencil);
 					}
 				}
 
-				if (cf->clearFlags & ClearFramebuffer::COLOR) {
-
-					for (GLint i = 0, j = GLint(fb->size()); i < j; ++i) {
-
-						if (ctx.clearColor.type == SetClearColor::Type::FLOAT)
-							glClearNamedFramebufferfv(dat->index, GL_COLOR, i, ctx.clearColor.rgbaf.arr);
-						else if (ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
-							glClearNamedFramebufferuiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbau.arr);
-						else
-							glClearNamedFramebufferiv(dat->index, GL_COLOR, i, ctx.clearColor.rgbai.arr);
-					}
-				}
+				if (cf->clearFlags & ClearFramebuffer::COLOR)
+					for (GLint i = 0, j = GLint(fb->size()); i < j; ++i)
+						glxClearFramebuffer(ctx, dat->index, i, ctx.clearColor);
 
 				break;
 			}
@@ -153,9 +222,7 @@ namespace ignis {
 				auto b = ((BindPrimitiveBuffer*)c)->bindObject;
 				auto *pbuffer = b.get<PrimitiveBuffer>();
 
-				//Check if the primitive buffer disappeared since the buffer can be nullptr and still be valid
-				if (!b.null() && !pbuffer) {
-					oic::System::log()->warn("Invalid primitive buffer. Ignoring draw calls");
+				if (!pbuffer) {
 					ctx.primitiveBuffer = nullptr;
 					break;
 				}
@@ -223,6 +290,7 @@ namespace ignis {
 					return;
 				}
 
+
 				if (ctx.pipeline->getInfo().pipelineLayout.size() && 
 					(!ctx.descriptors || !ctx.descriptors->isShaderCompatible(
 						ctx.pipeline->getInfo().pipelineLayout
@@ -233,14 +301,20 @@ namespace ignis {
 				}
 
 				if(ctx.framebuffer->getInfo().samples != ctx.pipeline->getInfo().msaa.samples) {
-					oic::System::log()->warn("Surface didn't have the same number of samples as pipeline");
+					oic::System::log()->warn("Framebuffer didn't have the same number of samples as pipeline");
 					return;
 				}
 
 				auto topo = glxTopologyMode(ctx.pipeline->getInfo().topology);
 				auto *di = (DrawInstanced*) c;
 
-				if (di->isIndexed)
+				if (di->isIndexed) {
+
+					if(!ctx.primitiveBuffer) {
+						oic::System::log()->warn("Primitive buffer is required for indexed drawing");
+						return;
+					}
+
 					glDrawElementsInstancedBaseVertexBaseInstance(
 						topo,
 						di->count,
@@ -253,7 +327,18 @@ namespace ignis {
 						di->vertexStart,
 						di->instanceStart
 					);
-				else
+
+				} else {
+
+					if (!ctx.primitiveBuffer) {
+
+						if (ctx.vaos.find({}) == ctx.vaos.end())
+							glCreateVertexArrays(1, &ctx.vaos[{}]);
+
+						GLuint vao = ctx.vaos[{}];
+						glBindVertexArray(vao);
+					}
+
 					glDrawArraysInstancedBaseInstance(
 						topo,
 						di->start,
@@ -261,6 +346,7 @@ namespace ignis {
 						di->instanceCount,
 						di->instanceStart
 					);
+				}
 
 				break;
 			}
@@ -285,6 +371,36 @@ namespace ignis {
 					);
 
 				glDispatchCompute(groups.x, groups.y, groups.z);
+				break;
+			}
+
+			case CMD_DISPATCH_INDIRECT: {
+
+				if (!ctx.pipeline || !ctx.pipeline->isCompute()) {
+					oic::System::log()->warn("No pipeline bound!");
+					break;
+				}
+
+				auto *di = (DispatchIndirect*) c;
+				auto *buf = di->buffer.get<GPUBuffer>();
+
+				if (!buf) {
+					oic::System::log()->warn("No indirect buffer bound!");
+					break;
+				}
+
+				GLuint buffer = buf->getData()->handle;
+
+				if(buf->size() % 16)
+					oic::System::log()->fatal("Buffer should be 16-byte aligned!");
+
+				if (ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] != di->buffer) {
+					glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer);
+					ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] = di->buffer;
+				}
+
+				glDispatchComputeIndirect(di->offset * 16);
+
 				break;
 			}
 
