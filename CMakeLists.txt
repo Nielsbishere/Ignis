@@ -15,11 +15,11 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 file(GLOB_RECURSE ignisHpp "include/*.hpp")
 file(GLOB_RECURSE ignisCpp "src/*.cpp")
 
-set(graphicsApi vulkan CACHE STRING "Graphics API")
-
 if("$ENV{VULKAN_SDK}" STREQUAL "")
-	set(graphicsApi opengl FORCE CACHE STRING "Graphics API")
+	set(graphicsApi opengl CACHE STRING "Graphics API")
 	message("-- Vulkan SDK not found, falling back to OpenGL")
+else()
+	set(graphicsApi vulkan CACHE STRING "Graphics API")
 endif()
 
 set(graphicsApis vulkan opengl directx)
