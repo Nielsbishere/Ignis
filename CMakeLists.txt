@@ -18,7 +18,7 @@ file(GLOB_RECURSE ignisCpp "src/*.cpp")
 set(graphicsApi vulkan CACHE STRING "Graphics API")
 
 if("$ENV{VULKAN_SDK}" STREQUAL "")
-	set(graphicsApi opengl CACHE STRING "Graphics API")
+	set(graphicsApi opengl FORCE CACHE STRING "Graphics API")
 	message("-- Vulkan SDK not found, falling back to OpenGL")
 endif()
 
