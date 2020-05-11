@@ -63,12 +63,9 @@ namespace ignis {
 		if(info.vertexLayout.size() == 0)
 			oic::System::log()->fatal("Primitive buffer requires at least one vertex buffer");
 
-		if (isIndexed()) {
+		if (hasIndices()) {
 
 			if (!info.indexLayout.buffer) {
-
-				if(info.indexLayout.formats.size() != 1)
-					oic::System::log()->fatal("Index buffer requires one format");
 
 				info.indexLayout.buffer = new GPUBuffer(
 					g, NAME(name + " ibo"),
@@ -86,6 +83,21 @@ namespace ignis {
 
 			else
 				info.indexLayout.buffer->addRef();
+
+			if(info.indexLayout.formats.size() != 1)
+				oic::System::log()->fatal("Index buffer requires one format");
+
+			switch (info.indexLayout.formats[0].format) {
+				
+				case GPUFormat::R32u:
+				case GPUFormat::R32i:
+				case GPUFormat::R16u:
+				case GPUFormat::R16i:
+					break;
+
+				default:
+					oic::System::log()->fatal("Index buffer requires a 32 or 16 bit (unsigned) int format");
+			}
 		}
 	}
 

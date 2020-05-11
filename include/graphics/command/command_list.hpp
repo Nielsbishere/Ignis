@@ -19,6 +19,8 @@ namespace ignis {
 	//Storing a list of GPU commands that can be executed by the interface
 	class CommandList : public GPUObject {
 
+		friend class Graphics;
+
 	public:
 
 		struct Info {
@@ -35,11 +37,14 @@ namespace ignis {
 			Data(const Info &info): commandBuffer(info.bufferSize) {}
 		};
 
+		apimpl struct APIData;
+
 		CommandList(Graphics &g, const String &name, const Info &info);		//Construct new command list
 		CommandList(Graphics &g, const String &name, const Data &data);		//Copy old command list
 
-		const Info &getInfo() const;
-		Data &getData();
+		inline const Info &getInfo() const { return info; }
+		inline APIData *getAPIData() const { return apiData; }
+		inline Data &getData() { return data; }
 
 		void clear();
 		void resize(usz newSize);
@@ -69,10 +74,11 @@ namespace ignis {
 
 	private:
 
-		~CommandList() = default;
+		apimpl ~CommandList();
 
 		Info info;
 		Data data;
+		APIData *apiData{};
 	};
 
 	template<typename ...args>

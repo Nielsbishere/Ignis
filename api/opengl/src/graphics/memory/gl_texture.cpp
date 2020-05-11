@@ -96,9 +96,9 @@ namespace ignis {
 
 			const String fbName = NAME(name + " framebuffer");
 
-			data->framebuffer.resize(inf.layers);
+			data->framebuffer.resize(size_t(inf.layers) * inf.mips);
 
-			for (u16 i = 0; i < inf.layers; ++i) {
+			for (u16 i = 0; i < inf.layers * inf.mips; ++i) {
 
 				auto &fb = data->framebuffer[i];
 
@@ -108,9 +108,9 @@ namespace ignis {
 				GLenum colorAttachment = GL_COLOR_ATTACHMENT0;
 
 				if (inf.layers > 1)
-					glNamedFramebufferTextureLayer(fb, colorAttachment, data->handle, 0, i);
+					glNamedFramebufferTextureLayer(fb, colorAttachment, data->handle, i % inf.mips, i / inf.mips);
 				else
-					glNamedFramebufferTexture(fb, colorAttachment, data->handle, 0);
+					glNamedFramebufferTexture(fb, colorAttachment, data->handle, i);
 
 				glNamedFramebufferDrawBuffers(fb, 1, &colorAttachment);
 				GLenum status = glCheckNamedFramebufferStatus(fb, GL_FRAMEBUFFER);

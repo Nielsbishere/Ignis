@@ -16,9 +16,6 @@ namespace ignis {
 	CommandList::CommandList(Graphics &g, const String &name, const Data &data):
 		GPUObject(g, name, GPUObjectType::COMMAND_LIST), info(u32(data.commandBuffer.size())), data(data) {}
 
-	const CommandList::Info &CommandList::getInfo() const { return info; }
-	CommandList::Data &CommandList::getData() { return data; }
-
 	void CommandList::clear() {
 		data.next = 0;
 	}

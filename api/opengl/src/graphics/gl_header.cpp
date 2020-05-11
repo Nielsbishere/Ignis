@@ -472,7 +472,7 @@ void glxBeginRenderPass(
 	}
 }
 
-void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
+void glxFixSize(GLContext &ctx, Vec2u32 &size, const Vec2i32 &offset) {
 
 	if (!size.x || !size.y) {
 
@@ -481,8 +481,20 @@ void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 			return;
 		}
 
-		size = ctx.framebuffer->getInfo().size.cast<Vec2u32>();
+		auto asize = ctx.framebuffer->getInfo().size.cast<Vec2i32>() - offset;
+
+		if(!(asize >= Vec2i32()).all()) {
+			oic::System::log()->warn("SetViewport can't be corrected with an out of bounds offset");
+			return;
+		}
+
+		size = asize.cast<Vec2u32>();
 	}
+}
+
+void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
+
+	glxFixSize(ctx, size, offset);
 
 	if (ctx.viewportOff != offset || ctx.viewportSize != size) {
 		ctx.viewportOff = offset;
@@ -491,32 +503,9 @@ void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 	}
 }
 
-void glxClearFramebuffer(GLContext &ctx, GLuint fbo, GLuint index, const cmd::SetClearColor &clearColor) {
-
-	using namespace cmd;
-
-	if (ctx.clearColor.type == SetClearColor::Type::FLOAT)
-		glClearNamedFramebufferfv(fbo, GL_COLOR, index, clearColor.rgbaf.arr);
-
-	else if (ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
-		glClearNamedFramebufferuiv(fbo, GL_COLOR, index, clearColor.rgbau.arr);
-
-	else
-		glClearNamedFramebufferiv(fbo, GL_COLOR, index, clearColor.rgbai.arr);
-
-}
-
 void glxSetScissor(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
 
-	if (!size.x || !size.y) {
-
-		if (!ctx.framebuffer) {
-			oic::System::log()->warn("SetScissor can't be called with null size if the framebuffer isn't bound");
-			return;
-		}
-
-		size = ctx.framebuffer->getInfo().size.cast<Vec2u32>();
-	}
+	glxFixSize(ctx, size, offset);
 
 	if (!ctx.enableScissor) {
 		glEnable(GL_SCISSOR_TEST);
@@ -538,6 +527,21 @@ void glxSetViewportAndScissor(GLContext &ctx, const Vec2u32 &size, const Vec2i32
 	}
 
 	glxSetViewport(ctx, size, offset);
+}
+
+void glxClearFramebuffer(GLContext &ctx, GLuint fbo, GLuint index, const cmd::SetClearColor &clearColor) {
+
+	using namespace cmd;
+
+	if (ctx.clearColor.type == SetClearColor::Type::FLOAT)
+		glClearNamedFramebufferfv(fbo, GL_COLOR, index, clearColor.rgbaf.arr);
+
+	else if (ctx.clearColor.type == SetClearColor::Type::UNSIGNED_INT)
+		glClearNamedFramebufferuiv(fbo, GL_COLOR, index, clearColor.rgbau.arr);
+
+	else
+		glClearNamedFramebufferiv(fbo, GL_COLOR, index, clearColor.rgbai.arr);
+
 }
 
 void glxDebugMessage(
@@ -976,7 +980,7 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 		++i;
 	}
 
-	if(prim->isIndexed())
+	if(prim->hasIndices())
 		glVertexArrayElementBuffer(
 			handle, info.indexLayout.buffer->getData()->handle
 		);

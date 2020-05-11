@@ -81,6 +81,7 @@ namespace ignis {
 	};
 
 	//The layout of a pipeline (all registers that can span across multiple pipelines)
+	//TODO: Make this a GPUObject, because it can be
 	struct PipelineLayout {
 
 		//Don't rely on the Strings to be human readable; they might use HASH("Name")

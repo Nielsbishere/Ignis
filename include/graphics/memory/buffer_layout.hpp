@@ -91,7 +91,7 @@ namespace ignis {
 		BufferAttributes formats{};
 
 		GPUBuffer *buffer{};
-		usz bufferOffset{};		//TODO: Require all buffer offsets to adhere to GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT
+		u64 bufferOffset{};		//TODO: Require all buffer offsets to adhere to GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT
 		u32 elements{};
 
 		template<typename T>

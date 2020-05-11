@@ -13,6 +13,8 @@
 
 namespace ignis {
 
+	CommandList::~CommandList() {}
+
 	void CommandList::execute() {
 
 		//Detect if contents are different, then revalidate command list
@@ -26,6 +28,10 @@ namespace ignis {
 
 	void CommandList::execute(Command *c) {
 
+		//TODO:	For OpenGL implementation; the calls like "bind X" have to be deferred until they are needed
+		//		This means that dispatch indirect & draw will have to handle their own state changes instead of the command
+		///		This can increase performance because binds that don't affect anything won't end up in the command list
+
 		using namespace cmd;
 
 		auto &ctx = getGraphics().getData()->getContext();
@@ -37,7 +43,7 @@ namespace ignis {
 				auto *fb = ((BeginFramebuffer*)c)->bindObject.get<Framebuffer>();
 
 				if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
-					oic::System::log()->warn("Invalid framebuffer. Ignoring all calls that require it");
+					oic::System::log()->error("Invalid framebuffer. Ignoring all calls that require it");
 					ctx.framebuffer = nullptr;
 					break;
 				}
@@ -47,6 +53,25 @@ namespace ignis {
 				break;
 			}
 
+			case CMD_END_FRAMEBUFFER:
+
+				if(Framebuffer *fb = ctx.framebuffer)
+					fb->end();
+
+				break;
+
+			case CMD_SET_CLEAR_COLOR: 
+				ctx.clearColor = *(SetClearColor*)c;
+				break;
+
+			case CMD_SET_CLEAR_DEPTH:
+				ctx.depth = ((SetClearDepth*)c)->dataObject;
+				break;
+
+			case CMD_SET_CLEAR_STENCIL:
+				ctx.stencil  = ((SetClearStencil*)c)->dataObject;
+				break;
+
 			case CMD_CLEAR_IMAGE: {
 
 				const auto *ci = (ClearImage*)c;
@@ -54,12 +79,12 @@ namespace ignis {
 				const auto* tex = ci->texture.get<Texture>();
 
 				if (!tex) {
-					oic::System::log()->warn("Clear image ignored; texture was invalid");
+					oic::System::log()->error("Clear image ignored; texture was invalid");
 					break;
 				}
 
 				if (!(u8(tex->getInfo().usage) & u8(GPUMemoryUsage::GPU_WRITE))) {
-					oic::System::log()->warn("Clear image can only be invoked on GPU writable textures");
+					oic::System::log()->error("Clear image can only be invoked on GPU writable textures");
 					break;
 				}
 
@@ -70,7 +95,7 @@ namespace ignis {
 					const Vec2i32 dif = tex->getInfo().dimensions.cast<Vec2i32>() - ci->offset.cast<Vec2i32>();
 
 					if (!(dif > Vec2i32{}).all()) {
-						oic::System::log()->warn("All values of the size should be positive");
+						oic::System::log()->error("All values of the size should be positive");
 						break;
 					}
 
@@ -79,8 +104,14 @@ namespace ignis {
 
 				glxSetViewportAndScissor(ctx, size.cast<Vec2u32>(), {});
 
-				for(u16 l = ci->minSlice; l < ci->maxSlice; ++l)
-					glxClearFramebuffer(ctx, tex->getData()->framebuffer[l], 0, ctx.clearColor);
+				auto slices = ci->slices ? ci->slices : 1;
+				auto mips = ci->mipLevels ? ci->mipLevels : 1;
+
+				for(u16 l = ci->slice; l < ci->slice + slices; ++l)
+					for(u16 m = ci->mipLevels; m < ci->mipLevel + mips; ++m)
+						glxClearFramebuffer(
+							ctx, tex->getData()->framebuffer[size_t(l) * tex->getInfo().mips + m], 0, ctx.clearColor
+						);
 
 				break;
 			}
@@ -91,29 +122,37 @@ namespace ignis {
 				auto *buf = cb->buffer.get<GPUBuffer>();
 
 				if (!buf) {
-					oic::System::log()->warn("Clear buffer ignored; buffer was invalid");
+					oic::System::log()->error("Clear buffer ignored; buffer was invalid");
 					break;
 				}
 
-				if (cb->offset >= buf->size()) {
-					oic::System::log()->warn("Clear buffer offset out of bounds");
+				if (!(u8(buf->getInfo().usage) & u8(GPUMemoryUsage::GPU_WRITE))) {
+					oic::System::log()->error("Clear buffer can only be invoked on GPU writable buffers");
 					break;
 				}
 
-				usz size = cb->size;
+				u64 size = cb->size;
+				const u64 offset = cb->offset;
+
+				if (offset + size >= buf->size()) {
+					oic::System::log()->error("Clear buffer out of bounds");
+					break;
+				}
 
 				if (!size)
-					size = buf->size() - cb->offset;
+					size = buf->size() - offset;
 
-				if (size % 4) {
-					oic::System::log()->warn("ClearBuffer can't clear individual bytes, only a scalar (4 bytes)");
+				if (!size) break;
+
+				if (size & 3 || offset & 3) {
+					oic::System::log()->error("ClearBuffer can't clear individual bytes, only a scalar (4 bytes)");
 					break;
 				}
 
 				glClearNamedBufferSubData(
 					buf->getData()->handle,
 					GL_R32UI,
-					cb->offset,
+					offset,
 					size,
 					GL_RED_INTEGER,
 					GL_UNSIGNED_INT,
@@ -129,7 +168,7 @@ namespace ignis {
 				Framebuffer *fb = cf->target.get<Framebuffer>();
 
 				if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
-					oic::System::log()->warn("Invalid framebuffer. Ignoring clear call");
+					oic::System::log()->error("Invalid framebuffer. Ignoring clear call");
 					break;
 				}
 
@@ -156,8 +195,10 @@ namespace ignis {
 						if(depth)
 							glClearNamedFramebufferfv(dat->index, GL_DEPTH, 0, &ctx.depth);
 
-						if (stencil)
-							glClearNamedFramebufferiv(dat->index, GL_STENCIL, 0, (GLint*)&ctx.stencil);
+						if (stencil) {
+							GLint s = ctx.stencil;
+							glClearNamedFramebufferiv(dat->index, GL_STENCIL, 0, &s);
+						}
 					}
 				}
 
@@ -183,37 +224,6 @@ namespace ignis {
 			case CMD_SET_VIEWPORT_AND_SCISSOR: {
 				auto *svc = (SetViewportAndScissor*)c;
 				glxSetViewportAndScissor(ctx, svc->size, svc->offset);
-				break;
-			}
-
-			case CMD_END_FRAMEBUFFER:
-
-				if(Framebuffer *fb = ctx.framebuffer)
-					fb->end();
-
-				break;
-
-			case CMD_SET_CLEAR_COLOR: 
-				ctx.clearColor = *(SetClearColor*)c;
-				break;
-
-			case CMD_SET_CLEAR_DEPTH: {
-
-				SetClearDepth *cd = (SetClearDepth*)c;
-
-				if (cd->dataObject != ctx.depth)
-					glClearDepth(ctx.depth = cd->dataObject);
-
-				break;
-			}
-
-			case CMD_SET_CLEAR_STENCIL: {
-
-				SetClearStencil *cd = (SetClearStencil*)c;
-
-				if (cd->dataObject != ctx.stencil)
-					glClearStencil(ctx.stencil = cd->dataObject);
-
 				break;
 			}
 
@@ -252,7 +262,7 @@ namespace ignis {
 					if(pipeline)
 						glxBindPipeline(ctx, pipeline);
 					else
-						oic::System::log()->warn("Invalid pipeline. Ignoring dispatch & draw calls");
+						oic::System::log()->error("Invalid pipeline. Ignoring dispatch & draw calls");
 				}
 
 				break;
@@ -269,7 +279,7 @@ namespace ignis {
 					if(bd)
 						glxBindDescriptors(ctx, bd);		//TODO: Check descriptors resources
 					else
-						oic::System::log()->warn("Invalid descriptors. Ignoring dispatch & draw calls");
+						oic::System::log()->error("Invalid descriptors. Ignoring dispatch & draw calls");
 				}
 
 				break;
@@ -278,16 +288,16 @@ namespace ignis {
 			case CMD_DRAW_INSTANCED: {
 
 				if (!ctx.pipeline || !ctx.pipeline->isGraphics() || !ctx.framebuffer) {
-					oic::System::log()->warn("Draw call issued without framebuffer and/or graphics pipeline");
-					return;
+					oic::System::log()->error("Draw call issued without framebuffer and/or graphics pipeline");
+					break;
 				}
 
 				if(
 					ctx.pipeline->getInfo().attributeLayout.size() &&
 					(!ctx.primitiveBuffer || !ctx.primitiveBuffer->matchLayout(ctx.pipeline->getInfo().attributeLayout))
 				) {
-					oic::System::log()->warn("Draw call issued with mismatching pipeline and primitive buffer layout");
-					return;
+					oic::System::log()->error("Draw call issued with mismatching pipeline and primitive buffer layout");
+					break;
 				}
 
 
@@ -296,13 +306,13 @@ namespace ignis {
 						ctx.pipeline->getInfo().pipelineLayout
 					))
 				) {
-					oic::System::log()->warn("Pipeline layout doesn't match descriptors!");
-					return;
+					oic::System::log()->error("Pipeline layout doesn't match descriptors!");
+					break;
 				}
 
 				if(ctx.framebuffer->getInfo().samples != ctx.pipeline->getInfo().msaa.samples) {
-					oic::System::log()->warn("Framebuffer didn't have the same number of samples as pipeline");
-					return;
+					oic::System::log()->error("Framebuffer didn't have the same number of samples as pipeline");
+					break;
 				}
 
 				auto topo = glxTopologyMode(ctx.pipeline->getInfo().topology);
@@ -311,8 +321,8 @@ namespace ignis {
 				if (di->isIndexed) {
 
 					if(!ctx.primitiveBuffer) {
-						oic::System::log()->warn("Primitive buffer is required for indexed drawing");
-						return;
+						oic::System::log()->error("Primitive buffer is required for indexed drawing");
+						break;
 					}
 
 					glDrawElementsInstancedBaseVertexBaseInstance(
@@ -354,8 +364,8 @@ namespace ignis {
 			case CMD_DISPATCH: {
 
 				if (!ctx.pipeline || !ctx.pipeline->isCompute()) {
-					oic::System::log()->warn("Dispatch issued without compute pipeline");
-					return;
+					oic::System::log()->error("Dispatch issued without compute pipeline");
+					break;
 				}
 
 				Vec3u32 threads = ((Dispatch*)c)->threadCount;
@@ -377,7 +387,7 @@ namespace ignis {
 			case CMD_DISPATCH_INDIRECT: {
 
 				if (!ctx.pipeline || !ctx.pipeline->isCompute()) {
-					oic::System::log()->warn("No pipeline bound!");
+					oic::System::log()->error("No pipeline bound!");
 					break;
 				}
 
@@ -385,7 +395,7 @@ namespace ignis {
 				auto *buf = di->buffer.get<GPUBuffer>();
 
 				if (!buf) {
-					oic::System::log()->warn("No indirect buffer bound!");
+					oic::System::log()->error("No indirect buffer bound!");
 					break;
 				}
 
@@ -399,7 +409,7 @@ namespace ignis {
 					ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] = di->buffer;
 				}
 
-				glDispatchComputeIndirect(di->offset * 16);
+				glDispatchComputeIndirect(GLintptr(di->offset) * 16);
 
 				break;
 			}
@@ -449,8 +459,15 @@ namespace ignis {
 
 			#endif
 
+			case CMD_TRACE_RAYS_FT_2:
+			case CMD_BUILD_ACCELERATION_STRUCTURE_FT_2:
+			case CMD_COPY_ACCELERATION_STRUCTURE_FT_2:
+			case CMD_WRITE_ACCELERATION_STRUCTURE_PROPERTIES_FT_2:
+				oic::System::log()->error("Raytracing isn't supported in OpenGL, please compile using an API that supports it");
+				break;
+
 			default:
-				oic::System::log()->warn("Unsupported operation");
+				oic::System::log()->error("Unsupported operation");
 
 		}
 

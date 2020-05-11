@@ -254,7 +254,7 @@ namespace ignis {
 		);
 
 		apimpl void present(
-			Texture *intermediate, u16 slice, Swapchain *swapchain, 
+			Texture *intermediate, u16 slice, u16 mip, Swapchain *swapchain, 
 			const List<CommandList*> &commands
 		);
 
@@ -266,7 +266,7 @@ namespace ignis {
 		//This blocks other threads from sharing with the creator thread
 		plimpl void resume();
 
-		inline Data *getData() { return data; }
+		inline Data *getData() const { return data; }
 
 		const String appName, engineName;
 		const u32 appVersion, engineVersion;

@@ -93,9 +93,9 @@ namespace ignis {
 		struct DispatchIndirect : public Command {
 
 			GPUObjectId buffer;
-			usz offset;			//in dispatch indirect instructions
+			u32 offset;			//in dispatch indirect instructions
 
-			DispatchIndirect(GPUBuffer *buffer, usz offset = 0) :
+			DispatchIndirect(GPUBuffer *buffer, u32 offset = 0) :
 				Command(CMD_DISPATCH_INDIRECT, sizeof(*this)),
 				buffer(getGPUObjectId(buffer)),
 				offset(offset) {}
@@ -154,6 +154,7 @@ namespace ignis {
 
 		//Copy commands
 
+		//Clears framebuffer to the clear color/depth/stencil (depending on the flags you set)
 		struct ClearFramebuffer : Command {
 
 			GPUObjectId target;
@@ -170,31 +171,33 @@ namespace ignis {
 				Command(CMD_CLEAR_FRAMEBUFFER, sizeof(*this)), target(getGPUObjectId(target)), clearFlags(clearFlags) {}
 		};
 
+		//Clears image to the clear color (like framebuffer)
 		struct ClearImage : Command {
 
 			GPUObjectId texture;
 			Vec2i16 offset;
 			Vec2u16 size;
-			u16 mipLevel;
-			u16 minSlice, maxSlice;
+			u16 mipLevel, mipLevels;
+			u16 slice, slices;
 
 			ClearImage(
 				Texture *texture,
-				u16 mipLevel = {}, u16 minSlice = {}, u16 maxSlice = {},
+				u16 mipLevel = {}, u16 mipLevels = {}, u16 slice = {}, u16 slices = {},
 				const Vec2u16 &size = {}, const Vec2i16 &offset = {}
 			) :
 				Command(CMD_CLEAR_IMAGE, sizeof(*this)), 
-				texture(getGPUObjectId(texture)), mipLevel(mipLevel), minSlice(minSlice),
-				offset(offset), size(size), maxSlice(maxSlice) {}
+				texture(getGPUObjectId(texture)), mipLevel(mipLevel), slice(slice),
+				offset(offset), size(size), slices(slices), mipLevels(mipLevels) {}
 
 		};
 
+		//Clears buffer to zero
 		struct ClearBuffer : Command {
 
 			GPUObjectId buffer;
-			usz offset, size;
+			u64 offset, size;
 
-			ClearBuffer(GPUBuffer *buffer, usz offset = 0, usz size = 0) :
+			ClearBuffer(GPUBuffer *buffer, u64 offset = 0, u64 size = 0) :
 				Command(CMD_CLEAR_BUFFER, sizeof(*this)),
 				buffer(getGPUObjectId(buffer)), offset(offset), size(size) {}
 
@@ -206,8 +209,10 @@ namespace ignis {
 		struct DebugOp : public Command {
 
 			c8 string[maxStringLength];
+			Vec4f32 colorExt;				//Sometimes color coding your markers is allowed by the API
 
-			DebugOp(const String &str): Command(opCode, sizeof(*this)), string{} {
+			DebugOp(const String &str, const Vec4f32 &colorExt = Vec4f32(1, 0, 0, 1)):
+				Command(opCode, sizeof(*this)), string{}, colorExt(colorExt) {
 			
 				if (str.size() > maxStringLength)
 					oic::System::log()->fatal("Couldn't add debug operation; string is too big");

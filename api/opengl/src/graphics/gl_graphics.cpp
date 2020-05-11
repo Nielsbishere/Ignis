@@ -115,7 +115,7 @@ namespace ignis {
 	//Present image to swapchain
 
 	void Graphics::present(
-		Texture *intermediate, u16 slice, 
+		Texture *intermediate, u16 slice, u16 mip,
 		Swapchain *swapchain,
 		const List<CommandList*> &commands
 	) {
@@ -140,6 +140,9 @@ namespace ignis {
 		if(slice >= intermediate->getInfo().layers)
 			oic::System::log()->fatal("Couldn't present; array index out of bounds");
 
+		if(slice >= intermediate->getInfo().mips)
+			oic::System::log()->fatal("Couldn't present; mip index out of bounds");
+
 		GLContext &ctx = data->getContext();
 
 		swapchain->bind();
@@ -155,7 +158,7 @@ namespace ignis {
 			ctx.bound[GL_DRAW_FRAMEBUFFER] = {};
 
 			glBlitNamedFramebuffer(
-				intermediate->getData()->framebuffer[slice],
+				intermediate->getData()->framebuffer[size_t(slice) * intermediate->getInfo().mips + mip],
 				0,
 				0, 0, size.x, size.y,
 				0, 0, size.x, size.y,

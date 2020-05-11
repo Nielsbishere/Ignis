@@ -15,7 +15,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 file(GLOB_RECURSE ignisHpp "include/*.hpp")
 file(GLOB_RECURSE ignisCpp "src/*.cpp")
 
-set(graphicsApi opengl CACHE STRING "Graphics API")
+set(graphicsApi vulkan CACHE STRING "Graphics API")
 
 if(NOT DEFINED ENV{VULKAN_SDK})
 	set(graphicsApi opengl CACHE STRING "Graphics API")
@@ -28,16 +28,21 @@ set_property(CACHE graphicsApi PROPERTY STRINGS ${graphicsApis})
 message("-- Enabling ${graphicsApi} support")
 
 # Setup graphics api
-
-include_directories(api/${graphicsApi}/include)
-include_directories(core2/platform/${platform}/include)
 	
 file(GLOB_RECURSE apiHpp "api/${graphicsApi}/include/*.hpp")
 file(GLOB_RECURSE apiCpp "api/${graphicsApi}/src/*.cpp")
 
-# Setup platforms
+# Add ocore
 
-include_directories(api/${graphicsApi}/platform/${platform}/include)
+if(TARGET ocore)
+	get_target_property(CORE2_SOURCE_DIR ocore SOURCE_DIR)
+	message("-- Enabling core2 support (${CORE2_SOURCE_DIR})")
+else()
+	add_subdirectory(core2)
+	set(CORE2_SOURCE_DIR core2)
+endif()
+
+# Setup platforms
 	
 file(GLOB_RECURSE platformHpp "api/${graphicsApi}/platform/${platform}/include/*.hpp")
 file(GLOB_RECURSE platformCpp "api/${graphicsApi}/platform/${platform}/src/*.cpp")
@@ -56,13 +61,16 @@ add_library(
 )
 
 target_include_directories(ignis PRIVATE include)
-target_include_directories(ignis PRIVATE core2/include)
+target_include_directories(ignis PRIVATE ${CORE2_SOURCE_DIR}/include)
+target_include_directories(ignis PRIVATE api/${graphicsApi}/include)
+target_include_directories(ignis PRIVATE core2/platform/${platform}/include)
+target_include_directories(ignis PRIVATE api/${graphicsApi}/platform/${platform}/include)
 target_link_libraries(ignis PRIVATE ocore)
 
 if(${graphicsApi} STREQUAL "vulkan")
 
 	message("-- Vulkan SDK found at $ENV{VULKAN_SDK}")
-	target_include_directories(ignis PUBLIC Vulkan-Headers/include)
+	target_include_directories(ignis PUBLIC $ENV{VULKAN_SDK}/include)
 
 	if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 		target_link_directories(ignis PUBLIC $ENV{VULKAN_SDK}/Lib)
@@ -86,14 +94,3 @@ if(MSVC)
 else()
     target_compile_options(ignis PRIVATE -Wall -fms-extensions -Wextra -Werror)
 endif()
-
-if(TARGET ocore)
-	get_target_property(CORE2_SOURCE_DIR ocore SOURCE_DIR)
-	message("-- Enabling core2 support (${CORE2_SOURCE_DIR})")
-	target_include_directories(ignis PRIVATE ${CORE2_SOURCE_DIR}/include)
-else()
-	add_subdirectory(core2)
-	target_include_directories(ignis PRIVATE core2/include)
-endif()
-
-target_link_libraries(ignis PRIVATE ocore)
