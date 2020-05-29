@@ -35,7 +35,6 @@ namespace ignis {
 extern GLenum glxDepthFormat(ignis::DepthFormat format);
 extern GLenum glxColorFormat(ignis::GPUFormat format);
 extern GLenum glxBufferType(ignis::GPUBufferType format);
-extern GLenum glxBufferUsage(ignis::GPUMemoryUsage usage, bool isPersistent);
 extern GLenum glxBufferHint(ignis::GPUMemoryUsage usage);
 extern GLenum glxGpuFormatType(ignis::GPUFormat type);
 extern GLenum glxGpuDataFormat(ignis::GPUFormat type);
@@ -52,10 +51,9 @@ extern void glxBeginRenderPass(
 	ignis::GLContext &data, const ignis::GPUObjectId &framebuffer, GLuint i
 );
 
-extern void glxSetViewport(ignis::GLContext &ctx, Vec2u32 size, const Vec2i32 &offset);
-extern void glxSetScissor(ignis::GLContext &ctx, Vec2u32 size, const Vec2i32 &offset);
-extern void glxSetViewportAndScissor(ignis::GLContext &ctx, const Vec2u32 &size, const Vec2i32 &offset);
 extern void glxClearFramebuffer(ignis::GLContext& ctx, GLuint fbo, GLuint index, const ignis::cmd::SetClearColor& clearColor);
+
+extern void glxSetViewport(ignis::GLContext &data, const Vec2u32 &size, const Vec2i32 &offset);
 
 extern void APIENTRY glxDebugMessage(
 	GLenum, GLenum, GLuint, GLenum,

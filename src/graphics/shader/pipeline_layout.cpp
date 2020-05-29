@@ -23,11 +23,11 @@ namespace ignis {
 		ShaderAccess access, GPUFormat textureFormat, bool isWritable
 	):
 		name(name), textureFormat(textureFormat), globalId(globalId), localId(localId), 
-		type(ResourceType::TEXTURE), textureType(type), access(access), isWritable(isWritable) {}
+		type(ResourceType::IMAGE), textureType(type), access(access), isWritable(isWritable) {}
 
 	RegisterLayout::RegisterLayout(
 		const String &name, u32 globalId, TextureType type, u32 localId,
-		ShaderAccess access, bool isWritable
+		ShaderAccess access
 	):
 		name(name), textureFormat(GPUFormat::NONE), globalId(globalId), localId(localId), 
 		type(ResourceType::TEXTURE), textureType(type), 
@@ -62,8 +62,12 @@ namespace ignis {
 			//Union part compare
 			(
 				(
-					type == ResourceType::TEXTURE && 
-						(!isWritable || textureFormat == other.textureFormat)
+					(
+						type == ResourceType::IMAGE || type == ResourceType::TEXTURE
+					) && 
+					(
+						!isWritable || textureFormat == other.textureFormat
+					)
 				) ||
 				(
 					(type == ResourceType::BUFFER || type == ResourceType::CBUFFER) && 
@@ -76,7 +80,7 @@ namespace ignis {
 
 	//Validate pipeline layout and create look-up tables
 
-	PipelineLayout::PipelineLayout(const List<RegisterLayout> &layout) {
+	PipelineLayout::Info::Info(const List<RegisterLayout> &layout) {
 
 		for (auto &l : layout)
 
@@ -114,14 +118,16 @@ namespace ignis {
 		}
 	}
 
-	bool PipelineLayout::supportsLayout(const PipelineLayout &other) const {
+	bool PipelineLayout::supportsLayout(const PipelineLayout *other) const {
 
-		for (auto &elem : layoutsById) {
+		if (!other) return true;
+
+		for (auto &elem : info.layoutsById) {
 
 			auto &reg = elem.second;
-			auto regIt = other[elem.first];
+			auto regIt = other->info[elem.first];
 
-			if (regIt == other.end() || regIt->second != reg)
+			if (regIt == other->info.end() || regIt->second != reg)
 				return false;
 		}
 

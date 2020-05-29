@@ -8,12 +8,48 @@
 #include "graphics/memory/gl_framebuffer.hpp"
 #include "graphics/memory/gl_texture_object.hpp"
 #include "graphics/memory/swapchain.hpp"
+#include "graphics/memory/upload_buffer.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "system/system.hpp"
 
 namespace ignis {
 
+	void Graphics::wait() {
+
+		if (!isThreadEnabled())
+			return;
+
+		//Wait for all pending commands and then signal upload buffers to free that memory
+
+		GLContext &ctx = data->getContext();
+
+		if (ctx.fences.size()) {
+
+			List<UploadBuffer*> uploads;
+			uploads.reserve(16);
+
+			for (auto &gobj : graphicsObjects)
+				if (gobj.first.type == GPUObjectType::UPLOAD_BUFFER)
+					uploads.push_back((UploadBuffer*)gobj.second);
+
+			for (auto &fence : ctx.fences) {
+
+				glClientWaitSync(fence.second, GL_SYNC_FLUSH_COMMANDS_BIT, u64_MAX);
+				glDeleteSync(fence.second);
+
+				for (auto *upl : uploads)
+					upl->end(fence.first);
+
+			}
+
+			ctx.fences.clear();
+		}
+
+
+	}
+
 	Graphics::~Graphics() {
+		wait();
 		release();
 		destroy(data);
 	}
@@ -42,11 +78,13 @@ namespace ignis {
 		return CommandAvailability::SUPPORTED;
 	}
 
-	void Graphics::execute(const List<CommandList *> &commands) {
+	void Graphics::execute(const List<CommandList*> &commands) {
 
 		oicAssert("Graphics::execute can't be ran on a suspended graphics thread", enabledThreads[oic::Thread::getCurrentId()].enabled);
 
 		//TODO: lock mutex
+
+		++data->executionId;
 
 		//Updates VAOs and FBOs that have been added/released
 		data->updateContext(*this);
@@ -78,9 +116,10 @@ namespace ignis {
 
 		GLContext &ctx = data->getContext();
 
-		swapchain->bind();
-
 		execute(commands);
+
+		ctx.framebufferId = {};
+		glxBeginRenderPass(data->getContext(), {}, 0);
 
 		//Copy intermediate to backbuffer
 		if (intermediate) {
@@ -94,13 +133,18 @@ namespace ignis {
 
 			//TODO: Fix this! it should use a shader!
 
-			glxSetViewportAndScissor(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
+			if (ctx.enableScissor) {
+				glDisable(GL_SCISSOR_TEST);
+				ctx.enableScissor = false;
+			}
 
-			ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getId();
-			ctx.bound[GL_DRAW_FRAMEBUFFER] = {};
+			glxSetViewport(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
+
+			ctx.boundObjects[GL_READ_FRAMEBUFFER] = intermediate->getId();
+			ctx.boundObjects[GL_DRAW_FRAMEBUFFER] = {};
 
 			glBlitNamedFramebuffer(
-				intermediate->getData()->index,
+				intermediate->getData()->handle,
 				0,
 				0, 0, size.x, size.y,
 				0, size.y, size.x, 0,
@@ -145,17 +189,23 @@ namespace ignis {
 
 		GLContext &ctx = data->getContext();
 
-		swapchain->bind();
-
 		execute(commands);
+
+		ctx.framebufferId = {};
+		glxBeginRenderPass(data->getContext(), {}, 0);
 
 		//Copy intermediate to backbuffer
 		if (intermediate) {
 
-			glxSetViewportAndScissor(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
+			if (ctx.enableScissor) {
+				glDisable(GL_SCISSOR_TEST);
+				ctx.enableScissor = false;
+			}
 
-			ctx.bound[GL_READ_FRAMEBUFFER] = intermediate->getId();
-			ctx.bound[GL_DRAW_FRAMEBUFFER] = {};
+			glxSetViewport(ctx, swapchain->getInfo().size.cast<Vec2u32>(), {});
+
+			ctx.boundObjects[GL_READ_FRAMEBUFFER] = intermediate->getId();
+			ctx.boundObjects[GL_DRAW_FRAMEBUFFER] = {};
 
 			glBlitNamedFramebuffer(
 				intermediate->getData()->framebuffer[size_t(slice) * intermediate->getInfo().mips + mip],
@@ -173,17 +223,57 @@ namespace ignis {
 	void Graphics::Data::updateContext(Graphics &g) {
 
 		GLContext &ctx = getContext();
+		ctx.executionId = g.getData()->executionId;
+
+		//Update status of previous fences
+
+		if (ctx.fences.size()) {
+
+			List<UploadBuffer*> uploads;
+			uploads.reserve(16);
+
+			for (auto &gobj : g)
+				if (gobj.first.type == GPUObjectType::UPLOAD_BUFFER)
+					uploads.push_back((UploadBuffer *)gobj.second);
+
+			List<u64> syncs;
+			syncs.reserve(ctx.fences.size());
+
+			for (auto &fence : ctx.fences) {
+
+				GLenum type = glClientWaitSync(fence.second, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
+
+				if (type == GL_TIMEOUT_EXPIRED || type == GL_WAIT_FAILED)
+					continue;
+
+				glDeleteSync(fence.second);
+				syncs.push_back(fence.first);
+
+				for (auto *upl : uploads)
+					upl->end(fence.first);
+
+			}
+
+			for (auto &sync : syncs)
+				ctx.fences.erase(sync);
+		}
 
 		//Acquire resources from id (since they might be destroyed)
 
-		ctx.framebuffer = ctx.framebufferId.get<Framebuffer>();
-		ctx.primitiveBuffer = ctx.primitiveBufferId.get<PrimitiveBuffer>();
-		ctx.pipeline = ctx.pipelineId.get<Pipeline>();
-		ctx.descriptors = ctx.descriptorsId.get<Descriptors>();
+		auto *fb = ctx.framebufferId.get<Framebuffer>();
+		auto *pb = ctx.primitiveBufferId.get<PrimitiveBuffer>();
+		auto *p = ctx.pipelineId.get<Pipeline>();
+		auto *d = ctx.descriptorsId.get<Descriptors>();
+
+
+		ctx.bound.pipeline = ctx.boundApi.pipeline = p;
+		ctx.bound.descriptors = ctx.boundApi.descriptors = d;
+		ctx.bound.framebuffer = ctx.boundApi.framebuffer = fb;
+		ctx.bound.primitiveBuffer = ctx.boundApi.primitiveBuffer = pb;
 
 		//Unbind if the resource stopped existing
 
-		for(auto &bound : ctx.bound)
+		for(auto &bound : ctx.boundObjects)
 			if (bound.second.vanished()) {
 
 				switch(bound.first) {
@@ -248,10 +338,14 @@ namespace ignis {
 
 		//Store frame independent ids
 
-		ctx.framebufferId = ctx.framebuffer->getId();
-		ctx.primitiveBufferId = ctx.primitiveBuffer->getId();
-		ctx.pipelineId = ctx.pipeline->getId();
-		ctx.descriptorsId = ctx.descriptors->getId();
+		ctx.framebufferId = getGPUObjectId(ctx.boundApi.framebuffer);
+		ctx.primitiveBufferId = getGPUObjectId(ctx.boundApi.primitiveBuffer);
+		ctx.pipelineId = getGPUObjectId(ctx.boundApi.pipeline);
+		ctx.descriptorsId = getGPUObjectId(ctx.boundApi.descriptors);
+
+		//Queue fence
+
+		ctx.fences[ctx.executionId] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
 	}
 

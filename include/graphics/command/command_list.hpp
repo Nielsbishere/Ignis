@@ -11,9 +11,9 @@ namespace ignis {
 	//op has to be unique since it is used as an identifier
 	struct Command {
 
-		u32 op, size;
+		u32 op, commandSize;
 
-		Command(u32 op, usz size);
+		Command(u32 op, usz commandSize);
 	};
 
 	//Storing a list of GPU commands that can be executed by the interface
@@ -26,30 +26,24 @@ namespace ignis {
 		struct Info {
 
 			usz bufferSize;
-			Info(usz bufferSize): bufferSize(bufferSize) {}
-		};
-
-		struct Data {
 
 			Buffer commandBuffer;
 			usz next{};
 
-			Data(const Info &info): commandBuffer(info.bufferSize) {}
+			Info(usz bufferSize): bufferSize(bufferSize), commandBuffer(bufferSize) {}
 		};
 
-		apimpl struct APIData;
+		apimpl struct Data;
 
-		CommandList(Graphics &g, const String &name, const Info &info);		//Construct new command list
-		CommandList(Graphics &g, const String &name, const Data &data);		//Copy old command list
+		apimpl CommandList(Graphics &g, const String &name, const Info &info);
 
 		inline const Info &getInfo() const { return info; }
-		inline APIData *getAPIData() const { return apiData; }
-		inline Data &getData() { return data; }
+		inline Data *getData() const { return data; }
 
 		void clear();
 		void resize(usz newSize);
 
-		inline bool empty() const { return !data.next; }
+		inline bool empty() const { return !info.next; }
 
 		//Add commands to the command list
 
@@ -77,8 +71,7 @@ namespace ignis {
 		apimpl ~CommandList();
 
 		Info info;
-		Data data;
-		APIData *apiData{};
+		Data *data{};
 	};
 
 	template<typename ...args>

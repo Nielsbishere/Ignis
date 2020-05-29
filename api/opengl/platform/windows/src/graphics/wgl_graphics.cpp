@@ -109,6 +109,8 @@ namespace ignis {
 
 	void Graphics::pause() {
 
+		wait();
+
 		if(data->platform->dc)
 			wglMakeCurrent(data->platform->dc, NULL);
 

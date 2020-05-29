@@ -44,7 +44,8 @@ namespace ignis {
 	//>> 8 = id
 	enum class GPUObjectType : u64 {
 
-		UNDEFINED = 0,
+		UNDEFINED = 0x000,
+		PIPELINE_LAYOUT = 0x100,
 
 		PIPELINE = 0x001,
 		COMMAND_LIST = 0x101,
@@ -53,6 +54,7 @@ namespace ignis {
 		FRAMEBUFFER = 0x008,
 		PRIMITIVE_BUFFER = 0x108,
 		SWAPCHAIN = 0x208,
+		UPLOAD_BUFFER = 0x308,
 
 		SAMPLER = 0x020,
 
@@ -61,9 +63,9 @@ namespace ignis {
 		DEPTH_TEXTURE = 0x027,
 		RENDER_TEXTURE = 0x127,
 
-		SHADER_BUFFER = 0x029,
+		SHADER_BUFFER = 0x028,
 
-		GPU_BUFFER = 0x031,
+		BUFFER = 0x031,
 
 		PROPERTY_HAS_GPU_MEMORY = 1 << 0,
 		PROPERTY_IS_TEXTURE = 1 << 1,
@@ -96,6 +98,8 @@ namespace ignis {
 	class RenderTexture;
 	class ShaderBuffer;
 	class GPUBuffer;
+	class PipelineLayout;
+	class UploadBuffer;
 
 	template<typename T> static constexpr GPUObjectType asTypeId = GPUObjectType::UNDEFINED;
 	template<> static constexpr GPUObjectType asTypeId<Pipeline> = GPUObjectType::PIPELINE;
@@ -109,7 +113,9 @@ namespace ignis {
 	template<> static constexpr GPUObjectType asTypeId<DepthTexture> = GPUObjectType::DEPTH_TEXTURE;
 	template<> static constexpr GPUObjectType asTypeId<RenderTexture> = GPUObjectType::RENDER_TEXTURE;
 	template<> static constexpr GPUObjectType asTypeId<ShaderBuffer> = GPUObjectType::SHADER_BUFFER;
-	template<> static constexpr GPUObjectType asTypeId<GPUBuffer> = GPUObjectType::GPU_BUFFER;
+	template<> static constexpr GPUObjectType asTypeId<GPUBuffer> = GPUObjectType::BUFFER;
+	template<> static constexpr GPUObjectType asTypeId<PipelineLayout> = GPUObjectType::PIPELINE_LAYOUT;
+	template<> static constexpr GPUObjectType asTypeId<UploadBuffer> = GPUObjectType::UPLOAD_BUFFER;
 
 	//Wrapper around a GPUObject that is unique, even after the object's lifetime
 
@@ -177,7 +183,6 @@ namespace std {
 
 namespace ignis {
 
-	//Graphics
 	class Graphics {
 
 		friend class GPUObject;
@@ -215,7 +220,7 @@ namespace ignis {
 		inline auto endByName() const { return graphicsObjectsByName.end(); }
 
 		template<typename ...args>
-		inline void execute(args *...arg) {
+		inline void execute(const args &...arg) {
 			List<CommandList*> commands{ arg... };
 			execute(commands);
 		}
@@ -258,13 +263,18 @@ namespace ignis {
 			const List<CommandList*> &commands
 		);
 
+		//Wait until the GPU has executed pending instructions from this thread
+		apimpl void wait();
+
 		//Signals that the graphics instance of this thread is not needed currently
 		//This enables other threads from sharing with the creator thread
-		plimpl void pause();
+		//Must be called when a thread is stopped or doesn't call the graphics anymore
+		apimpl plimpl void pause();
 
 		//Signals that the graphics instance of this thread is needed currently
 		//This blocks other threads from sharing with the creator thread
-		plimpl void resume();
+		//Required to be called if a thread starts to call graphics
+		apimpl plimpl void resume();
 
 		inline Data *getData() const { return data; }
 

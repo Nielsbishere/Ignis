@@ -12,25 +12,43 @@ namespace ignis {
 
 	struct GLContext {
 
-		//Large objects
+		//Objects that have to be set in OpenGL
 
-		Rasterizer currRaster{};
-		BlendState currBlend{};
-		DepthStencil currDepth{};
+		struct Bound {
 
-		Vec2u32 viewportSize{}, scissorSize{};
-		Vec2i32 viewportOff{}, scissorOff{};
+			cmd::SetViewport viewport;
+			cmd::SetScissor scissor;
 
-		cmd::SetClearColor clearColor{};
+			Framebuffer *framebuffer{};
+			PrimitiveBuffer *primitiveBuffer{};
+			Descriptors *descriptors{};
+			Pipeline *pipeline{};
+
+		} bound, boundApi;
 
 		//VAOs; because they aren't shared (by object id)
 
 		HashMap<GPUObjectId, GLuint> vaos;
 
-		//Current bound objects
+		//Constants that aren't intermediate states
 
-		HashMap<GLenum, GPUObjectId> bound;
+		HashMap<GLenum, GPUObjectId> boundObjects;
 		HashMap<u64, BoundRange> boundByBaseId;	//GLenum lower 32-bit, Base upper 32-bit
+
+		HashMap<u64, GLsync> fences;
+
+		Rasterizer currRaster{ CullMode::NONE };
+		BlendState currBlend{};
+		DepthStencil currDepth{};
+
+		cmd::SetClearColor clearColor{};
+		i32 stencil{};
+		f32 depth = 1;
+
+		f32 minSampleShading{};
+
+		bool enableScissor{};
+		bool enableMinSampleShading{};
 
 		//States that have to be set with commands
 
@@ -41,21 +59,7 @@ namespace ignis {
 
 		//CommandList cache of active objects
 
-		Framebuffer *framebuffer{};
-		PrimitiveBuffer *primitiveBuffer{};
-		Pipeline *pipeline{};
-		Descriptors *descriptors{};
-
-		u64 frameId{};
-		f32 depth = 1, minSampleShading{};
-		u32 stencil{};
-
-		bool enableScissor{};
-		bool enableMinSampleShading{};
-
-		GLContext() {
-			currRaster.cull = CullMode::NONE;
-		}
+		u64 frameId{}, executionId{};
 
 	};
 

@@ -8,14 +8,13 @@
 namespace ignis {
 	
 	Texture::Texture(Graphics &g, const String &name, const Info &inf) :
-		TextureObject(g, name, inf, GPUObjectType::TEXTURE), info(inf) {
+		TextureObject(g, name, inf, GPUObjectType::TEXTURE), info(inf)
+	{
 
 		data = new Data();
 
 		GLint mipCount = inf.mips;
 		GLenum textureFormat = glxColorFormat(inf.format);
-		GLenum type = glxGpuFormatType(inf.format);
-		GLenum format = glxGpuDataFormat(inf.format);
 
 		glCreateTextures(glxTextureType(inf.textureType), 1, &data->handle);
 		GLuint handle = data->handle;
@@ -31,12 +30,6 @@ namespace ignis {
 			glTextureStorage1D(
 				handle, mipCount, textureFormat, inf.dimensions.x
 			);
-
-			if (inf.initData.size())
-				for (u32 i = 0; i < inf.mips; ++i)
-					glTextureSubImage1D(
-						handle, i, 0, inf.mipSizes[i].x, format, type, inf.initData[i].data()
-					);
 			
 			break;
 
@@ -48,16 +41,6 @@ namespace ignis {
 					inf.dimensions.x,
 					std::max(inf.dimensions.y, inf.layers)
 				);
-
-				if (inf.initData.size())
-					for (u32 i = 0; i < inf.mips; ++i)
-						glTextureSubImage2D(
-							handle, i, 0, 0,
-							inf.mipSizes[i].x,
-							std::max(inf.mipSizes[i].y, inf.layers),
-							format, type,
-							inf.initData[i].data()
-						);
 
 			}
 			break;
@@ -72,16 +55,6 @@ namespace ignis {
 					inf.dimensions.x, inf.dimensions.y,
 					std::max(inf.dimensions.z, inf.layers)
 				);
-
-				if(inf.initData.size())
-					for (u32 i = 0; i < inf.mips; ++i)
-						glTextureSubImage3D(
-							handle, i, 0, 0, 0,
-							inf.mipSizes[i].x,
-							inf.mipSizes[i].y,
-							std::max(inf.mipSizes[i].z, inf.layers),
-							format, type, inf.initData[i].data()
-						);
 
 			}
 			break;
@@ -123,11 +96,12 @@ namespace ignis {
 
 		//Make sure CPU can write into the buffer
 
-		if (u8(inf.usage & GPUMemoryUsage::CPU_WRITE) && inf.initData.empty()) {
+		if (inf.initData.size() < inf.mips) {
 
+			u8 start = u8(inf.initData.size());
 			info.initData.resize(inf.mips);
 
-			for (u8 i = 0; i < inf.mips; ++i)
+			for (u8 i = start; i < inf.mips; ++i)
 				info.initData[i].resize(info.mipSizes[i].prod<usz>() * inf.layers * FormatHelper::getSizeBytes(inf.format));
 
 		}
@@ -143,59 +117,77 @@ namespace ignis {
 		destroy(data);
 	}
 
-	void Texture::flush(const List<Vec2u8> &ranges) {
+	void Texture::flush(CommandList::Data*, UploadBuffer *uploadBuffer, u8 mip, u8 mipCount) {
 
-		if (!u8(info.usage & GPUMemoryUsage::CPU_WRITE))
-			throw std::runtime_error("Flush can only be called on a CPU writable texture");
+		if (info.initData.size() < info.mips) {
+			oic::System::log()->error("Texture didn't have any backing CPU data");
+			return;
+		}
+
+		if (!HasFlags(info.usage, GPUMemoryUsage::SHARED) && !uploadBuffer) {
+			oic::System::log()->error("Even though OpenGL handles UploadBuffers implictly, for non shared memory one is required by the ignis spec");
+			return;
+		}
 
 		GLuint handle = data->handle;
 		GLenum type = glxGpuFormatType(info.format);
 		GLenum format = glxGpuDataFormat(info.format);
 
-		for (auto& range : ranges)
-			for (u8 i = range.x, j = i + range.y; i < j; ++i) 
-				switch (info.textureType) {
+		for (u8 i = mip, j = mip + mipCount; i < j; ++i)
 
-					case TextureType::TEXTURE_1D:
+			if (i >= info.mips) {
+				oic::System::log()->error("Flush texture mip out of bounds");
+				break;
+			}
 
-						glTextureSubImage1D(
-							handle, i, 0, 
-							info.mipSizes[i].x, 
-							format, type,
-							info.initData[i].data()
-						);
+			else switch (info.textureType) {
 
-						break;
+				case TextureType::TEXTURE_1D:
 
-					case TextureType::TEXTURE_1D_ARRAY:
-					case TextureType::TEXTURE_2D:
+					glTextureSubImage1D(
+						handle, i, 0, 
+						info.mipSizes[i].x, 
+						format, type,
+						info.initData[i].data()
+					);
 
-						glTextureSubImage2D(
-							handle, i, 0, 0,
-							info.mipSizes[i].x,
-							std::max(info.mipSizes[i].y, info.layers),
-							format, type,
-							info.initData[i].data()
-						);
+					break;
 
-						break;
+				case TextureType::TEXTURE_1D_ARRAY:
+				case TextureType::TEXTURE_2D:
 
-					case TextureType::TEXTURE_CUBE:
-					case TextureType::TEXTURE_CUBE_ARRAY:
-					case TextureType::TEXTURE_2D_ARRAY:
-					case TextureType::TEXTURE_3D:
+					glTextureSubImage2D(
+						handle, i, 0, 0,
+						info.mipSizes[i].x,
+						std::max(info.mipSizes[i].y, info.layers),
+						format, type,
+						info.initData[i].data()
+					);
 
-						glTextureSubImage3D(
-							handle, i, 0, 0, 0,
-							info.mipSizes[i].x, info.mipSizes[i].y,
-							std::max(info.mipSizes[i].z, info.layers),
-							format, type,
-							info.initData[i].data()
-						);
+					break;
 
-						break;
+				case TextureType::TEXTURE_CUBE:
+				case TextureType::TEXTURE_CUBE_ARRAY:
+				case TextureType::TEXTURE_2D_ARRAY:
+				case TextureType::TEXTURE_3D:
 
-				}
+					glTextureSubImage3D(
+						handle, i, 0, 0, 0,
+						info.mipSizes[i].x, info.mipSizes[i].y,
+						std::max(info.mipSizes[i].z, info.layers),
+						format, type,
+						info.initData[i].data()
+					);
+
+					break;
+
+			}
+
+		//First flush is only for submitting the initial texture. Then the data is removed
+		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_ACCESS)) {
+			info.initData.clear();
+			return;
+		}
 	}
 
 }

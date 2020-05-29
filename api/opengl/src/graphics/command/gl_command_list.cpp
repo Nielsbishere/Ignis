@@ -2,6 +2,7 @@
 #include "graphics/command/command_ops.hpp"
 #include "graphics/command/commands.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
+#include "graphics/memory/upload_buffer.hpp"
 #include "graphics/memory/swapchain.hpp"
 #include "graphics/memory/gl_framebuffer.hpp"
 #include "graphics/memory/gl_gpu_buffer.hpp"
@@ -11,7 +12,21 @@
 #include "graphics/gl_context.hpp"
 #include "system/system.hpp"
 
+void ::glxSetViewport(ignis::GLContext &data, const Vec2u32 &size, const Vec2i32 &offset) {
+
+	if (data.boundApi.viewport.dim == size && data.boundApi.viewport.offset == offset)
+		return;
+
+	data.boundApi.viewport.dim = size;
+	data.boundApi.viewport.offset = offset;
+
+	glViewport(offset.x, offset.y, size.x, size.y);
+}
+
 namespace ignis {
+
+	CommandList::CommandList(Graphics &g, const String &name, const Info &info):
+		GPUObject(g, name, GPUObjectType::COMMAND_LIST), info(info) {}
 
 	CommandList::~CommandList() {}
 
@@ -19,18 +34,172 @@ namespace ignis {
 
 		//Detect if contents are different, then revalidate command list
 
-		for (u8 *ptr = (u8*)data.commandBuffer.data(), *end = ptr + data.next; ptr < end; ) {
+		for (u8 *ptr = (u8*)info.commandBuffer.data(), *end = ptr + info.next; ptr < end; ) {
 			Command *c = (Command*)ptr;
 			execute(c);
-			ptr += c->size;
+			ptr += c->commandSize;
 		}
 	}
 
-	void CommandList::execute(Command *c) {
+	bool glxFixSize(GLContext &data, Vec2u32 &size, const Vec2i32 &offset) {
 
-		//TODO:	For OpenGL implementation; the calls like "bind X" have to be deferred until they are needed
-		//		This means that dispatch indirect & draw will have to handle their own state changes instead of the command
-		///		This can increase performance because binds that don't affect anything won't end up in the command list
+		if (!size.x || !size.y) {
+
+			auto asize = data.bound.framebuffer->getInfo().size.cast<Vec2i32>() - offset;
+
+			if (!(asize >= Vec2i32()).all()) {
+				oic::System::log()->error("SetViewport can't be corrected with an out of bounds offset");
+				return false;
+			}
+
+			size = asize.cast<Vec2u32>();
+		}
+
+		return true;
+	}
+
+	void glxSetScissor(GLContext &data, const Vec2u32 &size, const Vec2i32 &offset) {
+
+		if (!data.enableScissor) {
+			glEnable(GL_SCISSOR_TEST);
+			data.enableScissor = true;
+		}
+
+		if (data.boundApi.viewport.dim == size && data.boundApi.viewport.offset == offset)
+			return;
+
+		data.boundApi.scissor.dim = size;
+		data.boundApi.scissor.offset = offset;
+
+		glScissor(offset.x, offset.y, size.x, size.y);
+	}
+
+	bool glxBindDescriptors(GLContext &ctx) {
+
+		auto *descriptors = ctx.bound.descriptors;
+
+		if (
+			ctx.bound.pipeline->getInfo().pipelineLayout &&
+			ctx.bound.pipeline->getInfo().pipelineLayout->getInfo().size() && 
+			(!descriptors || !descriptors->isShaderCompatible(ctx.bound.pipeline->getInfo().pipelineLayout))
+		) {
+			oic::System::log()->error("Pipeline layout doesn't match descriptors!");
+			return false;
+		}
+
+		if(ctx.boundApi.descriptors != descriptors)
+			::glxBindDescriptors(ctx, ctx.boundApi.descriptors = descriptors);
+
+		return true;
+	}
+
+	bool glxPrepareGraphicsPipeline(GLContext &ctx) {
+
+		auto *pipeline = ctx.bound.pipeline;
+
+		//Validate & bind pipeline
+
+		if (!pipeline || !pipeline->isGraphics()) {
+			oic::System::log()->error("No graphics pipeline bound!");
+			return false;
+		}
+
+		if(ctx.boundApi.pipeline != pipeline)
+			glxBindPipeline(ctx, ctx.boundApi.pipeline = pipeline);
+
+		//Validate & bind descriptors
+
+		if (!glxBindDescriptors(ctx))
+			return false;
+
+		//Bind primitive buffer
+
+		auto *primitiveBuffer = ctx.bound.primitiveBuffer;
+
+		if (ctx.boundApi.primitiveBuffer != primitiveBuffer) {
+
+			if(
+				pipeline->getInfo().attributeLayout.size() &&
+				(!primitiveBuffer || !primitiveBuffer->matchLayout(pipeline->getInfo().attributeLayout))
+			) {
+				oic::System::log()->error("Draw call issued with mismatching pipeline and primitive buffer layout");
+				return false;
+			}
+
+			ctx.boundApi.primitiveBuffer = primitiveBuffer;
+
+			auto id = getGPUObjectId(primitiveBuffer);
+
+			if (ctx.vaos.find(id) == ctx.vaos.end())
+				if (id.null())
+					glCreateVertexArrays(1, &ctx.vaos[id]);
+				else
+					if (GLuint vao = glxGenerateVao(primitiveBuffer))
+						ctx.vaos[id] = vao;
+					else
+						return false;
+
+			glBindVertexArray(ctx.vaos[id]);
+		}
+
+		//Bind & validate framebuffer
+
+		auto *framebuffer = ctx.bound.framebuffer;
+
+		if(!framebuffer) {
+			oic::System::log()->error("Framebuffer is required for draw calls");
+			return false;
+		}
+
+		if(framebuffer->getInfo().samples != pipeline->getInfo().msaa.samples) {
+			oic::System::log()->error("Framebuffer didn't have the same number of samples as pipeline");
+			return false;
+		}
+
+		if (ctx.boundApi.framebuffer != framebuffer) {
+			glxBeginRenderPass(ctx, framebuffer->getId(), framebuffer->getData()->handle);
+			ctx.boundApi.framebuffer = framebuffer;
+		}
+
+		//Bind viewport & scissor
+
+		Vec2u32 viewportSize = ctx.bound.viewport.dim, scissorSize = ctx.bound.scissor.dim;
+		Vec2i32 viewportOffset = ctx.bound.viewport.offset, scissorOffset = ctx.bound.scissor.offset;
+
+		if (!glxFixSize(ctx, viewportSize, viewportOffset)) return false;
+		if (!glxFixSize(ctx, scissorSize, scissorOffset)) return false;
+
+		if(viewportSize != scissorSize || viewportOffset != scissorOffset)
+			glxSetScissor(ctx, scissorSize, scissorOffset);
+		else if (ctx.enableScissor) {
+			glDisable(GL_SCISSOR_TEST);
+			ctx.enableScissor = false;
+		}
+
+		glxSetViewport(ctx, viewportSize, viewportOffset);
+
+		return true;
+	}
+
+	bool glxPrepareComputePipeline(GLContext &ctx) {
+
+		auto *pipeline = ctx.bound.pipeline;
+
+		if (!pipeline || !pipeline->isCompute()) {
+			oic::System::log()->error("No compute pipeline bound!");
+			return false;
+		}
+
+		if (pipeline != ctx.boundApi.pipeline)
+			glxBindPipeline(ctx, ctx.boundApi.pipeline = pipeline);
+
+		if (!glxBindDescriptors(ctx))
+			return false;
+
+		return true;
+	}
+
+	void CommandList::execute(Command *c) {
 
 		using namespace cmd;
 
@@ -44,20 +213,16 @@ namespace ignis {
 
 				if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
 					oic::System::log()->error("Invalid framebuffer. Ignoring all calls that require it");
-					ctx.framebuffer = nullptr;
+					ctx.bound.framebuffer = nullptr;
 					break;
 				}
 
-				fb->begin();
-				ctx.framebuffer = fb;
+				ctx.bound.framebuffer = fb;
 				break;
 			}
 
 			case CMD_END_FRAMEBUFFER:
-
-				if(Framebuffer *fb = ctx.framebuffer)
-					fb->end();
-
+				ctx.bound.framebuffer = nullptr;
 				break;
 
 			case CMD_SET_CLEAR_COLOR: 
@@ -69,7 +234,7 @@ namespace ignis {
 				break;
 
 			case CMD_SET_CLEAR_STENCIL:
-				ctx.stencil  = ((SetClearStencil*)c)->dataObject;
+				ctx.stencil = ((SetClearStencil*)c)->dataObject;
 				break;
 
 			case CMD_CLEAR_IMAGE: {
@@ -83,12 +248,12 @@ namespace ignis {
 					break;
 				}
 
-				if (!(u8(tex->getInfo().usage) & u8(GPUMemoryUsage::GPU_WRITE))) {
+				if (!HasFlags(tex->getInfo().usage, GPUMemoryUsage::GPU_WRITE)) {
 					oic::System::log()->error("Clear image can only be invoked on GPU writable textures");
 					break;
 				}
 
-				Vec2u16 size = ci->size.x;
+				Vec2u16 size = ci->size;
 
 				if (!size.all()) {
 
@@ -102,13 +267,15 @@ namespace ignis {
 					size = dif.cast<Vec2u16>();
 				}
 
-				glxSetViewportAndScissor(ctx, size.cast<Vec2u32>(), {});
+				glxSetViewport(ctx, size.cast<Vec2u32>(), ci->offset.cast<Vec2i32>());
 
-				auto slices = ci->slices ? ci->slices : 1;
-				auto mips = ci->mipLevels ? ci->mipLevels : 1;
+				if (ctx.enableScissor) {
+					glDisable(GL_SCISSOR_TEST);
+					ctx.enableScissor = false;
+				}
 
-				for(u16 l = ci->slice; l < ci->slice + slices; ++l)
-					for(u16 m = ci->mipLevels; m < ci->mipLevel + mips; ++m)
+				for(u16 l = ci->slice; l < ci->slice + ci->slices; ++l)
+					for(u16 m = ci->mipLevels; m < ci->mipLevel + ci->mipLevels; ++m)
 						glxClearFramebuffer(
 							ctx, tex->getData()->framebuffer[size_t(l) * tex->getInfo().mips + m], 0, ctx.clearColor
 						);
@@ -126,12 +293,12 @@ namespace ignis {
 					break;
 				}
 
-				if (!(u8(buf->getInfo().usage) & u8(GPUMemoryUsage::GPU_WRITE))) {
+				if (!HasFlags(buf->getInfo().usage, GPUMemoryUsage::GPU_WRITE)) {
 					oic::System::log()->error("Clear buffer can only be invoked on GPU writable buffers");
 					break;
 				}
 
-				u64 size = cb->size;
+				u64 size = cb->elements;
 				const u64 offset = cb->offset;
 
 				if (offset + size >= buf->size()) {
@@ -188,139 +355,68 @@ namespace ignis {
 					//TODO: Test stencil buffers, since they might need stencil write to be turned on
 
 					if(depth && stencil)
-						glClearNamedFramebufferfi(dat->index, GL_DEPTH_STENCIL, 0, ctx.depth, ctx.stencil);
+						glClearNamedFramebufferfi(dat->handle, GL_DEPTH_STENCIL, 0, ctx.depth, ctx.stencil);
 
 					else {
 
 						if(depth)
-							glClearNamedFramebufferfv(dat->index, GL_DEPTH, 0, &ctx.depth);
+							glClearNamedFramebufferfv(dat->handle, GL_DEPTH, 0, &ctx.depth);
 
-						if (stencil) {
-							GLint s = ctx.stencil;
-							glClearNamedFramebufferiv(dat->index, GL_STENCIL, 0, &s);
-						}
+						if (stencil)
+							glClearNamedFramebufferiv(dat->handle, GL_STENCIL, 0, &ctx.stencil);
 					}
 				}
 
 				if (cf->clearFlags & ClearFramebuffer::COLOR)
 					for (GLint i = 0, j = GLint(fb->size()); i < j; ++i)
-						glxClearFramebuffer(ctx, dat->index, i, ctx.clearColor);
+						glxClearFramebuffer(ctx, dat->handle, i, ctx.clearColor);
 
 				break;
 			}
 
-			case CMD_SET_SCISSOR: {
-				auto *sc = (SetScissor*)c;
-				glxSetScissor(ctx, sc->size, sc->offset);
+			case CMD_SET_SCISSOR:
+				ctx.bound.scissor = *(SetScissor*)c;
 				break;
-			}
 
-			case CMD_SET_VIEWPORT: {
-				auto *sv = (SetViewport*)c;
-				glxSetViewport(ctx, sv->size, sv->offset);
+			case CMD_SET_VIEWPORT:
+				ctx.bound.viewport = *(SetViewport*)c;
+				break; 
+
+			case CMD_SET_VIEWPORT_AND_SCISSOR:
+				ctx.bound.scissor = *(SetScissor*)c;
+				ctx.bound.viewport = *(SetViewport*)c;
+				break; 
+
+			case CMD_BIND_PRIMITIVE_BUFFER:
+				ctx.bound.primitiveBuffer = (((BindPrimitiveBuffer*)c)->bindObject).get<PrimitiveBuffer>();
 				break;
-			}
 
-			case CMD_SET_VIEWPORT_AND_SCISSOR: {
-				auto *svc = (SetViewportAndScissor*)c;
-				glxSetViewportAndScissor(ctx, svc->size, svc->offset);
-				break;
-			}
+			case CMD_BIND_PIPELINE:
 
-			case CMD_BIND_PRIMITIVE_BUFFER: {
+				ctx.bound.pipeline = ((BindPipeline*)c)->bindObject.get<Pipeline>();
 
-				auto b = ((BindPrimitiveBuffer*)c)->bindObject;
-				auto *pbuffer = b.get<PrimitiveBuffer>();
-
-				if (!pbuffer) {
-					ctx.primitiveBuffer = nullptr;
-					break;
-				}
-
-				if (pbuffer != ctx.primitiveBuffer) {
-
-					ctx.primitiveBuffer = pbuffer;
-
-					if (ctx.vaos.find(b) == ctx.vaos.end())
-						ctx.vaos[b] = glxGenerateVao(pbuffer);
-
-					GLuint vao = ctx.vaos[b];
-					glBindVertexArray(vao);
-				}
+				if(!ctx.bound.pipeline)
+					oic::System::log()->error("Invalid pipeline. Ignoring dispatch & draw calls");
 
 				break;
-			}
 
-			case CMD_BIND_PIPELINE: {
-
-				auto *pipeline = ((BindPipeline*)c)->bindObject.get<Pipeline>();
-
-				if (pipeline != ctx.pipeline) {
-
-					ctx.pipeline = pipeline;
-
-					if(pipeline)
-						glxBindPipeline(ctx, pipeline);
-					else
-						oic::System::log()->error("Invalid pipeline. Ignoring dispatch & draw calls");
-				}
-
+			case CMD_BIND_DESCRIPTORS:
+				ctx.bound.descriptors = ((BindDescriptors*)c)->bindObject.get<Descriptors>();
 				break;
-			}
-
-			case CMD_BIND_DESCRIPTORS: {
-
-				auto *bd = ((BindDescriptors*)c)->bindObject.get<Descriptors>();
-
-				if (ctx.descriptors != bd) {
-
-					ctx.descriptors = bd;
-
-					if(bd)
-						glxBindDescriptors(ctx, bd);		//TODO: Check descriptors resources
-					else
-						oic::System::log()->error("Invalid descriptors. Ignoring dispatch & draw calls");
-				}
-
-				break;
-			}
 
 			case CMD_DRAW_INSTANCED: {
 
-				if (!ctx.pipeline || !ctx.pipeline->isGraphics() || !ctx.framebuffer) {
-					oic::System::log()->error("Draw call issued without framebuffer and/or graphics pipeline");
+				if (!glxPrepareGraphicsPipeline(ctx)) {
+					oic::System::log()->error("Draw instanced call ignored because the graphics pipeline wasn't valid");
 					break;
 				}
 
-				if(
-					ctx.pipeline->getInfo().attributeLayout.size() &&
-					(!ctx.primitiveBuffer || !ctx.primitiveBuffer->matchLayout(ctx.pipeline->getInfo().attributeLayout))
-				) {
-					oic::System::log()->error("Draw call issued with mismatching pipeline and primitive buffer layout");
-					break;
-				}
-
-
-				if (ctx.pipeline->getInfo().pipelineLayout.size() && 
-					(!ctx.descriptors || !ctx.descriptors->isShaderCompatible(
-						ctx.pipeline->getInfo().pipelineLayout
-					))
-				) {
-					oic::System::log()->error("Pipeline layout doesn't match descriptors!");
-					break;
-				}
-
-				if(ctx.framebuffer->getInfo().samples != ctx.pipeline->getInfo().msaa.samples) {
-					oic::System::log()->error("Framebuffer didn't have the same number of samples as pipeline");
-					break;
-				}
-
-				auto topo = glxTopologyMode(ctx.pipeline->getInfo().topology);
+				auto topo = glxTopologyMode(ctx.bound.pipeline->getInfo().topology);
 				auto *di = (DrawInstanced*) c;
 
 				if (di->isIndexed) {
 
-					if(!ctx.primitiveBuffer) {
+					if(!ctx.bound.primitiveBuffer) {
 						oic::System::log()->error("Primitive buffer is required for indexed drawing");
 						break;
 					}
@@ -328,48 +424,37 @@ namespace ignis {
 					glDrawElementsInstancedBaseVertexBaseInstance(
 						topo,
 						di->count,
-						glxGpuFormatType(ctx.primitiveBuffer->getIndexFormat()),
+						glxGpuFormatType(ctx.bound.primitiveBuffer->getIndexFormat()),
 						(void*)(
 							usz(di->start) * 
-							FormatHelper::getSizeBytes(ctx.primitiveBuffer->getIndexFormat())
+							FormatHelper::getSizeBytes(ctx.bound.primitiveBuffer->getIndexFormat())
 						),
 						di->instanceCount,
 						di->vertexStart,
 						di->instanceStart
 					);
-
-				} else {
-
-					if (!ctx.primitiveBuffer) {
-
-						if (ctx.vaos.find({}) == ctx.vaos.end())
-							glCreateVertexArrays(1, &ctx.vaos[{}]);
-
-						GLuint vao = ctx.vaos[{}];
-						glBindVertexArray(vao);
-					}
-
-					glDrawArraysInstancedBaseInstance(
-						topo,
-						di->start,
-						di->count,
-						di->instanceCount,
-						di->instanceStart
-					);
 				}
+
+				else glDrawArraysInstancedBaseInstance(
+					topo,
+					di->start,
+					di->count,
+					di->instanceCount,
+					di->instanceStart
+				);
 
 				break;
 			}
 
 			case CMD_DISPATCH: {
 
-				if (!ctx.pipeline || !ctx.pipeline->isCompute()) {
+				if (!glxPrepareComputePipeline(ctx)) {
 					oic::System::log()->error("Dispatch issued without compute pipeline");
 					break;
 				}
 
 				Vec3u32 threads = ((Dispatch*)c)->threadCount;
-				Vec3u32 count = ctx.pipeline->getInfo().groupSize;
+				Vec3u32 count = ctx.bound.pipeline->getInfo().groupSize;
 
 				Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
 
@@ -386,8 +471,8 @@ namespace ignis {
 
 			case CMD_DISPATCH_INDIRECT: {
 
-				if (!ctx.pipeline || !ctx.pipeline->isCompute()) {
-					oic::System::log()->error("No pipeline bound!");
+				if (!glxPrepareComputePipeline(ctx)) {
+					oic::System::log()->error("Dispatch indirect issued without compute pipeline");
 					break;
 				}
 
@@ -404,9 +489,9 @@ namespace ignis {
 				if(buf->size() % 16)
 					oic::System::log()->fatal("Buffer should be 16-byte aligned!");
 
-				if (ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] != di->buffer) {
+				if (ctx.boundObjects[GL_DISPATCH_INDIRECT_BUFFER] != di->buffer) {
 					glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer);
-					ctx.bound[GL_DISPATCH_INDIRECT_BUFFER] = di->buffer;
+					ctx.boundObjects[GL_DISPATCH_INDIRECT_BUFFER] = di->buffer;
 				}
 
 				glDispatchComputeIndirect(GLintptr(di->offset) * 16);
@@ -455,9 +540,116 @@ namespace ignis {
 				case CMD_DEBUG_START_REGION:
 				case CMD_DEBUG_END_REGION:
 				case CMD_DEBUG_INSERT_MARKER:
+					oic::System::log()->performance("Using debug GPU instructions in release mode costs performance");
 					break;
 
 			#endif
+
+			case CMD_FLUSH_BUFFER: {
+
+				auto *fb = (FlushBuffer*)c;
+
+				auto *uploadBuffer = fb->uploadBuffer.get<UploadBuffer>();
+
+				if (fb->type == FlushBuffer::PRIMITIVE_BUFFER) {
+
+					PrimitiveBuffer *buf = fb->buffer.get<PrimitiveBuffer>();
+
+					if (!buf) {
+						oic::System::log()->error("Flush buffer called without buffer");
+						break;
+					}
+
+					auto &buffers = buf->getVertexBuffers();
+
+					for(auto &b : buffers)
+						b.buffer->flush(data, uploadBuffer, b.bufferOffset, b.size());
+
+					auto &index = buf->getIndexBuffer();
+
+					if (index.buffer)
+						index.buffer->flush(data, uploadBuffer, index.bufferOffset, index.size());
+
+					break;
+				}
+
+				else if (fb->type != FlushBuffer::REGULAR) {
+
+					PrimitiveBuffer *buf = fb->buffer.get<PrimitiveBuffer>();
+
+					if (!buf) {
+						oic::System::log()->error("Flush primitive buffer called without buffer");
+						break;
+					}
+
+					if (fb->type == FlushBuffer::INDEX) {
+
+						if (!buf->hasIndices()) {
+							oic::System::log()->error("Flush index buffer called without indices");
+							break;
+						}
+
+						auto &ibo = buf->getIndexBuffer();
+
+						if (ibo.stride() * (fb->offset + fb->elements) > ibo.size()) {
+							oic::System::log()->error("Flush index buffer out of bounds");
+							break;
+						}
+
+						auto bufferStart = ibo.stride() * fb->offset;
+
+						ibo.buffer->flush(data, uploadBuffer, ibo.bufferOffset + bufferStart, fb->elements ? ibo.stride() * fb->elements : ibo.size() - bufferStart);
+
+						break;
+					}
+
+					auto &buffers = buf->getVertexBuffers();
+
+					for (auto &b : buffers) {
+
+						if (b.stride() * (fb->offset + fb->elements) > b.size()) {
+							oic::System::log()->error("Flush vertex buffer out of bounds");
+							break;
+						}
+
+						auto bufferStart = b.stride() * fb->offset;
+
+						b.buffer->flush(data, uploadBuffer, b.bufferOffset + bufferStart, fb->elements ? b.stride() * fb->elements : b.size() - bufferStart);
+					}
+
+					break;
+				}
+
+				GPUBuffer *buf = dynamic_cast<GPUBuffer*>(fb->buffer.get<GPUObject>());
+
+				if (!buf) {
+					oic::System::log()->error("Flush buffer called without buffer");
+					break;
+				}
+
+				if (fb->offset + fb->elements > buf->size()) {
+					oic::System::log()->error("Flush buffer out of bounds");
+					break;
+				}
+
+				buf->flush(data, uploadBuffer, fb->offset, fb->elements ? fb->elements : buf->size() - fb->offset);
+				break;
+			}
+
+			case CMD_FLUSH_IMAGE: {
+
+				auto *fi = (FlushImage*)c;
+
+				Texture *tex = fi->image.get<Texture>();
+
+				if (!tex) {
+					oic::System::log()->error("Flush image called without texture");
+					break;
+				}
+
+				tex->flush(data, fi->uploadBuffer.get<UploadBuffer>(), fi->mipStart, fi->mipCount);
+				break;
+			}
 
 			case CMD_TRACE_RAYS_FT_2:
 			case CMD_BUILD_ACCELERATION_STRUCTURE_FT_2:

@@ -55,6 +55,9 @@ namespace ignis {
 		if(!layers || !xyz.x || !xyz.y || !xyz.z)
 			oic::System::log()->fatal("Texture created with invalid dimensions!");
 
+		if(std::log2(samples) != std::floor(std::log2(samples)))
+			oic::System::log()->fatal("Texture created with invalid samples!");
+
 		//Automatically determine mips
 
 		u32 biggestRes =

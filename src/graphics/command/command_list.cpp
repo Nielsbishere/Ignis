@@ -5,27 +5,21 @@
 
 namespace ignis {
 
-	Command::Command(u32 op, usz size): op(op), size(u32(size)) {
-		if (size >= u32_MAX)
+	Command::Command(u32 op, usz commandSize): op(op), commandSize(u32(commandSize)) {
+		if (commandSize >= u32_MAX)
 			oic::System::log()->fatal("The command contained too much data");
 	}
 
-	CommandList::CommandList(Graphics &g, const String &name, const Info &info):
-		GPUObject(g, name, GPUObjectType::COMMAND_LIST), info(info), data(info) {}
-
-	CommandList::CommandList(Graphics &g, const String &name, const Data &data):
-		GPUObject(g, name, GPUObjectType::COMMAND_LIST), info(u32(data.commandBuffer.size())), data(data) {}
-
 	void CommandList::clear() {
-		data.next = 0;
+		info.next = 0;
 	}
 
 	void CommandList::resize(usz newSize) {
 
-		if (newSize < data.next)
+		if (newSize < info.next)
 			oic::System::log()->fatal("The command list resize would result into loss of data");
 
-		data.commandBuffer.resize(newSize);
+		info.commandBuffer.resize(newSize);
 	}
 
 	void CommandList::addInternal(const Command *c) {
@@ -40,13 +34,13 @@ namespace ignis {
 			return;
 		}
 
-		usz size = c->size;
+		usz size = c->commandSize;
 
-		if (data.next + size >= info.bufferSize)
+		if (info.next + size > info.bufferSize)
 			oic::System::log()->fatal("The command list couldn't hold the commands");
 
-		std::memcpy(data.commandBuffer.data() + data.next, c, size);
-		data.next += size;
+		std::memcpy(info.commandBuffer.data() + info.next, c, size);
+		info.next += size;
 	}
 
 }

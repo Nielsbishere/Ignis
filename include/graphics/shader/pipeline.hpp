@@ -194,14 +194,27 @@ namespace ignis {
 	public:
 
 		enum class Flag : u8 {
-			OPTIMIZE = 1 << 0
+
+			NONE						= 0,
+			IS_PARENT					= 1 << 0,		//Allows the pipeline to be used as a base (to reduce compilation time)
+			DISABLE_OPTIMIZATION		= 1 << 1,
+
+			RT_LIBRARY					= 1 << 2,		//Specifies a library that can be combined to form one raytracing pipeline
+			RT_DISABLE_TRIANGLES		= 1 << 3,		//Skip triangle checking in raytracing (for if procedural geometry is used)
+			RT_DISABLE_PROCEDURAL		= 1 << 4,		//Skip AABB checking (for if triangles are used)
+			RT_PLACEHOLDER_ANYHIT		= 1 << 5,		//Always use an anyhit shader even if one is not provided
+			RT_PLACEHOLDER_CLOSESTHIT	= 1 << 6,		//Always use a closesthit shader even if one is not provided
+			RT_PLACEHOLDER_MISS			= 1 << 7,		//Always use a miss shader even if one is not provided
+
+			RT_FLAGS					= 0xFC
 		};
 
 		struct Info {
 
-			HashMap<ShaderStage, Buffer> stages;
+			List<Buffer> binaries;
+			HashMap<ShaderStage, Pair<u32, String>> stages;
 
-			PipelineLayout pipelineLayout;
+			const PipelineLayout *pipelineLayout;
 
 			Flag flag;
 
@@ -216,37 +229,119 @@ namespace ignis {
 			MSAA msaa{};
 
 			//Compute attributes
-
 			Vec3u32 groupSize{};
+
+			//Parent pipeline (must have IS_PARENT flag set)
+			Pipeline *parent{};
 
 			//Graphics
 
 			Info(
 				Flag f, 
 				const List<BufferAttributes> &attributeLayout, 
-				const HashMap<ShaderStage, Buffer> &stages,
-				const PipelineLayout &pipelineLayout,
+				const List<Buffer> &binaries,
+				const HashMap<ShaderStage, Pair<u32, String>> &stages,
+				const PipelineLayout *pipelineLayout,
 				MSAA msaa = {},
 				DepthStencil depthStencil = {},
 				Rasterizer rasterizer = {},
 				BlendState blendState = {},
 				TopologyMode topology = TopologyMode::TRIANGLE_LIST
 			) : 
-				stages(stages), pipelineLayout(pipelineLayout), flag(f),
+				stages(stages), binaries(binaries), pipelineLayout(pipelineLayout), flag(f),
 				attributeLayout(attributeLayout), topology(topology), depthStencil(depthStencil),
-				rasterizer(rasterizer), blendState(blendState), msaa(msaa) { }
+				rasterizer(rasterizer), blendState(blendState), msaa(msaa)
+			{
+
+				for (auto &stage : stages)
+
+					if (stage.first > ShaderStage::FRAGMENT)
+						oic::System::log()->fatal("Invalid graphics shaders (only accepting vert, geom, tesc, tese, frag");
+
+					else if(stage.second.first > binaries.size())
+						oic::System::log()->fatal("Stage pointed to an invalid binary id");
+			}
+
+			Info(
+				Flag f, 
+				const List<BufferAttributes> &attributeLayout, 
+				const HashMap<ShaderStage, Pair<Buffer, String>> &cstages,
+				const PipelineLayout *pipelineLayout,
+				MSAA msaa = {},
+				DepthStencil depthStencil = {},
+				Rasterizer rasterizer = {},
+				BlendState blendState = {},
+				TopologyMode topology = TopologyMode::TRIANGLE_LIST
+			) : 
+				pipelineLayout(pipelineLayout), flag(f),
+				attributeLayout(attributeLayout), topology(topology), depthStencil(depthStencil),
+				rasterizer(rasterizer), blendState(blendState), msaa(msaa)
+			{ 
+				for (auto &stage : cstages) {
+
+					if (stage.first > ShaderStage::FRAGMENT)
+						oic::System::log()->fatal("Invalid graphics shaders (only accepting vert, geom, tesc, tese, frag");
+
+					u32 curr = u32(binaries.size());
+					binaries.push_back(stage.second.first);
+					stages[stage.first] = { curr, stage.second.second };
+				}
+			}
+
+			Info(
+				Flag f, 
+				const List<BufferAttributes> &attributeLayout, 
+				const Buffer &binary,
+				const HashMap<ShaderStage, String> &cstages,
+				const PipelineLayout *pipelineLayout,
+				MSAA msaa = {},
+				DepthStencil depthStencil = {},
+				Rasterizer rasterizer = {},
+				BlendState blendState = {},
+				TopologyMode topology = TopologyMode::TRIANGLE_LIST
+			) : 
+				binaries{ binary }, pipelineLayout(pipelineLayout), flag(f),
+				attributeLayout(attributeLayout), topology(topology), depthStencil(depthStencil),
+				rasterizer(rasterizer), blendState(blendState), msaa(msaa)
+			{ 
+				for (auto &stage : cstages) {
+
+					if (stage.first > ShaderStage::FRAGMENT)
+						oic::System::log()->fatal("Invalid graphics shaders (only accepting vert, geom, tesc, tese, frag");
+
+					stages[stage.first] = { 0, stage.second };
+				}
+			}
 
 			//Compute
 
 			Info(
 				Flag f, 
 				const Buffer &computeShader,
-				const PipelineLayout &pipelineLayout,
-				const Vec3u32 &groupSize
+				const PipelineLayout *pipelineLayout,
+				const Vec3u32 &groupSize,
+				const String &entryPoint = "main"
 			) : 
-				stages{{ ShaderStage::COMPUTE, computeShader }}, 
+				stages{{ ShaderStage::COMPUTE, { 0, entryPoint } }}, 
+				binaries{ computeShader },
 				pipelineLayout(pipelineLayout), flag(f),
 				groupSize(groupSize) { }
+
+			inline bool hasStage(ShaderStage stage) const {
+				return stages.find(stage) != stages.end();
+			}
+
+			inline bool isCompute() const {
+				return stages.size() == 1 && hasStage(ShaderStage::COMPUTE);
+			}
+
+			inline bool isRaytracing() const {
+				return stages.size() >= 1 && u8(stages.begin()->first) & u8(ShaderStage::PROPERTY_IS_RAYTRACING);
+			}
+
+			inline bool isGraphics() const {
+				return !isCompute() && !isRaytracing();
+			}
 
 		};
 
@@ -254,11 +349,12 @@ namespace ignis {
 
 		apimpl Pipeline(Graphics &g, const String &name, const Info &info);
 
-		const Info &getInfo() const { return info; }
-		Data *getData() { return data; }
+		inline const Info &getInfo() const { return info; }
+		inline Data *getData() { return data; }
 
-		inline bool isCompute() const { return info.groupSize[0]; }
-		inline bool isGraphics() const { return !isCompute(); }
+		inline bool isCompute() const { return info.isCompute(); }
+		inline bool isRaytracing() const { return info.isRaytracing(); }
+		inline bool isGraphics() const { return info.isGraphics(); }
 
 	private:
 
@@ -268,4 +364,5 @@ namespace ignis {
 		Data *data{};
 	};
 
+	enumFlagOverloads(Pipeline::Flag);
 }

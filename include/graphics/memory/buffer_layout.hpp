@@ -104,8 +104,8 @@ namespace ignis {
 
 		BufferLayout() {}
 
-		inline usz size() const { return usz(elements) * formats.getStride(); }
 		inline u32 stride() const { return formats.getStride(); }
+		inline usz size() const { return usz(elements) * stride(); }
 		inline bool instanced() const { return formats.isInstanced(); }
 		inline auto &operator[](usz i) const { return formats[i]; }
 	};

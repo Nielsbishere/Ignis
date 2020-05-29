@@ -44,6 +44,6 @@ namespace ignis {
 	}
 
 	ShaderBuffer::ShaderBuffer(Graphics &g, const String &name, const ShaderBuffer::Info &info):
-		GPUBuffer(g, name, info.bufferInfo), info(info) { }
+		GPUBuffer(g, name, info.bufferInfo, GPUObjectType::SHADER_BUFFER), info(info) { }
 
 }

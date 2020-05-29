@@ -19,6 +19,9 @@ namespace ignis {
 
 		for (auto &it : info.vertexLayout) {
 
+			if (it.buffer && it.buffer->size() != it.size())
+				oic::System::log()->fatal("Invalid primitive buffer size");
+
 			if (!it.buffer) {
 
 				it.buffer = new GPUBuffer(g, NAME(name + " vbo " + std::to_string(i)),
@@ -51,9 +54,6 @@ namespace ignis {
 				if (elements != it.elements || !elements)
 					oic::System::log()->fatal("Invalid predefined vertex buffer size");
 			}
-
-			if (it.buffer->size() != it.size())
-				oic::System::log()->fatal("Invalid primitive buffer size");
 
 			it.buffer->addRef();
 

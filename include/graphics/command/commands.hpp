@@ -15,6 +15,7 @@ namespace ignis {
 	class PrimitiveBuffer;
 	class Query;
 	class GPUBuffer;
+	class UploadBuffer;
 	class Texture;
 
 	namespace cmd {
@@ -141,11 +142,11 @@ namespace ignis {
 		struct SetViewRegion : public Command {
 
 			Vec2i32 offset;
-			Vec2u32 size;
+			Vec2u32 dim;
 
-			SetViewRegion(const Vec2u32 &size = {}, const Vec2i32 &offset = {}) :
+			SetViewRegion(const Vec2u32 &dim = {}, const Vec2i32 &offset = {}) :
 				Command(opCode, sizeof(*this)),
-				offset(offset), size(size) {}
+				offset(offset), dim(dim) {}
 		};
 
 		using SetScissor = SetViewRegion<CMD_SET_SCISSOR>;
@@ -187,7 +188,7 @@ namespace ignis {
 			) :
 				Command(CMD_CLEAR_IMAGE, sizeof(*this)), 
 				texture(getGPUObjectId(texture)), mipLevel(mipLevel), slice(slice),
-				offset(offset), size(size), slices(slices), mipLevels(mipLevels) {}
+				offset(offset), size(size), slices(slices ? slices : 1), mipLevels(mipLevels ? mipLevels : 1) {}
 
 		};
 
@@ -195,11 +196,62 @@ namespace ignis {
 		struct ClearBuffer : Command {
 
 			GPUObjectId buffer;
-			u64 offset, size;
+			u64 offset, elements;
 
-			ClearBuffer(GPUBuffer *buffer, u64 offset = 0, u64 size = 0) :
+			ClearBuffer(GPUBuffer *buffer, u64 offset = 0, u64 elements = 0) :
 				Command(CMD_CLEAR_BUFFER, sizeof(*this)),
-				buffer(getGPUObjectId(buffer)), offset(offset), size(size) {}
+				buffer(getGPUObjectId(buffer)), offset(offset), elements(elements) {}
+
+		};
+
+		//Transfer calls
+
+		struct FlushBuffer : Command {
+
+			GPUObjectId buffer, uploadBuffer;
+
+			u64 offset, elements;
+
+			enum Type : u8 {
+				
+				REGULAR,
+				INDEX,
+				VERTEX,
+				PRIMITIVE_BUFFER
+
+			} type{};
+
+			FlushBuffer(GPUBuffer *buffer, UploadBuffer *uploadBuffer, u64 offset = 0, u64 elements = 0):
+				Command(CMD_FLUSH_BUFFER, sizeof(*this)), 
+				buffer(getGPUObjectId(buffer)), uploadBuffer(getGPUObjectId(uploadBuffer)),
+				offset(offset), elements(elements) {}
+
+			FlushBuffer(PrimitiveBuffer *buffer, UploadBuffer *uploadBuffer, bool isIndex , u64 elementOffset = 0, u64 elementSize = 0):
+				Command(CMD_FLUSH_BUFFER, sizeof(*this)), 
+				buffer(getGPUObjectId(buffer)), uploadBuffer(getGPUObjectId(uploadBuffer)),
+				offset(elementOffset), elements(elementSize), type(isIndex ? INDEX : VERTEX) {}
+
+			FlushBuffer(PrimitiveBuffer *buffer, UploadBuffer *uploadBuffer):
+				Command(CMD_FLUSH_BUFFER, sizeof(*this)), 
+				buffer(getGPUObjectId(buffer)), uploadBuffer(getGPUObjectId(uploadBuffer)),
+				offset(), elements(), type(PRIMITIVE_BUFFER) {}
+
+		};
+
+		struct FlushImage : Command {
+
+			GPUObjectId image, uploadBuffer;
+
+			u8 mipStart, mipCount;
+
+			//Command for flushing CPU data to the GPU
+			//ringBuffer must be non zero if the resource isn't allocated in shared memory (is queryable on Texture)
+			//GPU memory must be accessible
+			//
+			FlushImage(Texture *tex, UploadBuffer *uploadBuffer, u8 mipStart = 0, u8 mipCount = 0):
+				Command(CMD_FLUSH_IMAGE, sizeof(*this)), 
+				image(getGPUObjectId(tex)), uploadBuffer(getGPUObjectId(uploadBuffer)),
+				mipStart(mipStart), mipCount(mipCount ? mipCount : 1) {}
 
 		};
 		

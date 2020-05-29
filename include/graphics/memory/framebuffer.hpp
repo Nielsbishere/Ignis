@@ -50,9 +50,6 @@ namespace ignis {
 
 		apimpl void onResize(const Vec2u32 &size);
 
-		apimpl void begin();
-		apimpl void end();
-
 		inline const Info &getInfo() const { return info; }
 		inline Data *getData() const { return data; }
 

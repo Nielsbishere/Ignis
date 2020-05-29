@@ -9,13 +9,14 @@
 namespace ignis {
 
 	Descriptors::Info::Info(
-		const PipelineLayout &pipelineLayout, const Subresources &resources
+		const PipelineLayout *pipelineLayout, const Subresources &resources
 	):
 		pipelineLayout(pipelineLayout), resources(resources) {
 
-		for (auto &elem : pipelineLayout)
-			if (resources.find(elem.first) == resources.end())
-				this->resources[elem.first] = {};
+		if(pipelineLayout)
+			for (auto &elem : pipelineLayout->getInfo())
+				if (resources.find(elem.first) == resources.end())
+					this->resources[elem.first] = {};
 	}
 
 	bool Descriptors::isResourceCompatible(u32 i, const GPUSubresource &resource) const {
@@ -28,17 +29,20 @@ namespace ignis {
 		if (!resource.resource)
 			return true;
 
-		auto regIt = info.pipelineLayout[i];
+		if (!info.pipelineLayout)
+			return false;
 
-		if (regIt == info.pipelineLayout.end())
+		auto regIt = info.pipelineLayout->getInfo()[i];
+
+		if (regIt == info.pipelineLayout->getInfo().end())
 			return false;
 
 		auto &reg = regIt->second;
 		return resource.resource->isCompatible(reg, resource);
 	}
 
-	bool Descriptors::isShaderCompatible(const PipelineLayout &layout) const {
-		return layout.supportsLayout(info.pipelineLayout);
+	bool Descriptors::isShaderCompatible(const PipelineLayout *layout) const {
+		return (!layout && !info.pipelineLayout) || (layout && layout->supportsLayout(info.pipelineLayout));
 	}
 
 	GPUSubresource::GPUSubresource(GPUBuffer *resource, usz offset, usz size):

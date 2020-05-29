@@ -7,7 +7,7 @@ namespace ignis {
 	//Framebuffer definition
 
 	struct Framebuffer::Data {
-		GLuint index{};
+		GLuint handle{};
 	};
 
 }

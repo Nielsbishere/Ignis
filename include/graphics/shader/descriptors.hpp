@@ -98,13 +98,13 @@ namespace ignis {
 
 		struct Info {
 
-			PipelineLayout pipelineLayout;
+			const PipelineLayout *pipelineLayout;
 			Subresources resources;
 
 			bool shouldFlush{};
 
 			Info(
-				const PipelineLayout &pipelineLayout, 
+				const PipelineLayout *pipelineLayout, 
 				const Subresources &resources
 			);
 		};
@@ -123,7 +123,7 @@ namespace ignis {
 		bool isResourceCompatible(u32 i, const GPUSubresource &resource) const;
 
 		//Check if pipeline layout is compatible with a shader
-		bool isShaderCompatible(const PipelineLayout &layout) const;
+		bool isShaderCompatible(const PipelineLayout *layout) const;
 
 		Data *getData() { return data; }
 		const Info &getInfo() const { return info; }

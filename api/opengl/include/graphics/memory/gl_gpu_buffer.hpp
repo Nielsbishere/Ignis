@@ -5,7 +5,7 @@
 namespace ignis {
 
 	struct GPUBuffer::Data {
-		u8 *unmapped{};
+		volatile u8 *unmapped{};
 		GLuint handle{};
 	};
 }

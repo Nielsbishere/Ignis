@@ -70,14 +70,14 @@ namespace ignis {
 
 		Vec2u16 size = scaledSize.cast<Vec2u16>();
 
-		if (info.size == size && (info.isDynamic || (!info.isDynamic && data->index)))
+		if (info.size == size && (info.isDynamic || (!info.isDynamic && data->handle)))
 			return;
 
 		info.size = size;
 
-		if (data->index) {
-			glDeleteFramebuffers(1, &data->index);
-			data->index = 0;
+		if (data->handle) {
+			glDeleteFramebuffers(1, &data->handle);
+			data->handle = 0;
 		}
 
 		if(depth)
@@ -89,8 +89,8 @@ namespace ignis {
 		if (!size.x)
 			return;
 
-		glCreateFramebuffers(1, &data->index);
-		GLuint fb = data->index;
+		glCreateFramebuffers(1, &data->handle);
+		GLuint fb = data->handle;
 
 		glObjectLabel(
 			GL_FRAMEBUFFER, fb, GLsizei(getName().size()), getName().c_str()
@@ -121,11 +121,5 @@ namespace ignis {
 			oic::System::log()->fatal("Couldn't create framebuffer");
 
 	}
-
-	void Framebuffer::begin() {
-		glxBeginRenderPass(getGraphics().getData()->getContext(), getId(), data->index);
-	}
-
-	void Framebuffer::end() {}
 
 }

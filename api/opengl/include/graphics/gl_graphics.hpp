@@ -59,6 +59,9 @@ namespace ignis {
 
 		Platform *platform{};
 
+		//
+		u64 executionId{};
+
 		//OpenGL constants
 
 		u8 maxSamples;

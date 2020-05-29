@@ -160,21 +160,6 @@ GLenum glxBufferType(GPUBufferType format) {
 	}
 }
 
-GLenum glxBufferUsage(GPUMemoryUsage usage, bool isPersistent) {
-
-	GLenum res{};
-
-	if (u8(usage) & u8(GPUMemoryUsage::CPU_WRITE)) {
-		res |= GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT;
-		if(isPersistent) res |= GL_MAP_PERSISTENT_BIT;
-	}
-
-	if (u8(usage) & u8(GPUMemoryUsage::SHARED))
-		res |= GL_CLIENT_STORAGE_BIT;
-
-	return res;
-}
-
 GLenum glxBufferHint(GPUMemoryUsage usage) {
 
 	//& 1 = isStatic
@@ -186,7 +171,7 @@ GLenum glxBufferHint(GPUMemoryUsage usage) {
 
 	usz id{};
 
-	if (!(u8(usage) & u8(GPUMemoryUsage::CPU_WRITE))) {
+	if (!(u8(usage) & u8(GPUMemoryUsage::CPU_ACCESS))) {
 
 		id |= 2;		//If CPU doesn't write; it's draw
 
@@ -466,67 +451,10 @@ GLenum glxStencilOp(StencilOp stencilOp) {
 void glxBeginRenderPass(
 	GLContext &ctx, const GPUObjectId &framebuffer, GLuint i
 ) {
-	if (ctx.bound[GL_DRAW_FRAMEBUFFER] != framebuffer) {
-		ctx.bound[GL_DRAW_FRAMEBUFFER] = framebuffer;
+	if (ctx.boundObjects[GL_DRAW_FRAMEBUFFER] != framebuffer) {
+		ctx.boundObjects[GL_DRAW_FRAMEBUFFER] = framebuffer;
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, i);
 	}
-}
-
-void glxFixSize(GLContext &ctx, Vec2u32 &size, const Vec2i32 &offset) {
-
-	if (!size.x || !size.y) {
-
-		if (!ctx.framebuffer) {
-			oic::System::log()->warn("SetViewport can't be called with null size if the framebuffer isn't bound");
-			return;
-		}
-
-		auto asize = ctx.framebuffer->getInfo().size.cast<Vec2i32>() - offset;
-
-		if(!(asize >= Vec2i32()).all()) {
-			oic::System::log()->warn("SetViewport can't be corrected with an out of bounds offset");
-			return;
-		}
-
-		size = asize.cast<Vec2u32>();
-	}
-}
-
-void glxSetViewport(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
-
-	glxFixSize(ctx, size, offset);
-
-	if (ctx.viewportOff != offset || ctx.viewportSize != size) {
-		ctx.viewportOff = offset;
-		ctx.viewportSize = size;
-		glViewport(offset.x, offset.y, size.x, size.y);
-	}
-}
-
-void glxSetScissor(GLContext &ctx, Vec2u32 size, const Vec2i32 &offset) {
-
-	glxFixSize(ctx, size, offset);
-
-	if (!ctx.enableScissor) {
-		glEnable(GL_SCISSOR_TEST);
-		ctx.enableScissor = true;
-	}
-
-	if (ctx.scissorOff != offset || ctx.scissorSize != size) {
-		ctx.scissorOff = offset;
-		ctx.scissorSize = size;
-		glScissor(offset.x, offset.y, size.x, size.y);
-	}
-}
-
-void glxSetViewportAndScissor(GLContext &ctx, const Vec2u32 &size, const Vec2i32 &offset) {
-
-	if (ctx.enableScissor) {
-		glDisable(GL_SCISSOR_TEST);
-		ctx.enableScissor = false;
-	}
-
-	glxSetViewport(ctx, size, offset);
 }
 
 void glxClearFramebuffer(GLContext &ctx, GLuint fbo, GLuint index, const cmd::SetClearColor &clearColor) {
@@ -818,7 +746,9 @@ void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 
 void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 
-	for (auto &mapIt : descriptors->getInfo().pipelineLayout) {
+	if (!descriptors || !descriptors->getInfo().pipelineLayout) return;
+
+	for (auto &mapIt : descriptors->getInfo().pipelineLayout->getInfo()) {
 
 		auto resource = mapIt.second;
 		auto it = descriptors->getInfo().resources.find(resource.globalId);
@@ -955,6 +885,12 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 
 	for (auto &v : info.vertexLayout) {
 
+		if (!v.buffer || v.bufferOffset >= v.buffer->size()) {
+			oic::System::log()->error("Primitive buffer with null vertex buffer isn't allowed");
+			glDeleteVertexArrays(1, &handle);
+			return 0;
+		}
+
 		glVertexArrayVertexBuffer(
 			handle, i, v.buffer->getData()->handle, v.bufferOffset, v.stride()
 		);
@@ -980,10 +916,31 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 		++i;
 	}
 
-	if(prim->hasIndices())
+	if (prim->hasIndices()) {
+
+		if (!info.indexLayout.buffer || info.indexLayout.bufferOffset >= info.indexLayout.buffer->size()) {
+			oic::System::log()->error("Primitive buffer with null index buffer isn't allowed");
+			glDeleteVertexArrays(1, &handle);
+			return 0;
+		}
+
+		switch (prim->getIndexFormat()) {
+
+			case GPUFormat::R16u:
+			case GPUFormat::R32u:
+				break;
+
+			default:
+				oic::System::log()->error("Primitive buffer with invalid index format isn't allowed");
+				glDeleteVertexArrays(1, &handle);
+				return 0;
+
+		}
+
 		glVertexArrayElementBuffer(
 			handle, info.indexLayout.buffer->getData()->handle
 		);
+	}
 
 	return handle;
 }

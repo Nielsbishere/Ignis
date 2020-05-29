@@ -1,5 +1,6 @@
 #pragma once
 #include "graphics/memory/texture_object.hpp"
+#include "graphics/command/command_list.hpp"
 #include "types/grid.hpp"
 
 namespace ignis {
@@ -15,6 +16,8 @@ namespace ignis {
 
 	class Texture : public TextureObject {
 
+		friend class CommandList;
+
 	public:
 
 		struct Info : public TextureObject::Info {
@@ -23,6 +26,8 @@ namespace ignis {
 			//Each layer is stored in the grid
 			//[mip] Where each buffer.size = linearSize*layers
 			List<Buffer> initData;
+
+			//
 
 			using TextureObject::Info::Info;
 
@@ -78,9 +83,9 @@ namespace ignis {
 			return TextureObjectType::TEXTURE;
 		}
 
-		apimpl void flush(const List<Vec2u8> &mips);	//mipStart, mipCount
-
 	private:
+
+		apimpl void flush(CommandList::Data *commandList, UploadBuffer *uploadBuffer, u8 mip, u8 mipCount);
 
 		apimpl ~Texture();
 
@@ -89,9 +94,11 @@ namespace ignis {
 
 	template<typename T, typename>
 	Texture::Info::Info(
-		const DataTexture1D<T> &val, GPUFormat format, GPUMemoryUsage usage, u16 layers
+		const DataTexture1D<T> &val, GPUFormat format,
+		GPUMemoryUsage usage, u16 layers
 	) : 
-		Info(u16(val[0].size() / layers), format, usage, u8(val.size()), layers) {
+		Info(u16(val[0].size() / layers), format, usage, u8(val.size()), layers)
+	{
 
 		if (val[0].size() % layers != 0)
 			oic::System::log()->fatal("Width of Grid1D should encompass layer count");
@@ -112,12 +119,14 @@ namespace ignis {
 
 	template<typename T, typename>
 	Texture::Info::Info(
-		const DataTexture2D<T> &val, GPUFormat format, GPUMemoryUsage usage, u16 layers
+		const DataTexture2D<T> &val, GPUFormat format,
+		GPUMemoryUsage usage, u16 layers
 	) : 
 		Info(
 			Vec2u16(u16(val[0].size()[1]), u16(val[0].size()[0] / layers)), 
 			format, usage, u8(val.size()), layers
-		) {
+		)
+	{
 
 		if (val[0].size()[0] % layers != 0)
 			oic::System::log()->fatal("Height of Grid2D should encompass layer count");
@@ -138,12 +147,14 @@ namespace ignis {
 
 	template<typename T, typename>
 	Texture::Info::Info(
-		const DataTexture3D<T> &val, GPUFormat format, GPUMemoryUsage usage
+		const DataTexture3D<T> &val,
+		GPUFormat format, GPUMemoryUsage usage
 	) : 
 		Info(
 			Vec3u16{ u16(val[0].size()[2]), u16(val[0].size()[1]), u16(val[0].size()[0]) }, 
 			format, usage, u8(val.size()), 1
-		) {
+		)
+	{
 
 		if((val[0].size() > u16_MAX).any())
 			oic::System::log()->fatal("Dimensions of texture have to be less than 65536");
@@ -168,7 +179,8 @@ namespace ignis {
 			isCubeArray ? TextureType::TEXTURE_CUBE_ARRAY : TextureType::TEXTURE_CUBE, 
 			Vec3u16{ u16(val[0].size()[1]), u16(val[0].size()[0] / layers), 1 }, 
 			format, usage, u8(val.size()), layers
-		) {
+		)
+	{
 
 		if (val[0].size()[0] % layers != 0)
 			oic::System::log()->fatal("Height of Grid2D should encompass layer count");

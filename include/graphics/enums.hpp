@@ -24,7 +24,7 @@ namespace ignis {
 	};
 
 	//0 = NONE
-	//& 0xC = GPUBuffer (0), ShaderBuffer (4), DrawBuffer (8)
+	//& 0xC = GPUBuffer (0), ShaderBuffer (4), DrawBuffer (8), Staging (16)
 	enum class GPUBufferType : u8 {
 
 		VERTEX				= 0x0,
@@ -37,15 +37,17 @@ namespace ignis {
 		INDIRECT_DRAW		= 0x8,
 		INDIRECT_DISPATCH,
 
-		PROPERTY_TYPE		= 0xC
+		STAGING				= 0x10,
+
+		PROPERTY_TYPE		= 0x1C
 	};
 
 	//This is a usage hint to how the GPU memory should behave:
 	//Flags: 
 	//& 1 = isShared		; is CPU accessible (!isShared = device local)
 	//& 2 = isPreferred		; requires heap to be the same (!isPreferred = use specified heap)
-	//& 4 = isGPUWritable	; can the resource be written to from the GPU?
-	//& 8 = isCPUWritable	; can the CPU update this or is it just an initialization
+	//& 4 = isGPUWritable	; if the resource can be written to from the GPU
+	//& 8 = isCPUAccessible	; if the cpu holds (extra) data for the resource (read/write)
 	enum class GPUMemoryUsage : u8 {
 
 		LOCAL				= 0x0,
@@ -55,10 +57,12 @@ namespace ignis {
 		PREFER				= 0x2,
 
 		GPU_WRITE			= 0x4,
-		CPU_WRITE			= 0x8
+		CPU_ACCESS			= 0x8,
+
+		FORCE_LINEAR_TILING	= CPU_ACCESS | REQUIRE | SHARED		//Incompatible with the 'prefer' flag
 	};
 
-	enumFlagOverloads(GPUMemoryUsage, u8);
+	enumFlagOverloads(GPUMemoryUsage);
 
 	//This is the topology that should be assembled
 	//Flags (& types):
@@ -144,7 +148,7 @@ namespace ignis {
 		VERTEX_FRAGMENT		= VERTEX | FRAGMENT
 	};
 
-	enumFlagOverloads(ShaderAccess, u8);
+	enumFlagOverloads(ShaderAccess);
 
 	//Rasterizer enums
 
@@ -171,8 +175,13 @@ namespace ignis {
 		BUFFER,			//All other buffer types
 
 		TEXTURE,
+		IMAGE,
 		SAMPLER,
-		COMBINED_SAMPLER
+		COMBINED_SAMPLER,
+
+		RT_STRUCTURE = 0x80,
+
+		PROPERTY_IS_FT = 0x80
 	};
 
 	//Types of textures and samplers
@@ -202,7 +211,7 @@ namespace ignis {
 		ENUM_END				= 0x10
 	};
 
-	enumFlagOverloads(TextureType, u8);
+	enumFlagOverloads(TextureType);
 
 	//& 0x03 = dimension (CUBE, 1D, 2D, 3D)
 	//& 0x04 = isMultisampled
@@ -231,7 +240,7 @@ namespace ignis {
 		PROPERTY_AS_TEXTURE		= 0x0F
 	};
 
-	enumFlagOverloads(SamplerType, u8);
+	enumFlagOverloads(SamplerType);
 
 	//Minification filter
 	//& 1 = useNearestFilter

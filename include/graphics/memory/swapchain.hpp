@@ -31,12 +31,8 @@ namespace ignis {
 
 		plimpl apimpl Swapchain(Graphics &g, const String &name, const Info &info);
 		plimpl apimpl void present();
-		plimpl apimpl void bind();
 
 		apimpl void onResize(const Vec2u32 &size);
-
-		apimpl void begin();
-		apimpl void end();
 
 		inline const Info &getInfo() const  { return info; }
 		inline Data *getData() const { return data; }

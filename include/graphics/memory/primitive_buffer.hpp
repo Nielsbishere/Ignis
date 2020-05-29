@@ -35,6 +35,7 @@ namespace ignis {
 
 		inline const BufferLayout &getVertexBuffer(usz i) const { return info.vertexLayout[i]; }
 		inline const BufferLayout &getIndexBuffer() const { return info.indexLayout; }
+		inline const List<BufferLayout> &getVertexBuffers() const { return info.vertexLayout; }
 
 		inline bool hasIndices() const { return indices(); }
 

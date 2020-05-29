@@ -96,6 +96,9 @@ namespace ignis {
 
 	Swapchain::~Swapchain() {
 
+		//Finish the thread
+		getGraphics().wait();
+
 		//Destroy all FBOs and VAOs
 
 		getGraphics().getData()->destroyContext();
@@ -110,8 +113,6 @@ namespace ignis {
 
 		destroy(data);
 	}
-
-	void Swapchain::bind() { }
 
 	void Swapchain::present() {
 		SwapBuffers(data->dc);

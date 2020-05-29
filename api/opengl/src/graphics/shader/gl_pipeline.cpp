@@ -5,6 +5,11 @@
 
 namespace ignis {
 
+	PipelineLayout::PipelineLayout(Graphics &g, const String &name, const Info &inf) :
+		GPUObject(g, name, GPUObjectType::PIPELINE_LAYOUT), info(inf) {}
+
+	PipelineLayout::~PipelineLayout() {}
+
 	Pipeline::Pipeline(Graphics &g, const String &name, const Info &info):
 		GPUObject(g, name, GPUObjectType::PIPELINE), info(info) { 
 
@@ -28,13 +33,12 @@ namespace ignis {
 			if ((u8(stage.first) & u8(ShaderStage::PROPERTY_IS_TECHNIQUE)) && !g.hasFeature(Feature::MESH_SHADERS))
 				oic::System::log()->fatal("Driver doesn't support mesh shaders");
 
-			if((u8(stage.first) & u8(ShaderStage::PROPERTY_IS_COMPUTE)) && info.stages.size() != 1)
-				oic::System::log()->fatal("Can't create a shader with mixed compute and graphics stages");
+			const Buffer &bin = info.binaries[stage.second.first];
 
-			String shaderName = NAME(name + " shader " + std::to_string(u8(stage.first)));
-			glObjectLabel(GL_SHADER, shader, GLsizei(shaderName.size()), shaderName.c_str());
-			glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, stage.second.data(), GLsizei(stage.second.size()));
-			glSpecializeShader(shader, "main", 0, nullptr, nullptr);
+			oicAssert("SPIR-V has to be 4-byte aligned", !(bin.size() & 3));
+
+			glShaderBinary(1, &shader, GL_SHADER_BINARY_FORMAT_SPIR_V, bin.data(), GLsizei(bin.size()));
+			glSpecializeShader(shader, stage.second.second.c_str(), 0, nullptr, nullptr);
 
 			String error;
 
