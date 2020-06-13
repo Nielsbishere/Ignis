@@ -52,4 +52,5 @@ namespace ignis {
 		Info info;
 	};
 
+	using ShaderBufferRef = GraphicsObjectRef<ShaderBuffer>;
 }

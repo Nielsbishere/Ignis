@@ -5,6 +5,10 @@
 
 namespace ignis {
 
+	namespace cmd {
+		class FlushBuffer;
+	}
+
 	enum class GPUBufferType : u8;
 	enum class GPUMemoryUsage : u8;
 
@@ -12,6 +16,7 @@ namespace ignis {
 
 		friend class CommandList;
 		friend class UploadBuffer;
+		friend class cmd::FlushBuffer;
 
 	public:
 
@@ -22,6 +27,9 @@ namespace ignis {
 
 			GPUBufferType type;
 			GPUMemoryUsage usage;
+
+			List<Vec2u64> pending;	//offset, size
+			bool markedPending{};
 
 			Info(u64 bufferSize, GPUBufferType type, GPUMemoryUsage usage);
 
@@ -44,11 +52,20 @@ namespace ignis {
 
 		u8 *getBuffer() const { return (u8*) info.initData.data(); }
 
+		void flush(u64 offset, u64 size);
+
 	protected:
+
+		void mergePending();
 
 		apimpl GPUBuffer(Graphics &g, const String &name, const Info &info, GPUObjectType type);
 
-		apimpl void flush(CommandList::Data *data, UploadBuffer *uploadBuffer, u64 offset, u64 size);
+		//Prepare for any data to be allocated that's needed
+		//Returns { 0, u64_MAX } if an upload buffer is not needed
+		apimpl Pair<u64, u64> prepare(CommandList::Data*, UploadBuffer*);
+
+		//Copy allocation from GPU to CPU
+		apimpl void flush(CommandList::Data*, UploadBuffer*, const Pair<u64, u64>&);
 
 		apimpl ~GPUBuffer();
 
@@ -58,4 +75,5 @@ namespace ignis {
 		Data *data;
 	};
 
+	using GPUBufferRef = GraphicsObjectRef<GPUBuffer>;
 }

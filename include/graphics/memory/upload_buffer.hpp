@@ -8,13 +8,16 @@ namespace ignis {
 	//It can automatically shrink & grow and handle multi threaded allocations
 	class UploadBuffer : public GPUObject {
 
+		friend class CommandList;
+		friend class Graphics;
+
 	public:
 
 		struct Allocation {
 
 			static constexpr u64 freeBit = 1_u64 << 63;
 
-			u64 offset{}, sizeAndFree{}, allocationId{}, bufferId{};
+			u64 offset{}, sizeAndFree{}, executionId{}, bufferId{};
 
 			inline bool isFree() const { return sizeAndFree >> 63; }
 			inline u64 getSize() const { return sizeAndFree << 1 >> 1; }
@@ -45,10 +48,15 @@ namespace ignis {
 		//Returns { 0, u64_MAX } if no allocation possible
 		Pair<u64, u64> allocate(u64 executionId, const u8 *data, const usz size, u32 alignment);
 
+		const Info &getInfo() const { return info; }
+
+	protected:
+
 		//Call when an execution has ended again, so the memory becomes available
 		void end(u64 executionId);
 
-		const Info &getInfo() const { return info; }
+		//Flush all allocations from the execution
+		void flush(CommandList::Data*, u64 executionId);
 
 	private:
 
@@ -58,4 +66,5 @@ namespace ignis {
 		Info info;
 	};
 
+	using UploadBufferRef = GraphicsObjectRef<UploadBuffer>;
 }

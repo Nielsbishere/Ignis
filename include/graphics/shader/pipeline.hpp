@@ -365,4 +365,6 @@ namespace ignis {
 	};
 
 	enumFlagOverloads(Pipeline::Flag);
+
+	using PipelineRef = GraphicsObjectRef<Pipeline>;
 }

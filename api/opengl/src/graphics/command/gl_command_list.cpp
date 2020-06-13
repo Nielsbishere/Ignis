@@ -1,5 +1,4 @@
 #include "graphics/command/command_list.hpp"
-#include "graphics/command/command_ops.hpp"
 #include "graphics/command/commands.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/memory/upload_buffer.hpp"
@@ -25,20 +24,30 @@ void ::glxSetViewport(ignis::GLContext &data, const Vec2u32 &size, const Vec2i32
 
 namespace ignis {
 
+	using namespace cmd;
+
 	CommandList::CommandList(Graphics &g, const String &name, const Info &info):
 		GPUObject(g, name, GPUObjectType::COMMAND_LIST), info(info) {}
 
-	CommandList::~CommandList() {}
+	CommandList::~CommandList() { clear(); }
 
 	void CommandList::execute() {
 
-		//Detect if contents are different, then revalidate command list
+		//Prepare commands for execution
 
-		for (u8 *ptr = (u8*)info.commandBuffer.data(), *end = ptr + info.next; ptr < end; ) {
-			Command *c = (Command*)ptr;
-			execute(c);
-			ptr += c->commandSize;
-		}
+		for (Command *c : info.commands)
+			c->prepare(getGraphics(), data);
+
+		//Push data to GPU
+
+		for (auto &gobj : getGraphics())
+			if (gobj.first.type == GPUObjectType::UPLOAD_BUFFER)
+				((UploadBuffer*)gobj.second)->flush(data, getGraphics().getData()->getContext().executionId);
+
+		//Execute commands
+
+		for (Command *c : info.commands)
+			c->execute(getGraphics(), data);
 	}
 
 	bool glxFixSize(GLContext &data, Vec2u32 &size, const Vec2i32 &offset) {
@@ -199,470 +208,305 @@ namespace ignis {
 		return true;
 	}
 
-	void CommandList::execute(Command *c) {
+	#define context g.getData()->getContext()
 
-		using namespace cmd;
+	//Binding and setting things in the context
 
-		auto &ctx = getGraphics().getData()->getContext();
+	void BindPipeline::execute(Graphics &g, CommandList::Data*) const {
 
-		switch (c->op) {
+		context.bound.pipeline = pipeline;
 
-			case CMD_BEGIN_FRAMEBUFFER: {
+		if(pipeline.null())
+			oic::System::log()->error("Invalid pipeline. Ignoring dispatch & draw calls");
+	}
 
-				auto *fb = ((BeginFramebuffer*)c)->bindObject.get<Framebuffer>();
+	void BindDescriptors::execute(Graphics &g, CommandList::Data*) const { context.bound.descriptors = descriptors; }
+	void BindPrimitiveBuffer::execute(Graphics &g, CommandList::Data*) const { context.bound.primitiveBuffer = primitiveBuffer; }
 
-				if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
-					oic::System::log()->error("Invalid framebuffer. Ignoring all calls that require it");
-					ctx.bound.framebuffer = nullptr;
-					break;
-				}
+	void SetStencil::execute(Graphics &g, CommandList::Data*) const { context.stencil = stencil; }
+	void SetClearDepth::execute(Graphics &g, CommandList::Data*) const { context.depth = depth; }
+	void SetClearColor::execute(Graphics &g, CommandList::Data*) const { context.clearColor = *this;}
+	void SetScissor::execute(Graphics &g, CommandList::Data*) const { context.bound.scissor = *this; }
+	void SetViewport::execute(Graphics &g, CommandList::Data*) const { context.bound.viewport = *this; }
 
-				ctx.bound.framebuffer = fb;
-				break;
-			}
+	void SetViewportAndScissor::execute(Graphics &g, CommandList::Data*) const { 
+		context.bound.viewport = (const SetViewport&)*this; 
+		context.bound.scissor = (const SetScissor&)*this; 
+	}
 
-			case CMD_END_FRAMEBUFFER:
-				ctx.bound.framebuffer = nullptr;
-				break;
+	//Begin / end
 
-			case CMD_SET_CLEAR_COLOR: 
-				ctx.clearColor = *(SetClearColor*)c;
-				break;
+	void BeginFramebuffer::execute(Graphics &g, CommandList::Data*) const { 
 
-			case CMD_SET_CLEAR_DEPTH:
-				ctx.depth = ((SetClearDepth*)c)->dataObject;
-				break;
+		Framebuffer *fb = framebuffer;
 
-			case CMD_SET_CLEAR_STENCIL:
-				ctx.stencil = ((SetClearStencil*)c)->dataObject;
-				break;
-
-			case CMD_CLEAR_IMAGE: {
-
-				const auto *ci = (ClearImage*)c;
-
-				const auto* tex = ci->texture.get<Texture>();
-
-				if (!tex) {
-					oic::System::log()->error("Clear image ignored; texture was invalid");
-					break;
-				}
-
-				if (!HasFlags(tex->getInfo().usage, GPUMemoryUsage::GPU_WRITE)) {
-					oic::System::log()->error("Clear image can only be invoked on GPU writable textures");
-					break;
-				}
-
-				Vec2u16 size = ci->size;
-
-				if (!size.all()) {
-
-					const Vec2i32 dif = tex->getInfo().dimensions.cast<Vec2i32>() - ci->offset.cast<Vec2i32>();
-
-					if (!(dif > Vec2i32{}).all()) {
-						oic::System::log()->error("All values of the size should be positive");
-						break;
-					}
-
-					size = dif.cast<Vec2u16>();
-				}
-
-				glxSetViewport(ctx, size.cast<Vec2u32>(), ci->offset.cast<Vec2i32>());
-
-				if (ctx.enableScissor) {
-					glDisable(GL_SCISSOR_TEST);
-					ctx.enableScissor = false;
-				}
-
-				for(u16 l = ci->slice; l < ci->slice + ci->slices; ++l)
-					for(u16 m = ci->mipLevels; m < ci->mipLevel + ci->mipLevels; ++m)
-						glxClearFramebuffer(
-							ctx, tex->getData()->framebuffer[size_t(l) * tex->getInfo().mips + m], 0, ctx.clearColor
-						);
-
-				break;
-			}
-
-			case CMD_CLEAR_BUFFER: {
-
-				auto *cb = (ClearBuffer*)c;
-				auto *buf = cb->buffer.get<GPUBuffer>();
-
-				if (!buf) {
-					oic::System::log()->error("Clear buffer ignored; buffer was invalid");
-					break;
-				}
-
-				if (!HasFlags(buf->getInfo().usage, GPUMemoryUsage::GPU_WRITE)) {
-					oic::System::log()->error("Clear buffer can only be invoked on GPU writable buffers");
-					break;
-				}
-
-				u64 size = cb->elements;
-				const u64 offset = cb->offset;
-
-				if (offset + size >= buf->size()) {
-					oic::System::log()->error("Clear buffer out of bounds");
-					break;
-				}
-
-				if (!size)
-					size = buf->size() - offset;
-
-				if (!size) break;
-
-				if (size & 3 || offset & 3) {
-					oic::System::log()->error("ClearBuffer can't clear individual bytes, only a scalar (4 bytes)");
-					break;
-				}
-
-				glClearNamedBufferSubData(
-					buf->getData()->handle,
-					GL_R32UI,
-					offset,
-					size,
-					GL_RED_INTEGER,
-					GL_UNSIGNED_INT,
-					nullptr
-				);
-
-				break;
-			}
-			
-			case CMD_CLEAR_FRAMEBUFFER: {
-
-				auto *cf = (ClearFramebuffer*)c;
-				Framebuffer *fb = cf->target.get<Framebuffer>();
-
-				if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
-					oic::System::log()->error("Invalid framebuffer. Ignoring clear call");
-					break;
-				}
-
-				auto *dat = fb->getData();
-
-				if (fb->getDepth()) {
-
-					bool depth = cf->clearFlags & ClearFramebuffer::DEPTH;
-
-					bool stencil = 
-						cf->clearFlags & ClearFramebuffer::STENCIL && 
-						FormatHelper::hasStencil(fb->getInfo().depthFormat);
-
-					if(ctx.currDepth.enableDepthWrite != true)
-						glDepthMask(ctx.currDepth.enableDepthWrite = true);
-
-					//TODO: Test stencil buffers, since they might need stencil write to be turned on
-
-					if(depth && stencil)
-						glClearNamedFramebufferfi(dat->handle, GL_DEPTH_STENCIL, 0, ctx.depth, ctx.stencil);
-
-					else {
-
-						if(depth)
-							glClearNamedFramebufferfv(dat->handle, GL_DEPTH, 0, &ctx.depth);
-
-						if (stencil)
-							glClearNamedFramebufferiv(dat->handle, GL_STENCIL, 0, &ctx.stencil);
-					}
-				}
-
-				if (cf->clearFlags & ClearFramebuffer::COLOR)
-					for (GLint i = 0, j = GLint(fb->size()); i < j; ++i)
-						glxClearFramebuffer(ctx, dat->handle, i, ctx.clearColor);
-
-				break;
-			}
-
-			case CMD_SET_SCISSOR:
-				ctx.bound.scissor = *(SetScissor*)c;
-				break;
-
-			case CMD_SET_VIEWPORT:
-				ctx.bound.viewport = *(SetViewport*)c;
-				break; 
-
-			case CMD_SET_VIEWPORT_AND_SCISSOR:
-				ctx.bound.scissor = *(SetScissor*)c;
-				ctx.bound.viewport = *(SetViewport*)c;
-				break; 
-
-			case CMD_BIND_PRIMITIVE_BUFFER:
-				ctx.bound.primitiveBuffer = (((BindPrimitiveBuffer*)c)->bindObject).get<PrimitiveBuffer>();
-				break;
-
-			case CMD_BIND_PIPELINE:
-
-				ctx.bound.pipeline = ((BindPipeline*)c)->bindObject.get<Pipeline>();
-
-				if(!ctx.bound.pipeline)
-					oic::System::log()->error("Invalid pipeline. Ignoring dispatch & draw calls");
-
-				break;
-
-			case CMD_BIND_DESCRIPTORS:
-				ctx.bound.descriptors = ((BindDescriptors*)c)->bindObject.get<Descriptors>();
-				break;
-
-			case CMD_DRAW_INSTANCED: {
-
-				if (!glxPrepareGraphicsPipeline(ctx)) {
-					oic::System::log()->error("Draw instanced call ignored because the graphics pipeline wasn't valid");
-					break;
-				}
-
-				auto topo = glxTopologyMode(ctx.bound.pipeline->getInfo().topology);
-				auto *di = (DrawInstanced*) c;
-
-				if (di->isIndexed) {
-
-					if(!ctx.bound.primitiveBuffer) {
-						oic::System::log()->error("Primitive buffer is required for indexed drawing");
-						break;
-					}
-
-					glDrawElementsInstancedBaseVertexBaseInstance(
-						topo,
-						di->count,
-						glxGpuFormatType(ctx.bound.primitiveBuffer->getIndexFormat()),
-						(void*)(
-							usz(di->start) * 
-							FormatHelper::getSizeBytes(ctx.bound.primitiveBuffer->getIndexFormat())
-						),
-						di->instanceCount,
-						di->vertexStart,
-						di->instanceStart
-					);
-				}
-
-				else glDrawArraysInstancedBaseInstance(
-					topo,
-					di->start,
-					di->count,
-					di->instanceCount,
-					di->instanceStart
-				);
-
-				break;
-			}
-
-			case CMD_DISPATCH: {
-
-				if (!glxPrepareComputePipeline(ctx)) {
-					oic::System::log()->error("Dispatch issued without compute pipeline");
-					break;
-				}
-
-				Vec3u32 threads = ((Dispatch*)c)->threadCount;
-				Vec3u32 count = ctx.bound.pipeline->getInfo().groupSize;
-
-				Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
-
-				if ((threads % count).any())
-					oic::System::log()->performance(
-						"Thread count was incompatible with compute shader "
-						"this is fixed by the runtime, but could provide out of "
-						"bounds texture writes or reads"
-					);
-
-				glDispatchCompute(groups.x, groups.y, groups.z);
-				break;
-			}
-
-			case CMD_DISPATCH_INDIRECT: {
-
-				if (!glxPrepareComputePipeline(ctx)) {
-					oic::System::log()->error("Dispatch indirect issued without compute pipeline");
-					break;
-				}
-
-				auto *di = (DispatchIndirect*) c;
-				auto *buf = di->buffer.get<GPUBuffer>();
-
-				if (!buf) {
-					oic::System::log()->error("No indirect buffer bound!");
-					break;
-				}
-
-				GLuint buffer = buf->getData()->handle;
-
-				if(buf->size() % 16)
-					oic::System::log()->fatal("Buffer should be 16-byte aligned!");
-
-				if (ctx.boundObjects[GL_DISPATCH_INDIRECT_BUFFER] != di->buffer) {
-					glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, buffer);
-					ctx.boundObjects[GL_DISPATCH_INDIRECT_BUFFER] = di->buffer;
-				}
-
-				glDispatchComputeIndirect(GLintptr(di->offset) * 16);
-
-				break;
-			}
-
-			#ifndef NDEBUG
-
-				case CMD_DEBUG_START_REGION: {
-
-					auto *sr = (DebugStartRegion*)c;
-
-					glPushDebugGroup(
-						GL_DEBUG_SOURCE_APPLICATION,
-						0,
-						GLsizei(sr->size()),
-						sr->string
-					);
-
-					break;
-				}
-
-				case CMD_DEBUG_END_REGION:
-					glPopDebugGroup();
-					break;
-
-				case CMD_DEBUG_INSERT_MARKER: {
-
-					auto *im = (DebugInsertMarker*)c;
-
-					glDebugMessageInsert(
-						GL_DEBUG_SOURCE_APPLICATION,
-						GL_DEBUG_TYPE_MARKER,
-						0,
-						GL_DEBUG_SEVERITY_NOTIFICATION,
-						GLsizei(im->size()),
-						im->string
-					);
-
-					break;
-				}
-
-			#else
-
-				case CMD_DEBUG_START_REGION:
-				case CMD_DEBUG_END_REGION:
-				case CMD_DEBUG_INSERT_MARKER:
-					oic::System::log()->performance("Using debug GPU instructions in release mode costs performance");
-					break;
-
-			#endif
-
-			case CMD_FLUSH_BUFFER: {
-
-				auto *fb = (FlushBuffer*)c;
-
-				auto *uploadBuffer = fb->uploadBuffer.get<UploadBuffer>();
-
-				if (fb->type == FlushBuffer::PRIMITIVE_BUFFER) {
-
-					PrimitiveBuffer *buf = fb->buffer.get<PrimitiveBuffer>();
-
-					if (!buf) {
-						oic::System::log()->error("Flush buffer called without buffer");
-						break;
-					}
-
-					auto &buffers = buf->getVertexBuffers();
-
-					for(auto &b : buffers)
-						b.buffer->flush(data, uploadBuffer, b.bufferOffset, b.size());
-
-					auto &index = buf->getIndexBuffer();
-
-					if (index.buffer)
-						index.buffer->flush(data, uploadBuffer, index.bufferOffset, index.size());
-
-					break;
-				}
-
-				else if (fb->type != FlushBuffer::REGULAR) {
-
-					PrimitiveBuffer *buf = fb->buffer.get<PrimitiveBuffer>();
-
-					if (!buf) {
-						oic::System::log()->error("Flush primitive buffer called without buffer");
-						break;
-					}
-
-					if (fb->type == FlushBuffer::INDEX) {
-
-						if (!buf->hasIndices()) {
-							oic::System::log()->error("Flush index buffer called without indices");
-							break;
-						}
-
-						auto &ibo = buf->getIndexBuffer();
-
-						if (ibo.stride() * (fb->offset + fb->elements) > ibo.size()) {
-							oic::System::log()->error("Flush index buffer out of bounds");
-							break;
-						}
-
-						auto bufferStart = ibo.stride() * fb->offset;
-
-						ibo.buffer->flush(data, uploadBuffer, ibo.bufferOffset + bufferStart, fb->elements ? ibo.stride() * fb->elements : ibo.size() - bufferStart);
-
-						break;
-					}
-
-					auto &buffers = buf->getVertexBuffers();
-
-					for (auto &b : buffers) {
-
-						if (b.stride() * (fb->offset + fb->elements) > b.size()) {
-							oic::System::log()->error("Flush vertex buffer out of bounds");
-							break;
-						}
-
-						auto bufferStart = b.stride() * fb->offset;
-
-						b.buffer->flush(data, uploadBuffer, b.bufferOffset + bufferStart, fb->elements ? b.stride() * fb->elements : b.size() - bufferStart);
-					}
-
-					break;
-				}
-
-				GPUBuffer *buf = dynamic_cast<GPUBuffer*>(fb->buffer.get<GPUObject>());
-
-				if (!buf) {
-					oic::System::log()->error("Flush buffer called without buffer");
-					break;
-				}
-
-				if (fb->offset + fb->elements > buf->size()) {
-					oic::System::log()->error("Flush buffer out of bounds");
-					break;
-				}
-
-				buf->flush(data, uploadBuffer, fb->offset, fb->elements ? fb->elements : buf->size() - fb->offset);
-				break;
-			}
-
-			case CMD_FLUSH_IMAGE: {
-
-				auto *fi = (FlushImage*)c;
-
-				Texture *tex = fi->image.get<Texture>();
-
-				if (!tex) {
-					oic::System::log()->error("Flush image called without texture");
-					break;
-				}
-
-				tex->flush(data, fi->uploadBuffer.get<UploadBuffer>(), fi->mipStart, fi->mipCount);
-				break;
-			}
-
-			case CMD_TRACE_RAYS_FT_2:
-			case CMD_BUILD_ACCELERATION_STRUCTURE_FT_2:
-			case CMD_COPY_ACCELERATION_STRUCTURE_FT_2:
-			case CMD_WRITE_ACCELERATION_STRUCTURE_PROPERTIES_FT_2:
-				oic::System::log()->error("Raytracing isn't supported in OpenGL, please compile using an API that supports it");
-				break;
-
-			default:
-				oic::System::log()->error("Unsupported operation");
-
+		if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
+			oic::System::log()->error("Invalid framebuffer. Ignoring all calls that require it");
+			context.bound.framebuffer = nullptr;
+			return;
 		}
 
+		context.bound.framebuffer = fb; 
 	}
+
+	void EndFramebuffer::execute(Graphics &g, CommandList::Data*) const { context.bound.framebuffer = nullptr; }
+
+	//Draw and dispatches
+
+	void DrawInstanced::execute(Graphics &g, CommandList::Data*) const {
+	
+		auto &ctx = context;
+
+		if (!glxPrepareGraphicsPipeline(ctx)) {
+			oic::System::log()->error("Draw instanced call ignored because the graphics pipeline wasn't valid");
+			return;
+		}
+
+		auto topo = glxTopologyMode(ctx.bound.pipeline->getInfo().topology);
+
+		if (isIndexed) {
+
+			if(!ctx.bound.primitiveBuffer) {
+				oic::System::log()->error("Primitive buffer is required for indexed drawing");
+				return;
+			}
+
+			glDrawElementsInstancedBaseVertexBaseInstance(
+				topo,
+				count,
+				glxGpuFormatType(ctx.bound.primitiveBuffer->getIndexFormat()),
+				(void*)(
+					usz(start) * 
+					FormatHelper::getSizeBytes(ctx.bound.primitiveBuffer->getIndexFormat())
+				),
+				instanceCount,
+				vertexStart,
+				instanceStart
+			);
+		}
+
+		else glDrawArraysInstancedBaseInstance(
+			topo,
+			start,
+			count,
+			instanceCount,
+			instanceStart
+		);
+	}
+
+	void Dispatch::execute(Graphics &g, CommandList::Data*) const {
+
+		auto &ctx = context;
+
+		if (!glxPrepareComputePipeline(ctx)) {
+			oic::System::log()->error("Dispatch issued without compute pipeline");
+			return;
+		}
+
+		const Vec3u32 &threads = threadCount;
+		Vec3u32 count = ctx.bound.pipeline->getInfo().groupSize;
+
+		Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
+
+		if ((threads % count).any())
+			oic::System::log()->performance(
+				"Thread count was incompatible with compute shader "
+				"this is fixed by the runtime, but could provide out of "
+				"bounds texture writes or reads"
+			);
+
+		glDispatchCompute(groups.x, groups.y, groups.z);
+	}
+
+	void DispatchIndirect::execute(Graphics &g, CommandList::Data*) const {
+
+		auto &ctx = context;
+
+		if (!glxPrepareComputePipeline(ctx)) {
+			oic::System::log()->error("Dispatch indirect issued without compute pipeline");
+			return;
+		}
+
+		GPUBuffer *buf = buffer;
+
+		if (!buf) {
+			oic::System::log()->error("No indirect buffer bound!");
+			return;
+		}
+
+		GLuint handle = buf->getData()->handle;
+
+		if(buf->size() % 16)
+			oic::System::log()->fatal("Buffer should be 16-byte aligned!");
+
+		if (ctx.boundObjects[GL_DISPATCH_INDIRECT_BUFFER] != buf->getId()) {
+			glBindBuffer(GL_DISPATCH_INDIRECT_BUFFER, handle);
+			ctx.boundObjects[GL_DISPATCH_INDIRECT_BUFFER] = buf->getId();
+		}
+
+		glDispatchComputeIndirect(GLintptr(offset));
+	}
+
+	//Clearing
+
+	void ClearFramebuffer::execute(Graphics &g, CommandList::Data*) const {
+	
+		auto &ctx = context;
+		Framebuffer *fb = ctx.bound.framebuffer;
+
+		if (!fb || !fb->getInfo().size.x || !fb->getInfo().size.y) {
+			oic::System::log()->error("Invalid framebuffer. Ignoring clear call");
+			return;
+		}
+
+		auto *dat = fb->getData();
+
+		if (fb->getDepth()) {
+
+			bool depth = clearFlags & ClearFramebuffer::DEPTH;
+
+			bool stencil = 
+				clearFlags & ClearFramebuffer::STENCIL && 
+				FormatHelper::hasStencil(fb->getInfo().depthFormat);
+
+			if(ctx.currDepth.enableDepthWrite != true)
+				glDepthMask(ctx.currDepth.enableDepthWrite = true);
+
+			//TODO: Test stencil buffers, since they might need stencil write to be turned on
+
+			if(depth && stencil)
+				glClearNamedFramebufferfi(dat->handle, GL_DEPTH_STENCIL, 0, ctx.depth, ctx.stencil);
+
+			else {
+
+				if(depth)
+					glClearNamedFramebufferfv(dat->handle, GL_DEPTH, 0, &ctx.depth);
+
+				if (stencil)
+					glClearNamedFramebufferiv(dat->handle, GL_STENCIL, 0, &ctx.stencil);
+			}
+		}
+
+		if (clearFlags & ClearFramebuffer::COLOR)
+			for (GLint i = 0, j = GLint(fb->size()); i < j; ++i)
+				glxClearFramebuffer(ctx, dat->handle, i, ctx.clearColor);
+
+	}
+
+	void ClearImage::execute(Graphics &g, CommandList::Data*) const {
+
+		if (!texture) {
+			oic::System::log()->error("Clear image ignored; texture was invalid");
+			return;
+		}
+
+		if (!HasFlags(texture->getInfo().usage, GPUMemoryUsage::GPU_WRITE)) {
+			oic::System::log()->error("Clear image can only be invoked on GPU writable textures");
+			return;
+		}
+
+		Vec2u16 siz = size;
+
+		if (!size.all()) {
+
+			const Vec2i32 dif = texture->getInfo().dimensions.cast<Vec2i32>() - offset.cast<Vec2i32>();
+
+			if (!(dif > Vec2i32{}).all()) {
+				oic::System::log()->error("All values of the size should be positive");
+				return;
+			}
+
+			siz = dif.cast<Vec2u16>();
+		} 
+
+		auto &ctx = context;
+
+		glxSetViewport(ctx, siz.cast<Vec2u32>(), offset.cast<Vec2i32>());
+
+		if (ctx.enableScissor) {
+			glDisable(GL_SCISSOR_TEST);
+			ctx.enableScissor = false;
+		}
+
+		for(u16 l = slice; l < slice + slices; ++l)
+			for(u16 m = mipLevels; m < mipLevel + mipLevels; ++m)
+				glxClearFramebuffer(
+					ctx, texture->getData()->framebuffer[size_t(l) * texture->getInfo().mips + m], 0, ctx.clearColor
+				);
+	}
+
+	void ClearBuffer::execute(Graphics&, CommandList::Data*) const {
+	
+		if (!buffer) {
+			oic::System::log()->error("Clear buffer ignored; buffer was invalid");
+			return;
+		}
+
+		if (!HasFlags(buffer->getInfo().usage, GPUMemoryUsage::GPU_WRITE)) {
+			oic::System::log()->error("Clear buffer can only be invoked on GPU writable buffers");
+			return;
+		}
+
+		u64 size = elements;
+
+		if (offset + size >= buffer->size()) {
+			oic::System::log()->error("Clear buffer out of bounds");
+			return;
+		}
+
+		if (!size)
+			size = buffer->size() - offset;
+
+		if (!size) return;
+
+		if (size & 3 || offset & 3) {
+			oic::System::log()->error("ClearBuffer can't clear individual bytes, only a scalar (4 bytes)");
+			return;
+		}
+
+		glClearNamedBufferSubData(
+			buffer->getData()->handle,
+			GL_R32UI,
+			offset, size,
+			GL_RED_INTEGER, GL_UNSIGNED_INT,
+			nullptr
+		);
+	}
+
+	//Debugging
+
+	#ifndef NDEBUG
+
+		void DebugStartRegion::execute(Graphics&, CommandList::Data*) const {
+			glPushDebugGroup(
+				GL_DEBUG_SOURCE_APPLICATION,
+				0,
+				GLsizei(name.size()),
+				name.c_str()
+			);
+		}
+
+		void DebugInsertMarker::execute(Graphics&, CommandList::Data*) const {
+			glDebugMessageInsert(
+				GL_DEBUG_SOURCE_APPLICATION,
+				GL_DEBUG_TYPE_MARKER,
+				0,
+				GL_DEBUG_SEVERITY_NOTIFICATION,
+				GLsizei(name.size()),
+				name.c_str()
+			);
+		}
+
+		void DebugEndRegion::execute(Graphics&, CommandList::Data*) const {
+			glPopDebugGroup();
+		}
+
+	#else
+
+		void DebugStartRegion::execute(Graphics&, CommandList::Data*) const { }
+		void DebugInsertMarker::execute(Graphics&, CommandList::Data*) const { }
+		void DebugEndRegion::execute(Graphics&, CommandList::Data*) const { }
+
+	#endif
 
 }

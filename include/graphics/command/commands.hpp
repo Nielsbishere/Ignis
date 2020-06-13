@@ -1,6 +1,11 @@
 #pragma once
 #include "graphics/command/command_list.hpp"
-#include "graphics/command/command_ops.hpp"
+#include "graphics/shader/pipeline.hpp"
+#include "graphics/shader/descriptors.hpp"
+#include "graphics/memory/framebuffer.hpp"
+#include "graphics/memory/texture.hpp"
+#include "graphics/memory/primitive_buffer.hpp"
+#include "graphics/memory/upload_buffer.hpp"
 #include "types/vec.hpp"
 #include <cstring>
 
@@ -20,46 +25,77 @@ namespace ignis {
 
 	namespace cmd {
 
-		//Basic commands
+		//Basic bind commands
 
-		template<CommandOp opCode>
-		struct NoParamOp : public Command {
-			NoParamOp(): Command(opCode, sizeof(*this)) {}
+		class BindPipeline : public Command {
+
+			PipelineRef pipeline;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			BindPipeline(Pipeline *pipeline): pipeline(pipeline) {}
 		};
 
-		template<CommandOp opCode, typename BindObject>
-		struct GraphicsObjOp : public Command {
+		class BindDescriptors : public Command {
 
-			GPUObjectId bindObject;
+			DescriptorsRef descriptors;
 
-			GraphicsObjOp(const BindObject *bindObject, usz size = 0): 
-				Command(opCode, size == 0 ? sizeof(*this) : size), 
-				bindObject(getGPUObjectId(bindObject)) {}
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			BindDescriptors(Descriptors *descriptors): descriptors(descriptors) {}
 		};
 
-		using BindPipeline			= GraphicsObjOp<CMD_BIND_PIPELINE, Pipeline>;
-		using BindDescriptors		= GraphicsObjOp<CMD_BIND_DESCRIPTORS, Descriptors>;
-		using BeginFramebuffer		= GraphicsObjOp<CMD_BEGIN_FRAMEBUFFER, Framebuffer>;
-		using BindPrimitiveBuffer	= GraphicsObjOp<CMD_BIND_PRIMITIVE_BUFFER, PrimitiveBuffer>;
+		class BindPrimitiveBuffer : public Command {
 
-		/*using BeginQuery			= GraphicsObjOp<CMD_BEGIN_QUERY,			Query>;
-		using EndQuery				= NoParamOp<CMD_END_QUERY>;*/
-		using EndFramebuffer		= NoParamOp<CMD_END_FRAMEBUFFER>;
+			PrimitiveBufferRef primitiveBuffer;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			BindPrimitiveBuffer(PrimitiveBuffer *primitiveBuffer): primitiveBuffer(primitiveBuffer) {}
+		};
+
+		//Basic begin/end commands
+
+		class BeginFramebuffer : public Command {
+
+			FramebufferRef framebuffer;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			BeginFramebuffer(Framebuffer *framebuffer): framebuffer(framebuffer) {}
+		};
+
+		class EndFramebuffer : public Command {
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+		};
+
+		//TODO: Begin/end query
 
 		//Draw/dispatch commands
 
 		//Indexed or non-indexed; instanced draw call
 		//DrawInstanced(...) for non-indexed
 		//DrawInstanced::indexed() for indexed
-		struct DrawInstanced : public Command {
+		class DrawInstanced : public Command {
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
 
 			u32 start, count, instanceCount, instanceStart, vertexStart;
 			bool isIndexed;
 
+		public:
+
 			DrawInstanced(
 				u32 count, u32 instanceCount = 1, u32 start = 0, u32 instanceStart = 0
 			): 
-				Command(CMD_DRAW_INSTANCED, sizeof(*this)),
 				start(start), count(count), instanceCount(instanceCount), 
 				instanceStart(instanceStart), vertexStart(), isIndexed(false) {}
 
@@ -73,48 +109,69 @@ namespace ignis {
 
 		//Dispatch calls
 
-		struct Dispatch : public Command {
+		class Dispatch : public Command {
 
 			Vec3u32 threadCount;
 
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
 			Dispatch(u32 threads) :
-				Command(CMD_DISPATCH, sizeof(*this)),
 				threadCount { threads, 1, 1 } {}
 
 			Dispatch(const Vec2u32 &threads) :
-				Command(CMD_DISPATCH, sizeof(*this)),
 				threadCount { threads.x, threads.y, 1 } {}
 
 			Dispatch(const Vec3u32 &threads) :
-				Command(CMD_DISPATCH, sizeof(*this)),
 				threadCount(threads) {}
 
 		};
 
-		struct DispatchIndirect : public Command {
+		class DispatchIndirect : public Command {
 
-			GPUObjectId buffer;
-			u32 offset;			//in dispatch indirect instructions
+			GPUBufferRef buffer;
+			u64 offset;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
 
 			DispatchIndirect(GPUBuffer *buffer, u32 offset = 0) :
-				Command(CMD_DISPATCH_INDIRECT, sizeof(*this)),
-				buffer(getGPUObjectId(buffer)),
-				offset(offset) {}
+				buffer(buffer),
+				offset(offset << 4_u64) {}
 
 		};
 
 		//Setting values
 
-		template<CommandOp opCode, typename DataObject>
-		struct DataOp : public Command {
-			DataObject dataObject;
-			DataOp(DataObject dataObject): Command(opCode, sizeof(*this)), dataObject(dataObject) {}
+		class SetStencil : public Command {
+
+			u8 stencil;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			SetStencil(u8 stencil): stencil(stencil) {}
 		};
 
-		using SetClearStencil		= DataOp<CMD_SET_CLEAR_STENCIL,			u8>;
-		using SetClearDepth			= DataOp<CMD_SET_CLEAR_DEPTH,			f32>;
+		class SetClearDepth : public Command {
+
+			f32 depth;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			SetClearDepth(f32 depth): depth(depth) {}
+		};
 
 		struct SetClearColor : public Command {
+
+			enum class Type : u8 {
+				FLOAT, UNSIGNED_INT, SIGNED_INT
+			};
 
 			union {
 				Vec4f32 rgbaf;
@@ -122,43 +179,60 @@ namespace ignis {
 				Vec4i32 rgbai;
 			};
 
-			enum class Type : u8 {
-				FLOAT, UNSIGNED_INT, SIGNED_INT
-			} type;
+			Type type;
 
-			SetClearColor() : SetClearColor(Vec4f32()) {}
+			SetClearColor(): SetClearColor(Vec4f32()) {}
+			SetClearColor(const Vec4f32 &rgba): rgbaf(rgba), type(Type::FLOAT) {}
+			SetClearColor(const Vec4u32 &rgba): rgbau(rgba), type(Type::UNSIGNED_INT) {}
+			SetClearColor(const Vec4i32 &rgba): rgbai(rgba), type(Type::SIGNED_INT) {}
 
-			SetClearColor(const Vec4f32 &rgba): 
-				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbaf(rgba), type(Type::FLOAT) {}
+		private:
 
-			SetClearColor(const Vec4u32 &rgba): 
-				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbau(rgba), type(Type::UNSIGNED_INT) {}
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
 
-			SetClearColor(const Vec4i32 &rgba): 
-				Command(CMD_SET_CLEAR_COLOR, sizeof(*this)), rgbai(rgba), type(Type::SIGNED_INT) {}
 		};
 
-		template<CommandOp opCode>
 		struct SetViewRegion : public Command {
 
 			Vec2i32 offset;
 			Vec2u32 dim;
 
-			SetViewRegion(const Vec2u32 &dim = {}, const Vec2i32 &offset = {}) :
-				Command(opCode, sizeof(*this)),
-				offset(offset), dim(dim) {}
+		protected:
+
+			SetViewRegion(const Vec2u32 &dim, const Vec2i32 &offset): offset(offset), dim(dim) {}
 		};
 
-		using SetScissor = SetViewRegion<CMD_SET_SCISSOR>;
-		using SetViewport = SetViewRegion<CMD_SET_VIEWPORT>;
-		using SetViewportAndScissor = SetViewRegion<CMD_SET_VIEWPORT_AND_SCISSOR>;
+		class SetScissor : public SetViewRegion {
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			SetScissor(const Vec2u32 &dim = {}, const Vec2i32 &offset = {}) : SetViewRegion(dim, offset) {}
+		};
+
+		class SetViewport : public SetViewRegion {
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			SetViewport(const Vec2u32 &dim = {}, const Vec2i32 &offset = {}) : SetViewRegion(dim, offset) {}
+		};
+
+		class SetViewportAndScissor : public SetViewRegion {
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			SetViewportAndScissor(const Vec2u32 &dim = {}, const Vec2i32 &offset = {}) : SetViewRegion(dim, offset) {}
+		};
 
 		//Copy commands
 
 		//Clears framebuffer to the clear color/depth/stencil (depending on the flags you set)
 		struct ClearFramebuffer : Command {
-
-			GPUObjectId target;
 
 			enum ClearFlags : u8 {
 				COLOR = 1,
@@ -166,124 +240,163 @@ namespace ignis {
 				STENCIL = 4,
 				DEPTH_STENCIL = 6,
 				ALL = 7
-			} clearFlags;
+			};
 
-			ClearFramebuffer(Framebuffer *target, ClearFlags clearFlags = ClearFlags::ALL) :
-				Command(CMD_CLEAR_FRAMEBUFFER, sizeof(*this)), target(getGPUObjectId(target)), clearFlags(clearFlags) {}
+		private:
+
+			ClearFlags clearFlags;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			ClearFramebuffer(ClearFlags clearFlags = ALL): clearFlags(clearFlags) {}
 		};
 
 		//Clears image to the clear color (like framebuffer)
-		struct ClearImage : Command {
+		class ClearImage : Command {
 
-			GPUObjectId texture;
+			TextureRef texture;
 			Vec2i16 offset;
 			Vec2u16 size;
 			u16 mipLevel, mipLevels;
 			u16 slice, slices;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
 
 			ClearImage(
 				Texture *texture,
 				u16 mipLevel = {}, u16 mipLevels = {}, u16 slice = {}, u16 slices = {},
 				const Vec2u16 &size = {}, const Vec2i16 &offset = {}
 			) :
-				Command(CMD_CLEAR_IMAGE, sizeof(*this)), 
-				texture(getGPUObjectId(texture)), mipLevel(mipLevel), slice(slice),
+				texture(texture), mipLevel(mipLevel), slice(slice),
 				offset(offset), size(size), slices(slices ? slices : 1), mipLevels(mipLevels ? mipLevels : 1) {}
-
 		};
 
 		//Clears buffer to zero
-		struct ClearBuffer : Command {
+		class ClearBuffer : Command {
 
-			GPUObjectId buffer;
+			GPUBufferRef buffer;
 			u64 offset, elements;
 
-			ClearBuffer(GPUBuffer *buffer, u64 offset = 0, u64 elements = 0) :
-				Command(CMD_CLEAR_BUFFER, sizeof(*this)),
-				buffer(getGPUObjectId(buffer)), offset(offset), elements(elements) {}
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
 
+		public:
+
+			ClearBuffer(GPUBuffer *buffer, u64 offset = 0, u64 elements = 0) :
+				buffer(buffer), offset(offset), elements(elements) {}
 		};
 
 		//Transfer calls
 
-		struct FlushBuffer : Command {
+		class FlushBuffer : Command {
 
-			GPUObjectId buffer, uploadBuffer;
+			GPUBufferRef gbuffer;
+			PrimitiveBufferRef pbuffer;
 
-			u64 offset, elements;
+			UploadBufferRef uploadBuffer;
 
-			enum Type : u8 {
-				
-				REGULAR,
-				INDEX,
-				VERTEX,
-				PRIMITIVE_BUFFER
+			List<Pair<u64, u64>> flushedRanges;
 
-			} type{};
+			apimpl void prepare(Graphics&, CommandList::Data*) final override;
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
 
-			FlushBuffer(GPUBuffer *buffer, UploadBuffer *uploadBuffer, u64 offset = 0, u64 elements = 0):
-				Command(CMD_FLUSH_BUFFER, sizeof(*this)), 
-				buffer(getGPUObjectId(buffer)), uploadBuffer(getGPUObjectId(uploadBuffer)),
-				offset(offset), elements(elements) {}
+		public:
 
-			FlushBuffer(PrimitiveBuffer *buffer, UploadBuffer *uploadBuffer, bool isIndex , u64 elementOffset = 0, u64 elementSize = 0):
-				Command(CMD_FLUSH_BUFFER, sizeof(*this)), 
-				buffer(getGPUObjectId(buffer)), uploadBuffer(getGPUObjectId(uploadBuffer)),
-				offset(elementOffset), elements(elementSize), type(isIndex ? INDEX : VERTEX) {}
+			FlushBuffer(GPUBuffer *buffer, UploadBuffer *uploadBuffer):
+				gbuffer(buffer), uploadBuffer(uploadBuffer) {}
 
 			FlushBuffer(PrimitiveBuffer *buffer, UploadBuffer *uploadBuffer):
-				Command(CMD_FLUSH_BUFFER, sizeof(*this)), 
-				buffer(getGPUObjectId(buffer)), uploadBuffer(getGPUObjectId(uploadBuffer)),
-				offset(), elements(), type(PRIMITIVE_BUFFER) {}
+				pbuffer(buffer), uploadBuffer(uploadBuffer) {}
 
 		};
 
-		struct FlushImage : Command {
+		class FlushImage : Command {
 
-			GPUObjectId image, uploadBuffer;
+			TextureRef image;
+			UploadBufferRef uploadBuffer;
 
-			u8 mipStart, mipCount;
+			Pair<u64, u64> flushedRange;
+
+			apimpl void prepare(Graphics&, CommandList::Data*) final override;
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
 
 			//Command for flushing CPU data to the GPU
 			//ringBuffer must be non zero if the resource isn't allocated in shared memory (is queryable on Texture)
 			//GPU memory must be accessible
 			//
-			FlushImage(Texture *tex, UploadBuffer *uploadBuffer, u8 mipStart = 0, u8 mipCount = 0):
-				Command(CMD_FLUSH_IMAGE, sizeof(*this)), 
-				image(getGPUObjectId(tex)), uploadBuffer(getGPUObjectId(uploadBuffer)),
-				mipStart(mipStart), mipCount(mipCount ? mipCount : 1) {}
+			FlushImage(Texture *tex, UploadBuffer *uploadBuffer):
+				image(tex), uploadBuffer(uploadBuffer) {}
 
 		};
 		
 		//Debug calls
 
-		template<CommandOp opCode, usz maxStringLength = 64>
-		struct DebugOp : public Command {
+		class DebugMarkerCommand : public DebugCommand {
 
-			c8 string[maxStringLength];
-			Vec4f32 colorExt;				//Sometimes color coding your markers is allowed by the API
+		protected:
 
-			DebugOp(const String &str, const Vec4f32 &colorExt = Vec4f32(1, 0, 0, 1)):
-				Command(opCode, sizeof(*this)), string{}, colorExt(colorExt) {
-			
-				if (str.size() > maxStringLength)
-					oic::System::log()->fatal("Couldn't add debug operation; string is too big");
+			String name;
+			Vec4f32 colorExt;	//Sometimes color coding your markers is allowed by the API
 
-				memcpy(string, str.data(), str.size());
-			}
+		public:
 
-			inline usz size() const {
-				usz size = std::strlen(string);
-				return size >= maxStringLength ? maxStringLength : size;
-			}
+			DebugMarkerCommand(const String &str, const Vec4f32 &colorExt) :
+				name(str), colorExt(colorExt) {}
+		};
+
+		class DebugStartRegion : public DebugMarkerCommand {
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			DebugStartRegion(const String &str, const Vec4f32 &colorExt = Vec4f32(1, 0, 0, 1)) :
+				DebugMarkerCommand(str, colorExt) {}
+		};
+
+		class DebugInsertMarker : public DebugMarkerCommand {
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			DebugInsertMarker(const String &str, const Vec4f32 &colorExt = Vec4f32(1, 0, 0, 1)) :
+				DebugMarkerCommand(str, colorExt) {}
+		};
+
+		class DebugEndRegion : public DebugCommand {
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+		};
+
+		//Extensions
+
+		/*
+
+		class TODO: RTTraceFt : public CommandFt {
+
+			ShaderBindingTable shaderBindingTable;
+
+			List<usz> raygenEntries, missEntries, hitShaders, callableShaders;
+
+			Vec3u32 dimensions;
+
+			apimpl void execute(Graphics&, CommandList::Data*) const final override;
+
+		public:
+
+			RTTraceFt(const Vec3u32 &dim): CommandFt(Feature::RAY_TRACING), dimensions(dim) {}
 
 		};
 
-		using DebugStartRegion		= DebugOp<CMD_DEBUG_START_REGION>;
-		using DebugInsertMarker		= DebugOp<CMD_DEBUG_INSERT_MARKER>;
-		using DebugEndRegion		= NoParamOp<CMD_DEBUG_END_REGION>;
+		TODO: Build, copy, write
 
-	};
-	
+		*/
+
+	}
 
 }

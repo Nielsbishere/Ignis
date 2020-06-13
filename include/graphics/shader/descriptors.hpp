@@ -136,4 +136,5 @@ namespace ignis {
 		Data *data{};
 	};
 
+	using DescriptorsRef = GraphicsObjectRef<Descriptors>;
 }

@@ -5,16 +5,7 @@
 namespace ignis {
 
 	class Graphics;
-
-	//A struct that can be inherrited; size should store the size of the struct
-	//Can store the pointers necessary for executing the operation, but size can also be 0 if no additional data is needed
-	//op has to be unique since it is used as an identifier
-	struct Command {
-
-		u32 op, commandSize;
-
-		Command(u32 op, usz commandSize);
-	};
+	class Command;
 
 	//Storing a list of GPU commands that can be executed by the interface
 	class CommandList : public GPUObject {
@@ -30,7 +21,22 @@ namespace ignis {
 			Buffer commandBuffer;
 			usz next{};
 
+			List<Command*> commands;
+
 			Info(usz bufferSize): bufferSize(bufferSize), commandBuffer(bufferSize) {}
+
+			/*
+			~Info() {
+				bufferSize = next = 0;
+				commandBuffer.clear();
+				commands.clear();
+			}
+
+			Info(const Info&);
+			Info(Info&&);
+			Info &operator=(const Info&);
+			Info &operator=(Info&&);
+			*/
 		};
 
 		apimpl struct Data;
@@ -53,18 +59,9 @@ namespace ignis {
 		template<typename T>
 		inline void add(const T &t);
 
-		template<typename ...args>
-		inline void add(const args *...arg);
-
-		template<typename T, typename = std::enable_if<std::is_base_of_v<Command, T> && std::is_pod_v<T> && sizeof(T) <= u16_MAX>>
-		inline void add(const T *t);
-
-		apimpl void execute();
-
 	protected:
 
-		void addInternal(const Command *c);
-		apimpl void execute(Command *c);
+		apimpl void execute();
 
 	private:
 
@@ -74,6 +71,62 @@ namespace ignis {
 		Data *data{};
 	};
 
+	//A copyable struct that can be placed inside of a command buffer
+	//
+	class Command {
+
+		friend class CommandList;
+
+		virtual void prepare(Graphics&, CommandList::Data*) {}
+		virtual void execute(Graphics&, CommandList::Data*) const = 0;
+
+		//TODO:
+		//virtual void onCopy(const Command *c) = 0;
+		//virtual void onMove(Command *c) = 0;
+
+	protected:
+		virtual ~Command() = default;
+
+	public:
+		Command() = default;
+
+	};
+
+	//Classification for debug commands
+	class DebugCommand : public Command {};
+
+	//A command that relies on a feature to be present
+	//
+	class CommandFt : public Command {
+
+		Feature feature;
+
+	protected:
+
+		CommandFt(Feature ft): feature(ft) {}
+
+	public:
+
+		inline Feature getFeature() const { return feature; }
+	};
+
+	//A command that relies on an extension to be present
+	//
+	class CommandExt : public Command {
+
+		Extension extension;
+
+	protected:
+
+		CommandExt(Extension ext): extension(ext) {}
+
+	public:
+
+		inline Extension getExtension() const { return extension; }
+	};
+
+	//Implementations
+
 	template<typename ...args>
 	void CommandList::add(const args &...arg) {
 		(add(arg), ...);
@@ -81,17 +134,21 @@ namespace ignis {
 
 	template<typename T>
 	void CommandList::add(const T &t) {
-		add(&t);
+
+		static_assert(std::is_base_of_v<Command, T>, "CommandList::add requires T to be a command");
+
+		constexpr usz size = sizeof(T);
+
+		if (info.next + size > info.bufferSize)
+			oic::System::log()->fatal("The command list couldn't hold the commands");
+
+		auto *addr = info.commandBuffer.data() + info.next;
+
+		::new(addr) T(t);
+		info.next += size;
+		info.commands.push_back((Command*)addr);
 	}
 
-	template<typename ...args>
-	void CommandList::add(const args *...arg) {
-		(add(arg), ...);
-	}
-
-	template<typename T, typename>
-	void CommandList::add(const T *t) {
-		addInternal((const Command*)t);
-	}
+	using CommandListRef = GraphicsObjectRef<CommandList>;
 
 }

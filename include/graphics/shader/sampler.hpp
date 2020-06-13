@@ -58,4 +58,5 @@ namespace ignis {
 		Data *data;
 	};
 
+	using SamplerRef = GraphicsObjectRef<Sampler>;
 }

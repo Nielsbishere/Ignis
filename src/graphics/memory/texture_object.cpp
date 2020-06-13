@@ -100,10 +100,34 @@ namespace ignis {
 			reg.type == ResourceType::TEXTURE &&
 			reg.textureType == info.textureType &&
 			(reg.textureFormat == GPUFormat::NONE || reg.textureFormat == info.format) &&
-			validSubresource(sub);
+			isValidSubresource(sub);
 	}
 
-	bool TextureObject::validSubresource(const GPUSubresource &res, bool isSampler) const {
+	usz TextureObject::getDimensionLayerId() const {
+
+		if ((info.textureType & ~TextureType::PROPERTY_IS_ARRAY) == TextureType::TEXTURE_1D)
+			return 2;
+
+		return 3;
+	}
+
+	Vec3u16 TextureObject::getDimensions(u8 i) const {
+
+		auto maxDim = info.mipSizes[i];
+
+		if ((info.textureType & ~TextureType::PROPERTY_IS_ARRAY) == TextureType::TEXTURE_1D)
+			maxDim.y = info.layers;
+		else
+			maxDim.z = std::max(maxDim.z, info.layers);
+		
+		return maxDim;
+	}
+
+	bool TextureObject::isValidRange(const TextureRange &range) const {
+		return range.mip < info.mips && ((range.start + range.size) <= getDimensions(range.mip)).all();
+	}
+
+	bool TextureObject::isValidSubresource(const GPUSubresource &res, bool isSampler) const {
 
 		auto &tex = isSampler ? (const GPUSubresource::TextureRange&)res.samplerData : res.textureRange;
 

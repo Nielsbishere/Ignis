@@ -45,4 +45,6 @@ namespace ignis {
 		Data *data;
 	};
 
+	using SwapchainRef = GraphicsObjectRef<Swapchain>;
+
 }

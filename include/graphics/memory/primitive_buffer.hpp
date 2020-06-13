@@ -61,4 +61,5 @@ namespace ignis {
 		Data *data{};
 	};
 
+	using PrimitiveBufferRef = GraphicsObjectRef<PrimitiveBuffer>;
 }

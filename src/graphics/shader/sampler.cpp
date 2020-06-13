@@ -49,7 +49,7 @@ namespace ignis {
 		return 
 			tex && 
 			tex->getInfo().textureType == samplerTexture &&
-			tex->validSubresource(sub, true);
+			tex->isValidSubresource(sub, true);
 	}
 
 }

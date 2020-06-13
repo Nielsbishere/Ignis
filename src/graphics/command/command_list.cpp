@@ -5,13 +5,13 @@
 
 namespace ignis {
 
-	Command::Command(u32 op, usz commandSize): op(op), commandSize(u32(commandSize)) {
-		if (commandSize >= u32_MAX)
-			oic::System::log()->fatal("The command contained too much data");
-	}
-
 	void CommandList::clear() {
+
+		for (Command *c : info.commands)
+			c->~Command();
+
 		info.next = 0;
+		info.commands.clear();
 	}
 
 	void CommandList::resize(usz newSize) {
@@ -21,26 +21,4 @@ namespace ignis {
 
 		info.commandBuffer.resize(newSize);
 	}
-
-	void CommandList::addInternal(const Command *c) {
-
-		auto availability = getGraphics().getCommandAvailability(CommandOp(c->op));
-
-		if (availability == CommandAvailability::PERFORMANCE)
-			oic::System::log()->performance("The command is not natively supported and could lead to performance loss");
-
-		else if (availability == CommandAvailability::UNSUPPORTED) {
-			oic::System::log()->fatal("The command is not supported and will be ignored");
-			return;
-		}
-
-		usz size = c->commandSize;
-
-		if (info.next + size > info.bufferSize)
-			oic::System::log()->fatal("The command list couldn't hold the commands");
-
-		std::memcpy(info.commandBuffer.data() + info.next, c, size);
-		info.next += size;
-	}
-
 }

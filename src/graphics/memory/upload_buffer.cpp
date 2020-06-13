@@ -48,11 +48,14 @@ namespace ignis {
 
 			if (siz < req) continue;
 
+			align += ai.offset;
+			u64 bufferId = ai.bufferId;
+
 			//Consume allocation
 
 			if (siz == req) {
 				ai.sizeAndFree = siz;
-				ai.allocationId = executionId;
+				ai.executionId = executionId;
 			}
 
 			//Generate two seperate allocations
@@ -62,32 +65,29 @@ namespace ignis {
 				u64 leftOver = siz - req;
 
 				ai.sizeAndFree = req;
-				ai.allocationId = executionId;
+				ai.executionId = executionId;
 
 				a.insert(a.begin() + i + 1, Allocation{
 					ai.offset + req,
 					leftOver | Allocation::freeBit,
-					executionId,
-					ai.bufferId
+					u64_MAX,
+					bufferId
 				});
-
 			}
-
-			align += ai.offset;
 
 			//Copy memory on cpu and shared memory
 
-			auto *buf = info.buffers[ai.bufferId];
+			auto *buf = info.buffers[bufferId];
 
-			if (data) {
+			if (data)
 				std::memcpy(buf->getBuffer() + align, data, size);
-				buf->flush(nullptr, nullptr, align, size);
-			}
+			else
+				std::memset(buf->getBuffer() + align, 0, size);
 
 			//Return allocation and finish mutex
 
 			mutex.unlock();
-			return { ai.bufferId, align };
+			return { bufferId, align };
 		}
 
 		//Get the biggest allocation
@@ -131,10 +131,10 @@ namespace ignis {
 
 		//Create main allocation
 
-		if (data) {
+		if (data)
 			std::memcpy(buf->getBuffer(), data, size);
-			buf->flush(nullptr, nullptr, 0, size);
-		}
+		else
+			std::memset(buf->getBuffer(), 0, size);
 
 		info.allocations.push_back(Allocation{
 			0,
@@ -149,7 +149,7 @@ namespace ignis {
 			info.allocations.push_back(Allocation{
 				size,
 				(newSize - size) | Allocation::freeBit,
-				executionId,
+				u64_MAX,
 				bufferId
 			});
 
@@ -157,6 +157,54 @@ namespace ignis {
 
 		mutex.unlock();
 		return { bufferId, 0 };
+	}
+
+	//Handle pushing to GPU
+
+	void UploadBuffer::flush(CommandList::Data *cdata, u64 executionId) {
+
+		mutex.lock();
+
+		u64 prev = u64_MAX, bufferId = u64_MAX, biggest{};
+
+		for(auto &alloc : info.allocations)
+			if (alloc.executionId == executionId) {
+
+				if (prev == u64_MAX) {
+					prev = alloc.offset;
+					biggest = prev + alloc.getSize();
+					bufferId = alloc.bufferId;
+				}
+				else if (bufferId != alloc.bufferId) {
+
+					auto it = info.buffers.find(bufferId);
+
+					if (it != info.buffers.end())
+						it->second->flush(cdata, nullptr, { prev, biggest });
+
+					prev = u64_MAX;
+				}
+				else biggest = alloc.offset + alloc.getSize();
+
+			} else if(prev != u64_MAX) {
+
+				auto it = info.buffers.find(bufferId);
+
+				if (it != info.buffers.end())
+					it->second->flush(cdata, nullptr, { prev, biggest });
+
+				prev = u64_MAX;
+			}
+
+		if (prev != u64_MAX) {
+
+			auto it = info.buffers.find(bufferId);
+
+			if (it != info.buffers.end())
+				it->second->flush(cdata, nullptr, { prev, biggest });
+		}
+
+		mutex.unlock();
 	}
 
 	//Handle freeing memory
@@ -184,14 +232,14 @@ namespace ignis {
 			//Find first block of the freed frame
 			if (k == usz_MAX) {
 
-				if (!isFree && ai.allocationId == executionId) {
+				if (!isFree && ai.executionId == executionId) {
 					k = i;
 					bufferId = ai.bufferId;
 				}
 			}
 
 			//Check if we hit the end of our region
-			else if (ai.allocationId != executionId) {
+			else if (ai.executionId != executionId) {
 
 				//Check if we have an empty block before we can merge with
 
@@ -222,7 +270,7 @@ namespace ignis {
 				a.insert(a.begin() + i, Allocation{
 					offset,
 					size | Allocation::freeBit,
-					executionId,
+					u64_MAX,
 					bufferId
 				});
 
@@ -259,7 +307,7 @@ namespace ignis {
 			a.push_back(Allocation{
 				offset,
 				size | Allocation::freeBit,
-				executionId,
+				u64_MAX,
 				bufferId
 			});
 
@@ -299,7 +347,7 @@ namespace ignis {
 				info.allocations.push_back(Allocation{
 					0,
 					newSize | Allocation::freeBit,
-					executionId,
+					u64_MAX,
 					bufferId
 				});
 			}

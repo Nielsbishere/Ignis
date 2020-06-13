@@ -12,14 +12,6 @@ namespace ignis {
 	using Features = Bitset<usz(Feature::COUNT)>;
 	using Extensions = Bitset<usz(Extension::COUNT)>;
 
-	enum CommandOp : u32;
-
-	enum class CommandAvailability : u32 {
-		SUPPORTED,
-		PERFORMANCE,
-		UNSUPPORTED
-	};
-
 	//A unique bitset specifying the apis (not necessarily implemented)
 	//& 1 = isLowLevel
 	//& 2 = isWindows (!isWindows; unix)
@@ -250,7 +242,6 @@ namespace ignis {
 
 		apimpl struct Data;
 
-		apimpl CommandAvailability getCommandAvailability(CommandOp op);
 		apimpl void execute(const List<CommandList*> &commands);
 
 		apimpl void present(
@@ -382,6 +373,105 @@ namespace ignis {
 
 	};
 
+	//A wrapper for constructing and destructing graphics objects
+	template<typename T>
+	class GraphicsObjectRef {
+
+		T *ptr{};
+
+	public:
+
+		using Ptr = T*;
+
+		void release() {
+			if (ptr) {
+				ptr->loseRef();
+				ptr = nullptr;
+			}
+		}
+
+		GraphicsObjectRef() { 
+			static_assert(std::is_base_of_v<GPUObject, T>, "GraphicsObjectRef can only be used on GraphicsObjects");
+		}
+
+		~GraphicsObjectRef() {
+			release();
+		}
+
+		GraphicsObjectRef(Ptr ptr): ptr(ptr) {
+			if(ptr)
+				ptr->addRef();
+		}
+
+		GraphicsObjectRef(const GraphicsObjectRef &other) {
+			if((ptr = other.ptr) != nullptr)
+				ptr->addRef();
+		}
+
+		GraphicsObjectRef(GraphicsObjectRef &&other) {
+			ptr = other.ptr;
+			other.ptr = nullptr;
+		}
+
+		GraphicsObjectRef &operator=(const GraphicsObjectRef &other) {
+
+			release();
+
+			if((ptr = other.ptr) != nullptr)
+				ptr->addRef();
+
+			return *this;
+		}
+
+		//Maintain equal references (the other one
+		GraphicsObjectRef &operator=(GraphicsObjectRef &&other) noexcept {
+			ptr = other.ptr;
+			other.ptr = nullptr;
+			return *this;
+		}
+
+		inline T *operator->() { return ptr; }
+		inline T *operator->() const { return ptr; }
+
+		inline operator T*() const { return ptr; }
+		inline operator T*() { return ptr; }
+
+		//Creates a graphics object
+		GraphicsObjectRef(Graphics &g, const String &name, const typename T::Info &info) {
+
+			//Find existing resource
+
+			auto it = g.find(name);
+
+			oicAssert("The requested resource already exists", it == g.endByName());
+
+			//Try and create resource (nullptr if it fails)
+
+			try {
+				ptr = new T(g, name, info);
+			} catch (std::runtime_error&) { }
+		}
+
+		//Finds a GraphicsObject
+		GraphicsObjectRef(Graphics &g, const String &name) {
+
+			//Find existing resource
+
+			auto it = g.find(name);
+
+			if (it != g.end()) {
+				ptr = it->second;
+				ptr->addRef();
+			}
+		}
+
+		inline bool exists() const { return ptr; }
+		inline bool null() const { return !ptr; }
+
+		//Use this if you can't use a wrapped object and need the actual pointer
+		inline T *get() const { return ptr; }
+	};
+
 	//Definitions
 	
 	inline auto Graphics::find(const String &name) const {
@@ -419,4 +509,16 @@ namespace ignis {
 		return (T*) it->second;
 	}
 
+}
+
+namespace std {
+
+	template<typename T>
+	struct hash<ignis::GraphicsObjectRef<T>> {
+
+		inline usz operator()(const ignis::GraphicsObjectRef<T> &t) const {
+			return usz(t.get());
+		}
+
+	};
 }

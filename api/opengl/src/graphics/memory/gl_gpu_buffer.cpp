@@ -27,6 +27,33 @@ namespace ignis {
 		return res;
 	}
 
+	inline void fastCopy(volatile u8 *dst, const u8 *src, const u64 size) {
+
+		u64 off = size & ~7;		//Bytes offset after the first 8 bytes
+
+		if(size >> 3)
+			std::copy((const u64*)src, (const u64*)(src + off), (volatile u64*)dst);
+
+		//Copy next 4 bytes if available
+
+		if (size & 4) {
+			*(volatile u32*)(dst + off) = *(const u32*)(src + off);
+			off += 4;
+		}
+
+		//Copy next 2 bytes if available
+
+		if (size & 2) {
+			*(volatile u16*)(dst + off) = *(const u16*)(src + off);
+			off += 2;
+		}
+
+		//Copy next byte if available
+
+		if (size & 1)
+			*(volatile u8*)(dst + off) = *(const u8*)(src + off);
+	}
+
 	GPUBuffer::GPUBuffer(Graphics &g, const String &name, const Info &inf, GPUObjectType type):
 		GPUObject(g, name, type), info(inf) {
 
@@ -45,7 +72,7 @@ namespace ignis {
 		);
 
 		if (HasFlags(inf.usage, GPUMemoryUsage::CPU_ACCESS) && HasFlags(inf.usage, GPUMemoryUsage::SHARED))
-			data->unmapped = (volatile u8*)glMapNamedBufferRange(handle, 0, inf.size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+			data->unmapped = (volatile u8*)glMapNamedBufferRange(handle, 0, inf.size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
 	}
 
 	GPUBuffer::~GPUBuffer() {
@@ -59,74 +86,95 @@ namespace ignis {
 		delete data;
 	}
 
-	void GPUBuffer::flush(CommandList::Data*, UploadBuffer *uploadBuffer, u64 offset, u64 size) {
-
-		if (offset + size > info.size) {
-			oic::System::log()->error("GPUBuffer out of range");
-			return;
-		}
+	Pair<u64, u64> GPUBuffer::prepare(CommandList::Data*, UploadBuffer *uploadBuffer) {
 
 		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_ACCESS)) {
+
+			if (info.pending.empty() || info.markedPending)
+				return { 0, u64_MAX };
+
+			if (!uploadBuffer) {
+				oic::System::log()->error("GPUBuffer::prepare without cpu access requires an upload buffer");
+				return { 0, u64_MAX };
+			}
+
+			u64 size{};
+
+			for (auto &pending : info.pending)
+				size += pending.y;
+
+			info.markedPending = true;
+
+			return uploadBuffer->allocate(getGraphics().getData()->getContext().executionId, info.initData.data(), size, 1);
+		}
+
+		return { 0, u64_MAX };
+	}
+
+	void GPUBuffer::flush(CommandList::Data*, UploadBuffer *uploadBuffer, const Pair<u64, u64> &allocation){
+
+		if (info.pending.empty())
+			return;
+
+		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_ACCESS)) {
+
+			if (allocation.second == u64_MAX)
+				return;
 
 			if (info.initData.size() != info.size) {
 				oic::System::log()->error("GPUBuffer doesn't have any backing CPU data");
 				return;
 			}
 
-			auto &ctx = getGraphics().getData()->getContext();
-
-			auto allocation = uploadBuffer->allocate(ctx.executionId, getBuffer() + offset, size, 1);
-
 			auto &buffers = uploadBuffer->getInfo().buffers;
 			auto it = buffers.find(allocation.first);
 
 			if (it == buffers.end()) {
-				oic::System::log()->error("Invalid upload buffer allocation; GPUBuffer::flush failed");
+				oic::System::log()->error("GPUBuffer isn't found in the upload buffer");
 				return;
 			}
 
-			glCopyNamedBufferSubData(it->second->getData()->handle, data->handle, allocation.second, offset, size);
+			GPUBuffer *buf = it->second;
+
+			u64 offset{};
+
+			for (auto &pending : info.pending) {
+
+				u64 readOffset = allocation.second + offset;
+
+				//Copy from upload buffer into this buffer
+
+				glCopyNamedBufferSubData(buf->getData()->handle, data->handle, readOffset, pending.x, pending.y);
+
+				offset += pending.y;
+			}
+
 			info.initData.clear();
-			return;
 		}
 
-		if (!HasFlags(info.usage, GPUMemoryUsage::SHARED) && !uploadBuffer) {
+		else if (!HasFlags(info.usage, GPUMemoryUsage::SHARED) && !uploadBuffer) {
 			oic::System::log()->error("Even though OpenGL handles UploadBuffers implictly, for non shared memory one is required by the ignis spec");
 			return;
 		}
 
-		if (data->unmapped) {
+		else if (data->unmapped) {
 
-			const u8 *start = info.initData.data() + offset, *end = start + size;
-			auto *ptr = data->unmapped + offset;
+			for (auto &pending : info.pending) {
 
-			switch (size & 7) {
+				const u8 *start = info.initData.data() + pending.x;
+				volatile u8 *ptr = data->unmapped + pending.x;
 
-				case 0:
-					std::copy((const u64*)start, (const u64*)end, (volatile u64*)ptr);
-					break;
+				fastCopy(ptr, start, pending.y);
 
-				case 4:
-					std::copy((const u32*)start, (const u32*)end, (volatile u32*)ptr);
-					break;
-
-				case 2:
-				case 6:
-					std::copy((const u16*)start, (const u16*)end, (volatile u16*)ptr);
-					break;
-
-				default:
-					std::copy(start, end, ptr);
-					break;
-
+				glFlushMappedNamedBufferRange(data->handle, GLintptr(pending.x), GLsizeiptr(pending.y));
 			}
 
-			//TODO: Use explicit flushing and that should only be done once per frame
-
-			//glFlushMappedNamedBufferRange(data->handle, GLintptr(offset), GLsizeiptr(size));
 		}
 
-		else glNamedBufferSubData(data->handle, GLintptr(offset), GLsizeiptr(size), info.initData.data() + offset);
+		else for (auto &pending : info.pending)
+			glNamedBufferSubData(data->handle, GLintptr(pending.x), GLsizeiptr(pending.y), info.initData.data() + pending.x);
 
+		info.pending.clear();
+		info.markedPending = false;
 	}
 }

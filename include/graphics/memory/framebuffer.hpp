@@ -69,4 +69,6 @@ namespace ignis {
 		Info info;
 	};
 
+	using FramebufferRef = GraphicsObjectRef<Framebuffer>;
+
 }

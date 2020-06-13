@@ -1,6 +1,5 @@
 #include "utils/thread.hpp"
 #include "graphics/command/command_list.hpp"
-#include "graphics/command/command_ops.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/memory/gl_gpu_buffer.hpp"
 #include "graphics/gl_graphics.hpp"
@@ -68,14 +67,6 @@ namespace ignis {
 
 	GraphicsApi Graphics::getCurrentApi() const {
 		return GraphicsApi::OPENGL;
-	}
-
-	CommandAvailability Graphics::getCommandAvailability(CommandOp op) {
-
-		if (op >> CMD_PROPERTY_TECHNIQUE_SHIFT)
-			return CommandAvailability::UNSUPPORTED;
-
-		return CommandAvailability::SUPPORTED;
 	}
 
 	void Graphics::execute(const List<CommandList*> &commands) {

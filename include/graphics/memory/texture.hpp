@@ -5,6 +5,10 @@
 
 namespace ignis {
 
+	namespace cmd {
+		class FlushImage;
+	}
+
 	template<typename T>
 	using DataTexture1D = List<oic::Grid1D<T>>;		//If layered: width / layers = imageWidth
 
@@ -17,6 +21,7 @@ namespace ignis {
 	class Texture : public TextureObject {
 
 		friend class CommandList;
+		friend class cmd::FlushImage;
 
 	public:
 
@@ -26,6 +31,12 @@ namespace ignis {
 			//Each layer is stored in the grid
 			//[mip] Where each buffer.size = linearSize*layers
 			List<Buffer> initData;
+
+			//Pending ranges
+			List<TextureRange> pending;
+
+			//If the flush has already been registered
+			bool markedPending{};
 
 			//
 
@@ -83,9 +94,14 @@ namespace ignis {
 			return TextureObjectType::TEXTURE;
 		}
 
+		void flush(const List<TextureRange> &ranges);	
+
 	private:
 
-		apimpl void flush(CommandList::Data *commandList, UploadBuffer *uploadBuffer, u8 mip, u8 mipCount);
+		void mergePending();
+
+		apimpl Pair<u64, u64> prepare(CommandList::Data*, UploadBuffer*);
+		apimpl void flush(CommandList::Data*, UploadBuffer*, const Pair<u64, u64>&);
 
 		apimpl ~Texture();
 
@@ -240,4 +256,5 @@ namespace ignis {
 		);
 	}
 
+	using TextureRef = GraphicsObjectRef<Texture>;
 }

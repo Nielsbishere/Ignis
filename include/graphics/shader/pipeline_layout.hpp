@@ -159,4 +159,5 @@ namespace ignis {
 		Data *data{};
 	};
 
+	using PipelineLayoutRef = GraphicsObjectRef<PipelineLayout>;
 }

@@ -11,6 +11,10 @@ namespace ignis {
 		DEPTH
 	};
 
+	//If specified on a Texture2DArray, the z of start is a layer
+	struct TextureRange { Vec3u16 start, size; u8 mip; };
+
+	//An object that stores array texel data
 	class TextureObject : public GPUObject, public GPUResource {
 
 	public:
@@ -71,20 +75,19 @@ namespace ignis {
 
 		virtual TextureObjectType getTextureObjectType() const = 0;
 
-		//If a register (and subresource) are compatible
-		bool isCompatible(
-			const RegisterLayout &reg, const GPUSubresource &resource
-		) const override;
+		bool isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) const override;
 
-		//If a subresource is compatible with this texture
-		bool validSubresource(
-			const GPUSubresource &resource, bool isSampler = false
-		) const;
+		bool isValidSubresource(const GPUSubresource &resource, bool isSampler = false) const;
+		bool isValidSubType(const TextureType type) const;
+		bool isValidRange(const TextureRange &range) const;
 
-		//If a subtype for a texture view can be used for this texture type
-		bool isValidSubType(
-			const TextureType type
-		) const;
+		//Gets dimensions of this texture (with the layer in the correct slot)
+		Vec3u16 getDimensions(u8 mip) const;
+
+		//Get the index in the dimension array that MIGHT contain the layer
+		//if HasFlags(info.textureType, TextureType::PROPERTY_IS_ARRAY) is false, it doesn't
+		//	and might contain the z of y instead
+		usz getDimensionLayerId() const;
 
 		inline const Info &getInfo() const { return info; }
 
