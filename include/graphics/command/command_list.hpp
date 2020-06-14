@@ -61,7 +61,7 @@ namespace ignis {
 
 	protected:
 
-		apimpl void execute();
+		apimpl void execute(List<GPUObject*> &resources);	//Returns resources used by this execution
 
 	private:
 
@@ -79,6 +79,7 @@ namespace ignis {
 
 		virtual void prepare(Graphics&, CommandList::Data*) {}
 		virtual void execute(Graphics&, CommandList::Data*) const = 0;
+		virtual List<GPUObject*> getResources() const { return {}; }
 
 		//TODO:
 		//virtual void onCopy(const Command *c) = 0;

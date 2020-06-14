@@ -35,7 +35,7 @@ namespace ignis {
 		HashMap<GLenum, GPUObjectId> boundObjects;
 		HashMap<u64, BoundRange> boundByBaseId;	//GLenum lower 32-bit, Base upper 32-bit
 
-		HashMap<u64, GLsync> fences;
+		HashMap<u64, Pair<GLsync, List<GPUObject*>>> fences;
 
 		Rasterizer currRaster{ CullMode::NONE };
 		BlendState currBlend{};

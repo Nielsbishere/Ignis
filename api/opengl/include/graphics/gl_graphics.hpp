@@ -77,7 +77,7 @@ namespace ignis {
 
 		void updateContext(Graphics &g);
 		void destroyContext();
-		void storeContext();
+		void storeContext(const List<GPUObject*> &resources);
 		GLContext &getContext();
 
 		//Helper functions

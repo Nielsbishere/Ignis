@@ -751,9 +751,9 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 	for (auto &mapIt : descriptors->getInfo().pipelineLayout->getInfo()) {
 
 		auto resource = mapIt.second;
-		auto it = descriptors->getInfo().resources.find(resource.globalId);
+		auto it = descriptors->getInfo().flushedResources.find(resource.globalId);
 
-		if (it != descriptors->getInfo().resources.end()) {
+		if (it != descriptors->getInfo().flushedResources.end()) {
 
 			auto &subres = it->second;
 			auto *res = subres.resource;

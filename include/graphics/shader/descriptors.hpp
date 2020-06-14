@@ -99,7 +99,7 @@ namespace ignis {
 		struct Info {
 
 			const PipelineLayout *pipelineLayout;
-			Subresources resources;
+			Subresources resources, flushedResources;
 
 			bool shouldFlush{};
 
@@ -114,7 +114,7 @@ namespace ignis {
 		apimpl Descriptors(Graphics &g, const String &name, const Info &info);
 
 		//Flush the updates from the CPU to the GPU
-		apimpl void flush(const List<Vec2usz> &offsetsAndSizes);
+		apimpl void flush(const List<Vec2u32> &offsetsAndSizes);
 
 		//Update the CPU-side resource; requires flush to be called afterwards
 		apimpl void updateDescriptor(u32 i, const GPUSubresource &range);

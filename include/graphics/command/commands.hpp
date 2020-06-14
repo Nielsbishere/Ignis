@@ -36,6 +36,7 @@ namespace ignis {
 		public:
 
 			BindPipeline(Pipeline *pipeline): pipeline(pipeline) {}
+			List<GPUObject*> getResources() const final override { return { pipeline }; }
 		};
 
 		class BindDescriptors : public Command {
@@ -47,6 +48,7 @@ namespace ignis {
 		public:
 
 			BindDescriptors(Descriptors *descriptors): descriptors(descriptors) {}
+			List<GPUObject*> getResources() const final override { return { descriptors }; }
 		};
 
 		class BindPrimitiveBuffer : public Command {
@@ -58,6 +60,7 @@ namespace ignis {
 		public:
 
 			BindPrimitiveBuffer(PrimitiveBuffer *primitiveBuffer): primitiveBuffer(primitiveBuffer) {}
+			List<GPUObject*> getResources() const final override { return { primitiveBuffer }; }
 		};
 
 		//Basic begin/end commands
@@ -71,6 +74,7 @@ namespace ignis {
 		public:
 
 			BeginFramebuffer(Framebuffer *framebuffer): framebuffer(framebuffer) {}
+			List<GPUObject*> getResources() const final override { return { framebuffer }; }
 		};
 
 		class EndFramebuffer : public Command {
@@ -141,6 +145,7 @@ namespace ignis {
 				buffer(buffer),
 				offset(offset << 4_u64) {}
 
+			List<GPUObject*> getResources() const final override { return { buffer }; }
 		};
 
 		//Setting values
@@ -273,6 +278,8 @@ namespace ignis {
 			) :
 				texture(texture), mipLevel(mipLevel), slice(slice),
 				offset(offset), size(size), slices(slices ? slices : 1), mipLevels(mipLevels ? mipLevels : 1) {}
+
+			List<GPUObject*> getResources() const final override { return { texture }; }
 		};
 
 		//Clears buffer to zero
@@ -287,6 +294,8 @@ namespace ignis {
 
 			ClearBuffer(GPUBuffer *buffer, u64 offset = 0, u64 elements = 0) :
 				buffer(buffer), offset(offset), elements(elements) {}
+
+			List<GPUObject*> getResources() const final override { return { buffer }; }
 		};
 
 		//Transfer calls
@@ -311,6 +320,9 @@ namespace ignis {
 			FlushBuffer(PrimitiveBuffer *buffer, UploadBuffer *uploadBuffer):
 				pbuffer(buffer), uploadBuffer(uploadBuffer) {}
 
+			List<GPUObject*> getResources() const final override { 
+				return { gbuffer, pbuffer, uploadBuffer }; 
+			}
 		};
 
 		class FlushImage : Command {
@@ -332,6 +344,7 @@ namespace ignis {
 			FlushImage(Texture *tex, UploadBuffer *uploadBuffer):
 				image(tex), uploadBuffer(uploadBuffer) {}
 
+			List<GPUObject*> getResources() const final override { return { image, uploadBuffer }; }
 		};
 		
 		//Debug calls
@@ -381,7 +394,7 @@ namespace ignis {
 
 			ShaderBindingTable shaderBindingTable;
 
-			List<usz> raygenEntries, missEntries, hitShaders, callableShaders;
+			u64 entrypoint;
 
 			Vec3u32 dimensions;
 

@@ -31,12 +31,19 @@ namespace ignis {
 
 	CommandList::~CommandList() { clear(); }
 
-	void CommandList::execute() {
+	void CommandList::execute(List<GPUObject*> &resources) {
 
 		//Prepare commands for execution
 
-		for (Command *c : info.commands)
+		for (Command *c : info.commands) {
+
 			c->prepare(getGraphics(), data);
+
+			for (auto *res : c->getResources())
+				if(res && std::find(resources.begin(), resources.end(), res) == resources.end())
+					resources.push_back(res);
+
+		}
 
 		//Push data to GPU
 
@@ -48,6 +55,7 @@ namespace ignis {
 
 		for (Command *c : info.commands)
 			c->execute(getGraphics(), data);
+
 	}
 
 	bool glxFixSize(GLContext &data, Vec2u32 &size, const Vec2i32 &offset) {

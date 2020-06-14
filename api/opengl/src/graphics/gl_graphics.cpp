@@ -33,8 +33,11 @@ namespace ignis {
 
 			for (auto &fence : ctx.fences) {
 
-				glClientWaitSync(fence.second, GL_SYNC_FLUSH_COMMANDS_BIT, u64_MAX);
-				glDeleteSync(fence.second);
+				glClientWaitSync(fence.second.first, GL_SYNC_FLUSH_COMMANDS_BIT, u64_MAX);
+				glDeleteSync(fence.second.first);
+
+				for (auto *res : fence.second.second)
+					res->loseRef();
 
 				for (auto *upl : uploads)
 					upl->end(fence.first);
@@ -80,11 +83,13 @@ namespace ignis {
 		//Updates VAOs and FBOs that have been added/released
 		data->updateContext(*this);
 
+		List<GPUObject*> resources;
+
 		for (CommandList *cl : commands)
-			cl->execute();
+			cl->execute(resources);
 
 		//Make sure that all immediate handles are converted to frame independent
-		data->storeContext();
+		data->storeContext(resources);
 
 		//TODO: unlock mutex
 	}
@@ -232,13 +237,16 @@ namespace ignis {
 
 			for (auto &fence : ctx.fences) {
 
-				GLenum type = glClientWaitSync(fence.second, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
+				GLenum type = glClientWaitSync(fence.second.first, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
 
 				if (type == GL_TIMEOUT_EXPIRED || type == GL_WAIT_FAILED)
 					continue;
 
-				glDeleteSync(fence.second);
+				glDeleteSync(fence.second.first);
 				syncs.push_back(fence.first);
+
+				for (auto *res : fence.second.second)
+					res->loseRef();
 
 				for (auto *upl : uploads)
 					upl->end(fence.first);
@@ -323,7 +331,7 @@ namespace ignis {
 
 	}
 
-	void Graphics::Data::storeContext() {
+	void Graphics::Data::storeContext(const List<GPUObject*> &resources) {
 
 		GLContext &ctx = getContext();
 
@@ -334,9 +342,14 @@ namespace ignis {
 		ctx.pipelineId = getGPUObjectId(ctx.boundApi.pipeline);
 		ctx.descriptorsId = getGPUObjectId(ctx.boundApi.descriptors);
 
+		//Increment refcounters, to ensure they don't disappear during execution
+
+		for (auto *res : resources)
+			res->addRef();
+
 		//Queue fence
 
-		ctx.fences[ctx.executionId] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+		ctx.fences[ctx.executionId] = { glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0), resources };
 
 	}
 
