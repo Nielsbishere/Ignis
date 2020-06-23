@@ -231,9 +231,9 @@ namespace ignis {
 		) throw();
 
 		template<typename ...args>
-		inline void present(Texture *intermediate, u16 slice, Swapchain *swapchain, args ...arg) {
+		inline void present(Texture *intermediate, u16 slice, u16 mip, Swapchain *swapchain, args ...arg) {
 			List<CommandList*> commands{ arg... };
-			present(intermediate, slice, swapchain, commands);
+			present(intermediate, slice, mip, swapchain, commands);
 		}
 
 		apimpl ~Graphics();
