@@ -97,7 +97,7 @@ namespace ignis {
 
 	bool TextureObject::isCompatible(const RegisterLayout &reg, const GPUSubresource &sub) const {
 		return
-			reg.type == ResourceType::TEXTURE &&
+			(reg.type == ResourceType::TEXTURE || reg.type == ResourceType::IMAGE) &&
 			reg.textureType == info.textureType &&
 			(reg.textureFormat == GPUFormat::NONE || reg.textureFormat == info.format) &&
 			isValidSubresource(sub);

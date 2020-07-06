@@ -104,8 +104,7 @@ namespace ignis {
 			return false;
 		}
 
-		if(ctx.boundApi.descriptors != descriptors)
-			::glxBindDescriptors(ctx, ctx.boundApi.descriptors = descriptors);
+		::glxBindDescriptors(ctx, ctx.boundApi.descriptors = descriptors);
 
 		return true;
 	}
@@ -316,12 +315,14 @@ namespace ignis {
 
 		Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
 
-		if ((threads % count).any())
-			oic::System::log()->performance(
-				"Thread count was incompatible with compute shader "
-				"this is fixed by the runtime, but could provide out of "
-				"bounds texture writes or reads"
-			);
+		#ifndef NDEBUG
+			if ((threads % count).any())
+				oic::System::log()->performance(
+					"Thread count was incompatible with compute shader "
+					"this is fixed by the runtime, but could provide out of "
+					"bounds texture writes or reads"
+				);
+		#endif
 
 		glDispatchCompute(groups.x, groups.y, groups.z);
 	}
