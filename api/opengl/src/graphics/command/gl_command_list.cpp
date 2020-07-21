@@ -315,7 +315,7 @@ namespace ignis {
 
 		Vec3u32 groups = (threads.cast<Vec3f32>() / count.cast<Vec3f32>()).ceil().cast<Vec3u32>();
 
-		#ifndef NDEBUG
+		#ifdef IGNIS_STRICT_PERFORMANCE_WARNINGS
 			if ((threads % count).any())
 				oic::System::log()->performance(
 					"Thread count was incompatible with compute shader "

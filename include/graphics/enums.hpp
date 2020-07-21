@@ -59,6 +59,9 @@ namespace ignis {
 		GPU_WRITE			= 0x4,
 		CPU_ACCESS			= 0x8,
 
+		NO_CPU_MEMORY		= 0x10,			//Not the same as leaving out CPU_ACCESS, as that still assumes you will update the resource at least once
+		GPU_WRITE_ONLY		= 0x14,	
+
 		FORCE_LINEAR_TILING	= CPU_ACCESS | REQUIRE | SHARED		//Incompatible with the 'prefer' flag
 	};
 

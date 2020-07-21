@@ -101,7 +101,7 @@ namespace ignis {
 
 		//Make sure CPU can write into the buffer
 
-		if (inf.initData.size() < inf.mips) {
+		if(!HasFlags(inf.usage, GPUMemoryUsage::NO_CPU_MEMORY) && inf.initData.size() < inf.mips) {
 
 			u8 start = u8(inf.initData.size());
 			info.initData.resize(inf.mips);
@@ -113,6 +113,12 @@ namespace ignis {
 	}
 
 	Texture::~Texture() {
+
+		if (!data) return;
+
+		if (HasFlags(info.usage, GPUMemoryUsage::GPU_WRITE))
+			for (u16 i = 0; i < info.layers * info.mips; ++i)
+				glDeleteFramebuffers(1, &data->framebuffer[i]);
 
 		for(auto &views : data->textureViews)
 			if (views.second != data->handle)

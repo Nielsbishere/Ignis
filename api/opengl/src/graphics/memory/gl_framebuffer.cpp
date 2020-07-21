@@ -14,7 +14,7 @@ namespace ignis {
 
 	Framebuffer::Framebuffer(Graphics &g, const String &name, const Info &inf): 
 		GPUObject(g, name, GPUObjectType::FRAMEBUFFER), info(inf) {
-		
+
 		data = new Data();
 		info.samples = oic::Math::min(g.getData()->maxSamples, info.samples);
 
@@ -70,7 +70,7 @@ namespace ignis {
 
 		Vec2u16 size = scaledSize.cast<Vec2u16>();
 
-		if (info.size == size && (info.isDynamic || (!info.isDynamic && data->handle)))
+		if (info.size == size && size.all())
 			return;
 
 		info.size = size;

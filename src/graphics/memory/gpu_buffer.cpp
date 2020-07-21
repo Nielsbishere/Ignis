@@ -6,7 +6,11 @@
 namespace ignis {
 
 	GPUBuffer::Info::Info(u64 bufferSize, GPUBufferType type, GPUMemoryUsage usage):
-		initData(bufferSize), size(bufferSize), type(type), usage(usage), pending { { 0, bufferSize }  } {}
+		initData(), size(bufferSize), type(type), usage(usage), pending { { 0, bufferSize }  }
+	{
+		if (!HasFlags(usage, GPUMemoryUsage::NO_CPU_MEMORY))
+			initData.resize(bufferSize);
+	}
 
 	GPUBuffer::Info::Info(const Buffer &initData, GPUBufferType type, GPUMemoryUsage usage):
 		initData(initData), size(initData.size()), type(type), usage(usage), pending { { 0, initData.size() } } {}
