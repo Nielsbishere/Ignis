@@ -77,7 +77,21 @@ namespace ignis {
 
 		void updateContext(Graphics &g);
 		void destroyContext();
-		void storeContext(const List<GPUObject*> &resources);
+
+		void storeContext(
+			const List<GPUObject*> &resources, 
+			void *callbackObjectPtr = nullptr, 
+			void (*callbackPtr)(void*, UploadBuffer*, const Pair<u64, u64>&, TextureObject*, const Vec3u16&, const Vec3u16&, u16, u8, bool) = nullptr,
+			TextureObject *gpuOutput = nullptr,
+			UploadBuffer *cpuOutput = nullptr,
+			const Pair<u64, u64> &allocation = {},
+			Vec3u16 offset = {},
+			Vec3u16 size = {},
+			u16 layer = {},
+			u8 mip = {},
+			bool isStencil = {}
+		);
+
 		GLContext &getContext();
 
 		//Helper functions

@@ -57,12 +57,15 @@ namespace ignis {
 		PREFER				= 0x2,
 
 		GPU_WRITE			= 0x4,
-		CPU_ACCESS			= 0x8,
+		CPU_WRITE			= 0x8,
 
-		NO_CPU_MEMORY		= 0x10,			//Not the same as leaving out CPU_ACCESS, as that still assumes you will update the resource at least once
+		NO_CPU_MEMORY		= 0x10,
 		GPU_WRITE_ONLY		= 0x14,	
+		CPU_READ			= 0x20,
 
-		FORCE_LINEAR_TILING	= CPU_ACCESS | REQUIRE | SHARED		//Incompatible with the 'prefer' flag
+		ALL					= 0x3F,
+
+		FORCE_LINEAR_TILING	= CPU_WRITE | REQUIRE | SHARED		//Incompatible with the 'prefer' flag
 	};
 
 	enumFlagOverloads(GPUMemoryUsage);

@@ -35,7 +35,31 @@ namespace ignis {
 		HashMap<GLenum, GPUObjectId> boundObjects;
 		HashMap<u64, BoundRange> boundByBaseId;	//GLenum lower 32-bit, Base upper 32-bit
 
-		HashMap<u64, Pair<GLsync, List<GPUObject*>>> fences;
+		struct Execution {
+
+			GLsync sync{};
+			List<GPUObject*> objects;
+
+			void *callbackObject{};
+			void (*functionPtr)(void*, UploadBuffer*, const Pair<u64, u64>&, TextureObject*, const Vec3u16&, const Vec3u16&, u16, u8, bool){};
+
+			TextureObject *gpuTexture{};
+			UploadBuffer *cpuOutput{};
+			Pair<u64, u64> allocation{};
+			Vec3u16 offset{};
+			Vec3u16 size{};
+			u16 layer{};
+			u8 mip{};
+			bool isStencil{};
+
+			inline void call() const {
+				if (auto func = functionPtr)
+					func(callbackObject, cpuOutput, allocation, gpuTexture, offset, size, layer, mip, isStencil);
+			}
+
+		};
+
+		HashMap<u64, Execution> fences;
 
 		Rasterizer currRaster{ CullMode::NONE };
 		BlendState currBlend{};

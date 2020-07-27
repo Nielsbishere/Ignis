@@ -2,6 +2,7 @@
 #include "graphics/command/command_list.hpp"
 #include "graphics/memory/primitive_buffer.hpp"
 #include "graphics/memory/gl_gpu_buffer.hpp"
+#include "graphics/memory/depth_texture.hpp"
 #include "graphics/gl_graphics.hpp"
 #include "graphics/gl_context.hpp"
 #include "graphics/memory/gl_framebuffer.hpp"
@@ -33,10 +34,13 @@ namespace ignis {
 
 			for (auto &fence : ctx.fences) {
 
-				glClientWaitSync(fence.second.first, GL_SYNC_FLUSH_COMMANDS_BIT, u64_MAX);
-				glDeleteSync(fence.second.first);
+				glClientWaitSync(fence.second.sync, GL_SYNC_FLUSH_COMMANDS_BIT, u64_MAX);
 
-				for (auto *res : fence.second.second)
+				fence.second.call();
+
+				glDeleteSync(fence.second.sync);
+
+				for (auto *res : fence.second.objects)
 					res->loseRef();
 
 				for (auto *upl : uploads)
@@ -72,11 +76,10 @@ namespace ignis {
 		return GraphicsApi::OPENGL;
 	}
 
-	void Graphics::execute(const List<CommandList*> &commands) {
+	List<GPUObject*> Graphics::executeInternal(const List<CommandList*> &commands, bool isIndepedentExecution) {
+
 
 		oicAssert("Graphics::execute can't be ran on a suspended graphics thread", enabledThreads[oic::Thread::getCurrentId()].enabled);
-
-		//TODO: lock mutex
 
 		++data->executionId;
 
@@ -89,7 +92,168 @@ namespace ignis {
 			cl->execute(resources);
 
 		//Make sure that all immediate handles are converted to frame independent
-		data->storeContext(resources);
+
+		if (isIndepedentExecution) {
+			data->storeContext(resources);
+			return {};
+		}
+
+		return resources;
+	}
+
+	void Graphics::presentToCpuInternal(
+		const List<CommandList*> &commands,
+		TextureObject *target,
+		UploadBuffer *result,
+		PresentToCpuCallback callback,
+		void *callbackInstance,
+		Vec3u16 size, Vec3u16 offset,
+		u8 mip,
+		u16 layer,
+		bool isStencil
+	) {
+
+		//Validate arguments
+
+		const auto &info = target->getInfo();
+
+		oicAssert("Mip out of bounds", mip < info.mips);
+		oicAssert("Mip out of bounds", layer < info.layers);
+		oicAssert("Offset out of bounds", ((offset.cast<Vec3u32>() + size.cast<Vec3u32>()) < info.mipSizes[mip].cast<Vec3u32>()).all());
+
+		if (!size.all())
+			size = info.mipSizes[mip] - offset;
+
+		GLenum format{}, type{};
+		usz stride{};
+
+		if(auto *depth = dynamic_cast<DepthTexture*>(target)) {
+
+			if (isStencil) {
+
+				if (!FormatHelper::hasStencil(depth->getFormat()))
+					oic::System::log()->fatal("Depth texture missing stencil, couldn't present to cpu");
+
+				format = GL_STENCIL_INDEX;
+				type = GL_UNSIGNED_BYTE;
+				stride = 1;
+			}
+			else {
+
+				switch (depth->getFormat()) {
+
+					case DepthFormat::D16:		stride = 2; type = GL_UNSIGNED_SHORT;	break;
+
+					case DepthFormat::D32:
+					case DepthFormat::D24_S8:
+					case DepthFormat::D24:		stride = 4; type = GL_UNSIGNED_INT;		break;
+
+					case DepthFormat::D32F_S8:
+					case DepthFormat::D32F:		stride = 4; type = GL_FLOAT;			break;
+
+					default:
+						oic::System::log()->fatal("Invalid depth format");
+				}
+
+				format = GL_DEPTH_COMPONENT;
+			}
+		}
+
+		else if(isStencil)
+			oic::System::log()->fatal("Stencil requested for cpu present, but color image doesn't have one");
+
+		else {
+
+			switch (FormatHelper::getChannelCount(info.format)) {
+			case 1:	format = GL_RED;		break;
+			case 2:	format = GL_RG;			break;
+			case 3:	format = GL_RGB;		break;
+			case 4:	format = GL_RGBA;		break;
+			}
+
+			switch (FormatHelper::getStrideBytes(info.format)) {
+			case 1:	type = GL_BYTE;		break;
+			case 2:	type = GL_SHORT;	break;
+			case 4:	type = GL_INT;		break;
+			}
+
+			if (FormatHelper::isFloatingPoint(info.format))
+				type = GL_FLOAT;
+
+			else if (!FormatHelper::isSigned(info.format))
+				type |= 1;
+
+			stride = FormatHelper::getSizeBytes(info.format);
+		}
+
+		//Execute and allocate memory for the frame
+		
+		List<GPUObject*> objects = executeInternal(commands, false);
+
+		Pair<u64, u64> allocation = result->allocate(data->executionId, nullptr, target->size(mip, isStencil), 1);
+
+		oicAssert("Out of memory exception", allocation.second != u64_MAX);
+
+		//Ensure our resources are counted
+
+		auto it0 = std::find(objects.begin(), objects.end(), target);
+
+		if (it0 == objects.end()) objects.push_back(target);
+
+		auto it1 = std::find(objects.begin(), objects.end(), result);
+
+		if (it1 == objects.end()) objects.push_back(result);
+
+		//Copy to GPU buffer
+
+		//TODO: Optimize bind call if possible
+
+		auto buf = result->getInfo().buffers.find(allocation.first);
+
+		oicAssert("UploadBuffer somehow disappeared", buf != result->getInfo().buffers.end());
+
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, buf->second->getData()->handle);
+
+		if (!size.all())
+			size = info.mipSizes[mip] - offset;
+
+		if (info.textureType == TextureType::TEXTURE_1D_ARRAY)
+			offset.y = layer;
+		else
+			offset.z = std::max(layer, offset.z);
+
+		usz textureSize = size.prod<usz>() * stride;
+
+		glGetTextureSubImage(
+			target->getData()->handle,
+			mip,
+			offset.x, offset.y, offset.z,
+			size.x, size.y, size.z,
+			format,
+			type,
+			GLsizei(textureSize),
+			(void*) allocation.second
+		);
+
+		//Finish
+
+		data->storeContext(
+			objects, 
+			callbackInstance, callback, 
+			target, result, allocation,
+			offset,
+			size,
+			layer,
+			mip,
+			isStencil
+		);
+	}
+
+	void Graphics::execute(const List<CommandList*> &commands) {
+
+		//TODO: lock mutex (also in present and presentToCpu)
+
+		executeInternal(commands, true);
 
 		//TODO: unlock mutex
 	}
@@ -98,7 +262,7 @@ namespace ignis {
 
 	void Graphics::present(
 		Framebuffer *intermediate, Swapchain *swapchain,
-		const List<CommandList *> &commands
+		const List<CommandList*> &commands
 	) {
 
 		if (!swapchain)
@@ -110,14 +274,27 @@ namespace ignis {
 		if (intermediate && intermediate->getInfo().size != swapchain->getInfo().size)
 			oic::System::log()->fatal("Couldn't present; swapchain and intermediate aren't same size");
 
+		//Execute
+
 		GLContext &ctx = data->getContext();
 
-		execute(commands);
+		List<GPUObject*> objects = executeInternal(commands, false);
 
-		ctx.framebufferId = {};
-		glxBeginRenderPass(data->getContext(), {}, 0);
+		//Ensure our swapchain and intermediate don't suddenly disappear
+
+		auto it0 = std::find(objects.begin(), objects.end(), intermediate);
+
+		if (it0 == objects.end()) objects.push_back(intermediate);
+
+		auto it1 = std::find(objects.begin(), objects.end(), swapchain);
+
+		if (it1 == objects.end()) objects.push_back(swapchain);
 
 		//Copy intermediate to backbuffer
+
+		ctx.boundApi.framebuffer = nullptr;
+		glxBeginRenderPass(data->getContext(), {}, 0);
+
 		if (intermediate) {
 
 			Vec2u16 size = intermediate->getInfo().size;
@@ -150,6 +327,11 @@ namespace ignis {
 
 		swapchain->present();
 		++ctx.frameId;
+
+		//Insert fence and store data
+
+		data->storeContext(objects);
+
 	}
 
 	//Present image to swapchain
@@ -183,14 +365,27 @@ namespace ignis {
 		if(slice >= intermediate->getInfo().mips)
 			oic::System::log()->fatal("Couldn't present; mip index out of bounds");
 
+		//Execute
+
 		GLContext &ctx = data->getContext();
 
-		execute(commands);
+		List<GPUObject*> objects = executeInternal(commands, false);
 
-		ctx.framebufferId = {};
-		glxBeginRenderPass(data->getContext(), {}, 0);
+		//Ensure our swapchain and intermediate don't suddenly disappear
+
+		auto it0 = std::find(objects.begin(), objects.end(), intermediate);
+
+		if (it0 == objects.end()) objects.push_back(intermediate);
+
+		auto it1 = std::find(objects.begin(), objects.end(), swapchain);
+
+		if (it1 == objects.end()) objects.push_back(swapchain);
 
 		//Copy intermediate to backbuffer
+
+		ctx.boundApi.framebuffer = {};
+		glxBeginRenderPass(data->getContext(), {}, 0);
+
 		if (intermediate) {
 
 			if (ctx.enableScissor) {
@@ -214,6 +409,10 @@ namespace ignis {
 
 		swapchain->present();
 		++ctx.frameId;
+
+		//Place fence
+
+		data->storeContext(objects);
 	}
 
 	void Graphics::Data::updateContext(Graphics &g) {
@@ -230,22 +429,24 @@ namespace ignis {
 
 			for (auto &gobj : g)
 				if (gobj.first.type == GPUObjectType::UPLOAD_BUFFER)
-					uploads.push_back((UploadBuffer *)gobj.second);
+					uploads.push_back((UploadBuffer*)gobj.second);
 
 			List<u64> syncs;
 			syncs.reserve(ctx.fences.size());
 
 			for (auto &fence : ctx.fences) {
 
-				GLenum type = glClientWaitSync(fence.second.first, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
+				GLenum type = glClientWaitSync(fence.second.sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
 
 				if (type == GL_TIMEOUT_EXPIRED || type == GL_WAIT_FAILED)
 					continue;
 
-				glDeleteSync(fence.second.first);
+				fence.second.call();
+
+				glDeleteSync(fence.second.sync);
 				syncs.push_back(fence.first);
 
-				for (auto *res : fence.second.second)
+				for (auto *res : fence.second.objects)
 					res->loseRef();
 
 				for (auto *upl : uploads)
@@ -331,7 +532,19 @@ namespace ignis {
 
 	}
 
-	void Graphics::Data::storeContext(const List<GPUObject*> &resources) {
+	void Graphics::Data::storeContext(
+		const List<GPUObject*> &resources, 
+		void *callbackObjectPtr, 
+		void (*callbackPtr)(void*, UploadBuffer*, const Pair<u64, u64>&, TextureObject*, const Vec3u16&, const Vec3u16&, u16, u8, bool),
+		TextureObject *gpuOutput,
+		UploadBuffer *cpuOutput,
+		const Pair<u64, u64> &allocation,
+		Vec3u16 offset,
+		Vec3u16 size,
+		u16 layer,
+		u8 mip,
+		bool isStencil
+	) {
 
 		GLContext &ctx = getContext();
 
@@ -349,7 +562,20 @@ namespace ignis {
 
 		//Queue fence
 
-		ctx.fences[ctx.executionId] = { glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0), resources };
+		ctx.fences[ctx.executionId] = { 
+			glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0), 
+			resources,
+			callbackObjectPtr,
+			callbackPtr,
+			gpuOutput,
+			cpuOutput,
+			allocation,
+			offset,
+			size,
+			layer,
+			mip,
+			isStencil
+		};
 
 	}
 

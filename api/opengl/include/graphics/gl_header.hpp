@@ -12,7 +12,7 @@ namespace ignis {
 	enum class DepthFormat : u8;
 	enum class GPUBufferType : u8;
 	enum class GPUMemoryUsage : u8;
-	enum class GPUFormat : u16;
+	class GPUFormat;
 	enum class GPUFormatType : u8;
 	enum class TextureType : u8;
 	enum class TopologyMode : u8;
@@ -35,7 +35,6 @@ namespace ignis {
 extern GLenum glxDepthFormat(ignis::DepthFormat format);
 extern GLenum glxColorFormat(ignis::GPUFormat format);
 extern GLenum glxBufferType(ignis::GPUBufferType format);
-extern GLenum glxBufferHint(ignis::GPUMemoryUsage usage);
 extern GLenum glxGpuFormatType(ignis::GPUFormat type);
 extern GLenum glxGpuDataFormat(ignis::GPUFormat type);
 extern GLenum glxTopologyMode(ignis::TopologyMode topo);

@@ -3,8 +3,6 @@
 
 namespace ignis {
 
-	enum class GPUFormat : u16;
-
 	class ShaderBuffer : public GPUBuffer {
 
 	public:

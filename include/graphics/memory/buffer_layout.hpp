@@ -21,7 +21,7 @@ namespace ignis {
 			Attrib() : offset {}, index {}, format {} {}
 
 			inline bool operator==(const Attrib &other) const {
-				return std::memcmp(this, &other, sizeof(*this)) == 0;
+				return *(u64*)&offset == *(u64*)&other.offset && format == other.format;
 			}
 		};
 

@@ -6,6 +6,7 @@
 #include "system/log.hpp"
 #include "utils/thread.hpp"
 #include "utils/hash.hpp"
+#include "types/vec.hpp"
 
 namespace ignis {
 
@@ -175,11 +176,16 @@ namespace std {
 
 namespace ignis {
 
+	class TextureObject;
+	class UploadBuffer;
+
 	class Graphics {
 
 		friend class GPUObject;
 
 	public:
+
+		using PresentToCpuCallback = void (*)(void*, UploadBuffer*, const Pair<u64, u64>&, TextureObject*, const Vec3u16&, const Vec3u16&, u16, u8, bool);
 
 		Graphics() = delete;
 		Graphics(const Graphics &) = delete;
@@ -254,6 +260,27 @@ namespace ignis {
 			const List<CommandList*> &commands
 		);
 
+		template<typename T, void (T::*func)(UploadBuffer*, const Pair<u64, u64>&, TextureObject*, const Vec3u16&, const Vec3u16&, u16, u8, bool)>
+		inline void presentToCpu(
+
+			const List<CommandList*> &commands,
+			TextureObject *target,
+			UploadBuffer *result,
+
+			T *callbackInstance,
+
+			Vec3u16 size = {}, Vec3u16 offset = {},
+			u8 mip = 0,
+			u16 layer = 0,
+
+			bool isStencil = false
+		) {
+			oicAssert("Upload buffer, TextureObject and Commands required", result && target && commands.size());
+			oicAssert("Callback and callbackInstance required", func && callbackInstance);
+
+			presentToCpuInternal(commands, target, result, (PresentToCpuCallback) &func, callbackInstance, size, offset, mip, layer, isStencil);
+		}
+
 		//Wait until the GPU has executed pending instructions from this thread
 		apimpl void wait();
 
@@ -290,6 +317,23 @@ namespace ignis {
 		}
 
 	protected:
+
+		//isIndepedentExecution specifies if this was called directly by "execute"
+		//or if an internal function will handle the syncing & resource tracking, etc.
+		//
+		apimpl List<GPUObject*> executeInternal(const List<CommandList*> &commands, bool isIndepedentExecution);
+
+		apimpl void presentToCpuInternal(
+			const List<CommandList *> &commands,
+			TextureObject *target,
+			UploadBuffer *result,
+			PresentToCpuCallback callback,
+			void *callbackInstance,
+			Vec3u16 size, Vec3u16 offset,
+			u8 mip,
+			u16 layer,
+			bool isStencil
+		);
 
 		plimpl void init();
 		plimpl void release();

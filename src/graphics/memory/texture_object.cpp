@@ -1,4 +1,5 @@
 #include "graphics/memory/texture_object.hpp"
+#include "graphics/memory/depth_texture.hpp"
 #include "graphics/shader/pipeline_layout.hpp"
 #include "graphics/shader/descriptors.hpp"
 #include "system/system.hpp"
@@ -99,7 +100,7 @@ namespace ignis {
 		return
 			(reg.type == ResourceType::TEXTURE || reg.type == ResourceType::IMAGE) &&
 			reg.textureType == info.textureType &&
-			(reg.textureFormat == GPUFormat::NONE || reg.textureFormat == info.format) &&
+			(reg.textureFormat == GPUFormat::NONE || reg.textureFormat == info.format.value) &&
 			isValidSubresource(sub);
 	}
 
@@ -122,6 +123,19 @@ namespace ignis {
 		
 		return maxDim;
 	}
+
+	usz TextureObject::size(u8 mip, u16, u16, bool isStencil) const {
+
+		usz stride;
+
+		if (const DepthTexture *dt = dynamic_cast<const DepthTexture*>(this))
+			stride = isStencil ? FormatHelper::getStencilBytes(dt->getFormat()) : FormatHelper::getDepthBytes(dt->getFormat());
+		else
+			stride = FormatHelper::getSizeBytes(info.format);
+
+		return info.mipSizes[mip].xy().prod<usz>() * stride;
+	}
+
 
 	bool TextureObject::isValidRange(const TextureRange &range) const {
 		return range.mip < info.mips && ((range.start + range.size) <= getDimensions(range.mip)).all();

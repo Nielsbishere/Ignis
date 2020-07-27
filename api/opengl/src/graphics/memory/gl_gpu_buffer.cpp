@@ -13,12 +13,24 @@ namespace ignis {
 
 		GLenum res{};
 
-		if (HasFlags(usage, GPUMemoryUsage::CPU_ACCESS)) {
+		bool cpuRead = HasFlags(usage, GPUMemoryUsage::CPU_READ);
+		bool cpuWrite = HasFlags(usage, GPUMemoryUsage::CPU_WRITE);
+
+		if (cpuRead || cpuWrite) {
 
 			res |= GL_DYNAMIC_STORAGE_BIT;
 
-			if(HasFlags(usage, GPUMemoryUsage::SHARED)) 
-				res |= GL_MAP_PERSISTENT_BIT | GL_MAP_WRITE_BIT | GL_MAP_COHERENT_BIT;
+			if (HasFlags(usage, GPUMemoryUsage::SHARED)) {
+
+				res |= GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT;
+
+				if (cpuRead)
+					res |= GL_MAP_READ_BIT;
+
+				if (cpuWrite)
+					res |= GL_MAP_WRITE_BIT;
+
+			}
 		}
 
 		if (HasFlags(usage, GPUMemoryUsage::SHARED))
@@ -67,12 +79,25 @@ namespace ignis {
 		glObjectLabel(GL_BUFFER, handle, GLsizei(name.size()), name.c_str());
 
 		glNamedBufferStorage(
-			handle, inf.size, nullptr,
+			handle, inf.size, {},
 			glxBufferUsage(inf.usage)
 		);
 
-		if (HasFlags(inf.usage, GPUMemoryUsage::CPU_ACCESS) && HasFlags(inf.usage, GPUMemoryUsage::SHARED))
-			data->unmapped = (volatile u8*)glMapNamedBufferRange(handle, 0, inf.size, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+		GLenum mapFlags = GL_MAP_PERSISTENT_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
+		bool hasCpuAccess{};
+
+		if (HasFlags(inf.usage, GPUMemoryUsage::CPU_WRITE)) {
+			mapFlags |= GL_MAP_WRITE_BIT;
+			hasCpuAccess = true;
+		}
+
+		if (HasFlags(inf.usage, GPUMemoryUsage::CPU_READ)) {
+			mapFlags |= GL_MAP_READ_BIT;
+			hasCpuAccess = true;
+		}
+
+		if (hasCpuAccess && HasFlags(inf.usage, GPUMemoryUsage::SHARED))
+			data->unmapped = (volatile u8*)glMapNamedBufferRange(handle, 0, inf.size, mapFlags);
 	}
 
 	GPUBuffer::~GPUBuffer() {
@@ -88,7 +113,7 @@ namespace ignis {
 
 	Pair<u64, u64> GPUBuffer::prepare(CommandList::Data*, UploadBuffer *uploadBuffer) {
 
-		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_ACCESS)) {
+		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_WRITE)) {
 
 			if (info.pending.empty() || info.markedPending)
 				return { 0, u64_MAX };
@@ -116,7 +141,7 @@ namespace ignis {
 		if (info.pending.empty())
 			return;
 
-		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_ACCESS)) {
+		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_WRITE)) {
 
 			if (allocation.second == u64_MAX)
 				return;
@@ -176,5 +201,11 @@ namespace ignis {
 
 		info.pending.clear();
 		info.markedPending = false;
+	}
+
+	Buffer GPUBuffer::readback(u64 offset, u64 size) {
+		oicAssert("Can only readback from CPU visible memory", data->unmapped);
+		oicAssert("Read out of bounds", offset + size <= info.size);
+		return Buffer(data->unmapped + offset, data->unmapped + offset + size);
 	}
 }

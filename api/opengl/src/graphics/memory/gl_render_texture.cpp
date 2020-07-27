@@ -44,6 +44,10 @@ namespace ignis {
 
 		info.dimensions.x = u16(size.x);
 		info.dimensions.y = u16(size.y);
+		info.dimensions.z = 1;
+
+		info.mips = 1;
+		info.mipSizes = { info.dimensions };
 
 		glCreateTextures(
 			glxTextureType(info.textureType), 

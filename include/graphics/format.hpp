@@ -1,5 +1,5 @@
 #pragma once
-#include "types/types.hpp"
+#include "types/enum.hpp"
 
 namespace ignis {
 
@@ -44,7 +44,7 @@ namespace ignis {
 	//& 0x100			= isSRGB
 	//& 0x200			= flip channels (RGBA -> BGRA, RGB = BGR)
 	//& 0x400			= isNone
-	enum class GPUFormat : u16 {
+	oicExposedEnum(GPUFormat, u16,
 
 		R8 = 0x00,		RG8,	RGB8,	RGBA8,
 		R16,			RG16,	RGB16,	RGBA16,
@@ -74,7 +74,7 @@ namespace ignis {
 		sBGR8 = 0x302,	sBGRA8,
 
 		NONE = 0x400
-	};
+	);
 
 	struct FormatHelper {
 
@@ -113,35 +113,37 @@ namespace ignis {
 	};
 
 	constexpr bool FormatHelper::isFloatingPoint(DepthFormat df) { return u8(df) & 0x10; }
-	constexpr bool FormatHelper::isFloatingPoint(GPUFormat gf) { return u8(gf) & 0x40; }
+	constexpr bool FormatHelper::isFloatingPoint(GPUFormat gf) { return u8(gf.value) & 0x40; }
 	constexpr bool FormatHelper::isFloatingPoint(GPUFormatType gft) { return u8(gft) & 0x4; }
 
 	constexpr bool FormatHelper::hasStencil(DepthFormat df) { return u8(df) & 0x1; }
-	constexpr bool FormatHelper::isSigned(GPUFormat gf) { return u8(gf) & 0x10; }
+	constexpr bool FormatHelper::isSigned(GPUFormat gf) { return u8(gf.value) & 0x10; }
 	constexpr bool FormatHelper::isSigned(GPUFormatType gft) { return u8(gft) & 0x1; }
 
 	constexpr bool FormatHelper::isAuto(DepthFormat df) { return u8(df) & 0x20; }
-	constexpr bool FormatHelper::isUnnormalized(GPUFormat gf) { return u8(gf) & 0x20; }
+	constexpr bool FormatHelper::isUnnormalized(GPUFormat gf) { return u8(gf.value) & 0x20; }
 	constexpr bool FormatHelper::isUnnormalized(GPUFormatType gft) { return u8(gft) & 0x2; }
 
 	constexpr bool FormatHelper::isNone(DepthFormat df) { return u8(df) & 0x40; }
-	constexpr bool FormatHelper::isNone(GPUFormat gf) { return u16(gf) & 0x400; }
-	constexpr GPUFormatType FormatHelper::getType(GPUFormat gf) { return GPUFormatType(u8(gf) >> 4); }
+	constexpr bool FormatHelper::isNone(GPUFormat gf) { return u16(gf.value) & 0x400; }
+	constexpr GPUFormatType FormatHelper::getType(GPUFormat gf) { return GPUFormatType(u8(gf.value) >> 4); }
 
 	constexpr usz FormatHelper::getDepthBits(DepthFormat df) { return df == DepthFormat::NONE ? 0 : 16_usz + (usz(u8(df) & 0x6) << 2); }
 	constexpr usz FormatHelper::getDepthBytes(DepthFormat df) { return df == DepthFormat::NONE ? 0 : 2_usz + (usz(u8(df) & 0x6) >> 1); }
 	constexpr usz FormatHelper::getStencilBytes(DepthFormat df) { return hasStencil(df); }
 	constexpr usz FormatHelper::getStencilBits(DepthFormat df) { return getStencilBytes(df) << 3; }
 
-	constexpr bool FormatHelper::isSRGB(GPUFormat gf) { return u16(gf) & 0x100; }
-	constexpr bool FormatHelper::flipRGB(GPUFormat gf) { return u16(gf) & 0x200; }
+	constexpr bool FormatHelper::isSRGB(GPUFormat gf) { return u16(gf.value) & 0x100; }
+	constexpr bool FormatHelper::flipRGB(GPUFormat gf) { return u16(gf.value) & 0x200; }
 
 	constexpr bool FormatHelper::isInt(GPUFormat gf) { return isUnnormalized(gf) && !isFloatingPoint(gf); }
 	constexpr bool FormatHelper::isInt(GPUFormatType gft) { return isUnnormalized(gft) && !isFloatingPoint(gft); }
 
-	constexpr usz FormatHelper::getStrideBits(GPUFormat gf) { return 8_usz << ((u8(gf) >> 2) & 3); }
-	constexpr usz FormatHelper::getStrideBytes(GPUFormat gf) { return 1_usz << ((u8(gf) >> 2) & 3); }
-	constexpr usz FormatHelper::getChannelCount(GPUFormat gf) { return 1_usz + (u8(gf) & 3); }
+	constexpr usz FormatHelper::getStrideBits(GPUFormat gf) { return 8_usz << ((u8(gf.value) >> 2) & 3); }
+	constexpr usz FormatHelper::getStrideBytes(GPUFormat gf) { return 1_usz << ((u8(gf.value) >> 2) & 3); }
+	constexpr usz FormatHelper::getChannelCount(GPUFormat gf) { return 1_usz + (u8(gf.value) & 3); }
 	constexpr usz FormatHelper::getSizeBits(GPUFormat gf) { return getStrideBits(gf) * getChannelCount(gf); }
 	constexpr usz FormatHelper::getSizeBytes(GPUFormat gf) { return getStrideBytes(gf) * getChannelCount(gf); }
 }
+
+oicEnumHash(ignis::GPUFormat);

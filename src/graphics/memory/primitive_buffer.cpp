@@ -87,7 +87,7 @@ namespace ignis {
 			if(info.indexLayout.formats.size() != 1)
 				oic::System::log()->fatal("Index buffer requires one format");
 
-			switch (info.indexLayout.formats[0].format) {
+			switch (info.indexLayout.formats[0].format.value) {
 				
 				case GPUFormat::R32u:
 				case GPUFormat::R32i:

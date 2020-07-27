@@ -48,6 +48,9 @@ namespace ignis {
 		//Returns { 0, u64_MAX } if no allocation possible
 		Pair<u64, u64> allocate(u64 executionId, const u8 *data, const usz size, u32 alignment);
 
+		//Readback result
+		Buffer readback(const Pair<u64, u64> &allocation, u64 size);
+
 		const Info &getInfo() const { return info; }
 
 	protected:
@@ -60,7 +63,7 @@ namespace ignis {
 
 	private:
 
-		~UploadBuffer() = default;
+		~UploadBuffer();
 
 		std::mutex mutex;
 		Info info;

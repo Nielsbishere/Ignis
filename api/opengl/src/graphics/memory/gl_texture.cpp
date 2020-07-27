@@ -1,4 +1,5 @@
 #include "graphics/memory/gl_texture_object.hpp"
+#include "graphics/memory/depth_texture.hpp"
 #include "graphics/gl_graphics.hpp"
 #include "utils/math.hpp"
 #include "utils/hash.hpp"
@@ -326,7 +327,7 @@ namespace ignis {
 		info.pending.clear();
 
 		//First flush is only for submitting the initial texture. Then the data is removed
-		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_ACCESS)) {
+		if (!HasFlags(info.usage, GPUMemoryUsage::CPU_WRITE)) {
 			info.initData.clear();
 			return;
 		}

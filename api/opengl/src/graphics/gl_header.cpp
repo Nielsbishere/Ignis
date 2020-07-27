@@ -49,7 +49,7 @@ GLenum glxDepthFormat(DepthFormat format) {
 
 GLenum glxColorFormat(GPUFormat format){
 
-	switch (format) {
+	switch (format.value) {
 
 		case GPUFormat::R8:		return GL_R8;
 		case GPUFormat::RG8:	return GL_RG8;
@@ -158,28 +158,6 @@ GLenum glxBufferType(GPUBufferType format) {
 			oic::System::log()->fatal("Invalid buffer type");
 			return GL_UNIFORM_BUFFER;
 	}
-}
-
-GLenum glxBufferHint(GPUMemoryUsage usage) {
-
-	//& 1 = isStatic
-	//& 2 = isCopy
-	constexpr GLenum type[] = {
-		GL_DYNAMIC_DRAW, GL_STATIC_DRAW,
-		GL_DYNAMIC_COPY, GL_STATIC_COPY
-	};
-
-	usz id{};
-
-	if (!(u8(usage) & u8(GPUMemoryUsage::CPU_ACCESS))) {
-
-		id |= 2;		//If CPU doesn't write; it's draw
-
-		if (!(u8(usage) & u8(GPUMemoryUsage::GPU_WRITE)))
-			id |= 1;	//If GPU also doesn't write; it's static
-	}
-
-	return type[id];
 }
 
 GLenum glxGpuFormatType(GPUFormat type) {
@@ -924,7 +902,7 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 			return 0;
 		}
 
-		switch (prim->getIndexFormat()) {
+		switch (prim->getIndexFormat().value) {
 
 			case GPUFormat::R16u:
 			case GPUFormat::R32u:

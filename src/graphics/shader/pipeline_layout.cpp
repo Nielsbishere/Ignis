@@ -22,7 +22,7 @@ namespace ignis {
 		const String &name, u32 globalId, TextureType type, u32 localId,
 		ShaderAccess access, GPUFormat textureFormat, bool isWritable
 	):
-		name(name), textureFormat(textureFormat), globalId(globalId), localId(localId), 
+		name(name), textureFormat(textureFormat.value), globalId(globalId), localId(localId), 
 		type(ResourceType::IMAGE), textureType(type), access(access), isWritable(isWritable) {}
 
 	RegisterLayout::RegisterLayout(

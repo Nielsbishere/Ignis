@@ -9,7 +9,7 @@ namespace ignis {
 
 		info.buffers[0] = new GPUBuffer(
 			g, NAME(name + " buffer 0"), GPUBuffer::Info(
-				inf.startSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED | GPUMemoryUsage::CPU_ACCESS
+				inf.startSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED | GPUMemoryUsage::CPU_WRITE | GPUMemoryUsage::CPU_READ
 			)
 		);
 
@@ -19,6 +19,14 @@ namespace ignis {
 			0,
 			0
 		});
+	}
+
+	UploadBuffer::~UploadBuffer() {
+
+		for (auto &buffer : info.buffers)
+			buffer.second->loseRef();
+
+		info.buffers.clear();
 	}
 
 	//Handle allocations
@@ -125,7 +133,7 @@ namespace ignis {
 		auto *buf = info.buffers[bufferId] = new GPUBuffer(
 			getGraphics(), NAME(getName() + " buffer " + std::to_string(bufferId)),
 			GPUBuffer::Info(
-				newSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED | GPUMemoryUsage::CPU_ACCESS
+				newSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED | GPUMemoryUsage::CPU_READ | GPUMemoryUsage::CPU_WRITE
 			)
 		);
 
@@ -340,7 +348,7 @@ namespace ignis {
 				info.buffers[bufferId] = new GPUBuffer(
 					getGraphics(), NAME(getName() + " buffer " + std::to_string(bufferId)),
 					GPUBuffer::Info(
-						newSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED	|		GPUMemoryUsage::CPU_ACCESS
+						newSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED|		GPUMemoryUsage::CPU_WRITE | GPUMemoryUsage::CPU_READ
 					)
 				);
 
@@ -357,6 +365,14 @@ namespace ignis {
 		//Now others can access
 
 		mutex.unlock();
+	}
+
+	//Copy memory
+
+	Buffer UploadBuffer::readback(const Pair<u64, u64> &allocation, u64 size) {
+		auto it = info.buffers.find(allocation.first);
+		oicAssert("Buffer out of bounds", it != info.buffers.end());
+		return it->second->readback(allocation.second, size);
 	}
 
 }

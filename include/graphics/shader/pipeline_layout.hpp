@@ -4,13 +4,6 @@
 
 namespace ignis {
 
-	enum class ShaderAccess : u32;
-	enum class GPUBufferType : u8;
-	enum class TextureType : u8;
-	enum class ResourceType : u8;
-	enum class SamplerType : u8;
-	enum class GPUFormat : u16;
-
 	//The layout of a register (texture, buffer or sampler)
 	struct RegisterLayout {
 
@@ -26,7 +19,7 @@ namespace ignis {
 			usz	  bufferSize;
 
 			//(If texture)
-			GPUFormat textureFormat;
+			GPUFormat::_E textureFormat;
 		};
 
 		u32 globalId;						//Global bind point (increases per register)

@@ -54,6 +54,9 @@ namespace ignis {
 
 		void flush(u64 offset, u64 size);
 
+		//Only valid if the GPU memory is present on the CPU (e.g. it's shared memory)
+		apimpl Buffer readback(u64 offset, u64 size);
+
 	protected:
 
 		void mergePending();
