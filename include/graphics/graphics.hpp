@@ -198,6 +198,7 @@ namespace ignis {
 
 		bool hasFeature(Feature) const;
 		bool hasExtension(Extension) const;
+		apimpl bool supportsFormat(GPUFormat format) const;
 
 		inline auto find(const String &name) const;
 		inline bool contains(const String &name) const;

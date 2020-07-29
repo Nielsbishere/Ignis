@@ -53,38 +53,26 @@ GLenum glxColorFormat(GPUFormat format){
 
 		case GPUFormat::R8:		return GL_R8;
 		case GPUFormat::RG8:	return GL_RG8;
-		case GPUFormat::BGR8:
-		case GPUFormat::RGB8:	return GL_RGB8;
-		case GPUFormat::BGRA8:
 		case GPUFormat::RGBA8:	return GL_RGBA8;
 
 		case GPUFormat::R16:	return GL_R16;
 		case GPUFormat::RG16:	return GL_RG16;
-		case GPUFormat::RGB16:	return GL_RGB16;
 		case GPUFormat::RGBA16:	return GL_RGBA16;
 
 		case GPUFormat::R8s:	return GL_R8_SNORM;
 		case GPUFormat::RG8s:	return GL_RG8_SNORM;
-		case GPUFormat::BGR8s:
-		case GPUFormat::RGB8s:	return GL_RGB8_SNORM;
-		case GPUFormat::BGRA8s:
 		case GPUFormat::RGBA8s:	return GL_RGBA8_SNORM;
 
 		case GPUFormat::R16s:	return GL_R16_SNORM;
 		case GPUFormat::RG16s:	return GL_RG16_SNORM;
-		case GPUFormat::RGB16s:	return GL_RGB16_SNORM;
 		case GPUFormat::RGBA16s:return GL_RGBA16_SNORM;
 
 		case GPUFormat::R8u:	return GL_R8UI;
 		case GPUFormat::RG8u:	return GL_RG8UI;
-		case GPUFormat::BGR8u:
-		case GPUFormat::RGB8u:	return GL_RGB8UI;
-		case GPUFormat::BGRA8u:
 		case GPUFormat::RGBA8u:	return GL_RGBA8UI;
 
 		case GPUFormat::R16u:	return GL_R16UI;
 		case GPUFormat::RG16u:	return GL_RG16UI;
-		case GPUFormat::RGB16u:	return GL_RGB16UI;
 		case GPUFormat::RGBA16u:return GL_RGBA16UI;
 
 		case GPUFormat::R32u:	return GL_R32UI;
@@ -94,14 +82,10 @@ GLenum glxColorFormat(GPUFormat format){
 
 		case GPUFormat::R8i:	return GL_R8I;
 		case GPUFormat::RG8i:	return GL_RG8I;
-		case GPUFormat::BGR8i:
-		case GPUFormat::RGB8i:	return GL_RGB8I;
-		case GPUFormat::BGRA8i:
 		case GPUFormat::RGBA8i:	return GL_RGBA8I;
 
 		case GPUFormat::R16i:	return GL_R16I;
 		case GPUFormat::RG16i:	return GL_RG16I;
-		case GPUFormat::RGB16i:	return GL_RGB16I;
 		case GPUFormat::RGBA16i:return GL_RGBA16I;
 
 		case GPUFormat::R32i:	return GL_R32I;
@@ -111,7 +95,6 @@ GLenum glxColorFormat(GPUFormat format){
 
 		case GPUFormat::R16f:	return GL_R16F;
 		case GPUFormat::RG16f:	return GL_RG16F;
-		case GPUFormat::RGB16f:	return GL_RGB16F;
 		case GPUFormat::RGBA16f:return GL_RGBA16F;
 
 		case GPUFormat::R32f:	return GL_R32F;
@@ -119,16 +102,13 @@ GLenum glxColorFormat(GPUFormat format){
 		case GPUFormat::RGB32f:	return GL_RGB32F;
 		case GPUFormat::RGBA32f:return GL_RGBA32F;
 
-		case GPUFormat::sBGR8:
-		case GPUFormat::sRGB8:	return GL_SRGB8;
-
-		case GPUFormat::sBGRA8:
 		case GPUFormat::sRGBA8:	return GL_SRGB8_ALPHA8;
 
-		case GPUFormat::R64f: case GPUFormat::R64u: case GPUFormat::R64i:
-		case GPUFormat::RG64f: case GPUFormat::RG64u: case GPUFormat::RG64i:
-		case GPUFormat::RGB64f: case GPUFormat::RGB64u: case GPUFormat::RGB64i:
+		case GPUFormat::R64f:    case GPUFormat::R64u:    case GPUFormat::R64i:
+		case GPUFormat::RG64f:   case GPUFormat::RG64u:   case GPUFormat::RG64i:
+		case GPUFormat::RGB64f:  case GPUFormat::RGB64u:  case GPUFormat::RGB64i:
 		case GPUFormat::RGBA64f: case GPUFormat::RGBA64u: case GPUFormat::RGBA64i:
+
 			oic::System::log()->fatal("OpenGL doesn't support 64-bit buffers");
 			return GL_RGBA8;
 

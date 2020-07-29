@@ -72,6 +72,11 @@ namespace ignis {
 		init();
 	}
 
+	bool Graphics::supportsFormat(GPUFormat) const {
+		//TODO: Query support
+		return true;
+	}
+
 	GraphicsApi Graphics::getCurrentApi() const {
 		return GraphicsApi::OPENGL;
 	}

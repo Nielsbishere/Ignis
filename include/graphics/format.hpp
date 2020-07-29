@@ -42,38 +42,32 @@ namespace ignis {
 	//& 0x20			= isUnnormalized
 	//& 0x40			= isFloatingPoint
 	//& 0x100			= isSRGB
-	//& 0x200			= flip channels (RGBA -> BGRA, RGB = BGR)
-	//& 0x400			= isNone
+	//& 0x200			= isNone
 	oicExposedEnum(GPUFormat, u16,
 
-		R8 = 0x00,		RG8,	RGB8,	RGBA8,
-		R16,			RG16,	RGB16,	RGBA16,
+		R8 = 0x00,		RG8,	RGBA8 = 0x03,
+		R16,			RG16,	RGBA16 = 0x07,
 
-		R8s = 0x10,		RG8s,	RGB8s,	RGBA8s,
-		R16s,			RG16s,	RGB16s,	RGBA16s,
+		R8s = 0x10,		RG8s,	RGBA8s = 0x13,
+		R16s,			RG16s,	RGBA16s = 0x17,
 
-		R8u = 0x20,		RG8u,	RGB8u,	RGBA8u,
-		R16u,			RG16u,	RGB16u, RGBA16u,
+		R8u = 0x20,		RG8u,	RGBA8u = 0x23,
+		R16u,			RG16u,  RGBA16u = 0x27,
 		R32u,			RG32u,	RGB32u, RGBA32u,
 		R64u,			RG64u,	RGB64u, RGBA64u,
 
-		R8i = 0x30,		RG8i,	RGB8i,	RGBA8i,
-		R16i,			RG16i,	RGB16i, RGBA16i,
+		R8i = 0x30,		RG8i,	RGBA8i = 0x33,
+		R16i,			RG16i,  RGBA16i = 0x37,
 		R32i,			RG32i,	RGB32i, RGBA32i,
 		R64i,			RG64i,	RGB64i, RGBA64i,
 
-		R16f = 0x74,	RG16f,	RGB16f,	RGBA16f,
+		R16f = 0x74,	RG16f,	RGBA16f = 0x77,
 		R32f,			RG32f,	RGB32f,	RGBA32f,
 		R64f,			RG64f,	RGB64f, RGBA64f,
 
-		sRGB8 = 0x102,	sRGBA8,
-		BGR8 = 0x202,	BGRA8,
-		BGR8s = 0x212,	BGRA8s,
-		BGR8u = 0x222,	BGRA8u,
-		BGR8i = 0x232,	BGRA8i,
-		sBGR8 = 0x302,	sBGRA8,
+		sRGBA8 = 0x103,
 
-		NONE = 0x400
+		NONE = 0x200
 	);
 
 	struct FormatHelper {
