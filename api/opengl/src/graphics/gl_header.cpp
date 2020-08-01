@@ -733,7 +733,7 @@ void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
 					continue;
 
 				glBindBufferRange(
-					bindPoint, resource.localId, buffer->getData()->handle, offset, size
+					bindPoint, resource.localId, buffer->getExtendedData()->handle, offset, size
 				);
 
 				bound = { buffer->getId(), offset, size };
@@ -850,7 +850,7 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 		}
 
 		glVertexArrayVertexBuffer(
-			handle, i, v.buffer->getData()->handle, v.bufferOffset, v.stride()
+			handle, i, v.buffer->getExtendedData()->handle, v.bufferOffset, v.stride()
 		);
 
 		for (auto &elem : v.formats) {
@@ -896,7 +896,7 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 		}
 
 		glVertexArrayElementBuffer(
-			handle, info.indexLayout.buffer->getData()->handle
+			handle, info.indexLayout.buffer->getExtendedData()->handle
 		);
 	}
 

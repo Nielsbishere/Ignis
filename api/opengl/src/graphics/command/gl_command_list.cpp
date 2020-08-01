@@ -343,7 +343,7 @@ namespace ignis {
 			return;
 		}
 
-		GLuint handle = buf->getData()->handle;
+		GLuint handle = buf->getExtendedData()->handle;
 
 		if(buf->size() % 16)
 			oic::System::log()->fatal("Buffer should be 16-byte aligned!");
@@ -474,7 +474,7 @@ namespace ignis {
 		}
 
 		glClearNamedBufferSubData(
-			buffer->getData()->handle,
+			buffer->getExtendedData()->handle,
 			GL_R32UI,
 			offset, size,
 			GL_RED_INTEGER, GL_UNSIGNED_INT,

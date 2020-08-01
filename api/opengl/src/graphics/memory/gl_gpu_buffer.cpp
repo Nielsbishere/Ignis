@@ -169,7 +169,7 @@ namespace ignis {
 
 				//Copy from upload buffer into this buffer
 
-				glCopyNamedBufferSubData(buf->getData()->handle, data->handle, readOffset, pending.x, pending.y);
+				glCopyNamedBufferSubData(buf->getExtendedData()->handle, data->handle, readOffset, pending.x, pending.y);
 
 				offset += pending.y;
 			}

@@ -217,7 +217,7 @@ namespace ignis {
 
 		oicAssert("UploadBuffer somehow disappeared", buf != result->getInfo().buffers.end());
 
-		glBindBuffer(GL_PIXEL_PACK_BUFFER, buf->second->getData()->handle);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, buf->second->getExtendedData()->handle);
 
 		if (!size.all())
 			size = info.mipSizes[mip] - offset;

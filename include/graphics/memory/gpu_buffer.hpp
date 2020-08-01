@@ -47,7 +47,7 @@ namespace ignis {
 
 		inline u64 size() const { return info.size; }
 
-		Data *getData() { return data; }
+		Data *getExtendedData() { return data; }
 		const Info &getInfo() const { return info; }
 
 		u8 *getBuffer() const { return (u8*) info.initData.data(); }
