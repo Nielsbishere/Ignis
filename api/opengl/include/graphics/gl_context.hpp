@@ -21,7 +21,7 @@ namespace ignis {
 
 			Framebuffer *framebuffer{};
 			PrimitiveBuffer *primitiveBuffer{};
-			Descriptors *descriptors{};
+			List<Descriptors*> descriptors{};
 			Pipeline *pipeline{};
 
 		} bound, boundApi;
@@ -79,7 +79,7 @@ namespace ignis {
 		GPUObjectId framebufferId{};
 		GPUObjectId primitiveBufferId{};
 		GPUObjectId pipelineId{};
-		GPUObjectId descriptorsId{};
+		List<GPUObjectId> descriptorsIds{};
 
 		//CommandList cache of active objects
 

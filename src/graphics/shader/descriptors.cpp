@@ -9,13 +9,16 @@
 namespace ignis {
 
 	Descriptors::Info::Info(
-		const PipelineLayout *pipelineLayout, const Subresources &resources
+		const PipelineLayout *pipelineLayout, u16 descriptorIndex, 
+		const Subresources &resources
 	):
-		pipelineLayout(pipelineLayout), resources(resources) {
+		pipelineLayout(pipelineLayout), resources(resources), 
+		descriptorSetIndex(descriptorIndex)
+	{
 
 		if(pipelineLayout)
 			for (auto &elem : pipelineLayout->getInfo())
-				if (resources.find(elem.first) == resources.end())
+				if (descriptorSetIndex == elem.second.descriptorSetId && resources.find(elem.first) == resources.end())
 					this->resources[elem.first] = {};
 	}
 
@@ -39,10 +42,6 @@ namespace ignis {
 
 		auto &reg = regIt->second;
 		return resource.resource->isCompatible(reg, resource);
-	}
-
-	bool Descriptors::isShaderCompatible(const PipelineLayout *layout) const {
-		return (!layout && !info.pipelineLayout) || (layout && layout->supportsLayout(info.pipelineLayout));
 	}
 
 	GPUSubresource::GPUSubresource(GPUBuffer *resource, usz offset, usz size):

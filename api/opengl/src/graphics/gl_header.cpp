@@ -51,63 +51,63 @@ GLenum glxColorFormat(GPUFormat format){
 
 	switch (format.value) {
 
-		case GPUFormat::R8:		return GL_R8;
-		case GPUFormat::RG8:	return GL_RG8;
-		case GPUFormat::RGBA8:	return GL_RGBA8;
+		case GPUFormat::r8:		return GL_R8;
+		case GPUFormat::rg8:	return GL_RG8;
+		case GPUFormat::rgba8:	return GL_RGBA8;
 
-		case GPUFormat::R16:	return GL_R16;
-		case GPUFormat::RG16:	return GL_RG16;
-		case GPUFormat::RGBA16:	return GL_RGBA16;
+		case GPUFormat::r16:	return GL_R16;
+		case GPUFormat::rg16:	return GL_RG16;
+		case GPUFormat::rgba16:	return GL_RGBA16;
 
-		case GPUFormat::R8s:	return GL_R8_SNORM;
-		case GPUFormat::RG8s:	return GL_RG8_SNORM;
-		case GPUFormat::RGBA8s:	return GL_RGBA8_SNORM;
+		case GPUFormat::r8s:	return GL_R8_SNORM;
+		case GPUFormat::rg8s:	return GL_RG8_SNORM;
+		case GPUFormat::rgba8s:	return GL_RGBA8_SNORM;
 
-		case GPUFormat::R16s:	return GL_R16_SNORM;
-		case GPUFormat::RG16s:	return GL_RG16_SNORM;
-		case GPUFormat::RGBA16s:return GL_RGBA16_SNORM;
+		case GPUFormat::r16s:	return GL_R16_SNORM;
+		case GPUFormat::rg16s:	return GL_RG16_SNORM;
+		case GPUFormat::rgba16s:return GL_RGBA16_SNORM;
 
-		case GPUFormat::R8u:	return GL_R8UI;
-		case GPUFormat::RG8u:	return GL_RG8UI;
-		case GPUFormat::RGBA8u:	return GL_RGBA8UI;
+		case GPUFormat::r8u:	return GL_R8UI;
+		case GPUFormat::rg8u:	return GL_RG8UI;
+		case GPUFormat::rgba8u:	return GL_RGBA8UI;
 
-		case GPUFormat::R16u:	return GL_R16UI;
-		case GPUFormat::RG16u:	return GL_RG16UI;
-		case GPUFormat::RGBA16u:return GL_RGBA16UI;
+		case GPUFormat::r16u:	return GL_R16UI;
+		case GPUFormat::rg16u:	return GL_RG16UI;
+		case GPUFormat::rgba16u:return GL_RGBA16UI;
 
-		case GPUFormat::R32u:	return GL_R32UI;
-		case GPUFormat::RG32u:	return GL_RG32UI;
-		case GPUFormat::RGB32u:	return GL_RGB32UI;
-		case GPUFormat::RGBA32u:return GL_RGBA32UI;
+		case GPUFormat::r32u:	return GL_R32UI;
+		case GPUFormat::rg32u:	return GL_RG32UI;
+		case GPUFormat::rgb32u:	return GL_RGB32UI;
+		case GPUFormat::rgba32u:return GL_RGBA32UI;
 
-		case GPUFormat::R8i:	return GL_R8I;
-		case GPUFormat::RG8i:	return GL_RG8I;
-		case GPUFormat::RGBA8i:	return GL_RGBA8I;
+		case GPUFormat::r8i:	return GL_R8I;
+		case GPUFormat::rg8i:	return GL_RG8I;
+		case GPUFormat::rgba8i:	return GL_RGBA8I;
 
-		case GPUFormat::R16i:	return GL_R16I;
-		case GPUFormat::RG16i:	return GL_RG16I;
-		case GPUFormat::RGBA16i:return GL_RGBA16I;
+		case GPUFormat::r16i:	return GL_R16I;
+		case GPUFormat::rg16i:	return GL_RG16I;
+		case GPUFormat::rgba16i:return GL_RGBA16I;
 
-		case GPUFormat::R32i:	return GL_R32I;
-		case GPUFormat::RG32i:	return GL_RG32I;
-		case GPUFormat::RGB32i:	return GL_RGB32I;
-		case GPUFormat::RGBA32i:return GL_RGBA32I;
+		case GPUFormat::r32i:	return GL_R32I;
+		case GPUFormat::rg32i:	return GL_RG32I;
+		case GPUFormat::rgb32i:	return GL_RGB32I;
+		case GPUFormat::rgba32i:return GL_RGBA32I;
 
-		case GPUFormat::R16f:	return GL_R16F;
-		case GPUFormat::RG16f:	return GL_RG16F;
-		case GPUFormat::RGBA16f:return GL_RGBA16F;
+		case GPUFormat::r16f:	return GL_R16F;
+		case GPUFormat::rg16f:	return GL_RG16F;
+		case GPUFormat::rgba16f:return GL_RGBA16F;
 
-		case GPUFormat::R32f:	return GL_R32F;
-		case GPUFormat::RG32f:	return GL_RG32F;
-		case GPUFormat::RGB32f:	return GL_RGB32F;
-		case GPUFormat::RGBA32f:return GL_RGBA32F;
+		case GPUFormat::r32f:	return GL_R32F;
+		case GPUFormat::rg32f:	return GL_RG32F;
+		case GPUFormat::rgb32f:	return GL_RGB32F;
+		case GPUFormat::rgba32f:return GL_RGBA32F;
 
-		case GPUFormat::sRGBA8:	return GL_SRGB8_ALPHA8;
+		case GPUFormat::srgba8:	return GL_SRGB8_ALPHA8;
 
-		case GPUFormat::R64f:    case GPUFormat::R64u:    case GPUFormat::R64i:
-		case GPUFormat::RG64f:   case GPUFormat::RG64u:   case GPUFormat::RG64i:
-		case GPUFormat::RGB64f:  case GPUFormat::RGB64u:  case GPUFormat::RGB64i:
-		case GPUFormat::RGBA64f: case GPUFormat::RGBA64u: case GPUFormat::RGBA64i:
+		case GPUFormat::r64f:    case GPUFormat::r64u:    case GPUFormat::r64i:
+		case GPUFormat::rg64f:   case GPUFormat::rg64u:   case GPUFormat::rg64i:
+		case GPUFormat::rgb64f:  case GPUFormat::rgb64u:  case GPUFormat::rgb64i:
+		case GPUFormat::rgba64f: case GPUFormat::rgba64u: case GPUFormat::rgba64i:
 
 			oic::System::log()->fatal("OpenGL doesn't support 64-bit buffers");
 			return GL_RGBA8;
@@ -702,127 +702,129 @@ void glxBindPipeline(GLContext &ctx, Pipeline *pipeline) {
 	}
 }
 
-void glxBindDescriptors(GLContext &ctx, Descriptors *descriptors) {
+void glxBindDescriptors(GLContext &ctx, const List<Descriptors*> &descriptors) {
 
-	if (!descriptors || !descriptors->getInfo().pipelineLayout) return;
+	if (descriptors.empty())
+		return;
 
-	for (auto &mapIt : descriptors->getInfo().pipelineLayout->getInfo()) {
+	for(Descriptors *desc : descriptors)
+		for (auto &mapIt : desc->getInfo().pipelineLayout->getInfo()) {
 
-		auto resource = mapIt.second;
-		auto it = descriptors->getInfo().flushedResources.find(resource.globalId);
+			auto resource = mapIt.second;
+			auto it = desc->getInfo().flushedResources.find(resource.globalId);
 
-		if (it != descriptors->getInfo().flushedResources.end()) {
+			if (it != desc->getInfo().flushedResources.end()) {
 
-			auto &subres = it->second;
-			auto *res = subres.resource;
+				auto &subres = it->second;
+				auto *res = subres.resource;
 
-			//TODO: Handle nullptr!
+				//TODO: Handle nullptr!
 
-			TextureObject *tex = dynamic_cast<TextureObject*>(res);
+				TextureObject *tex = dynamic_cast<TextureObject*>(res);
 
-			//Bind buffer range
+				//Bind buffer range
 
-			if (GPUBuffer *buffer = dynamic_cast<GPUBuffer*>(res)) {
+				if (GPUBuffer *buffer = dynamic_cast<GPUBuffer*>(res)) {
 
-				usz offset = subres.bufferRange.offset, size = subres.bufferRange.size;
+					usz offset = subres.bufferRange.offset, size = subres.bufferRange.size;
 
-				GLenum bindPoint = resource.type == ResourceType::CBUFFER ? GL_UNIFORM_BUFFER : GL_SHADER_STORAGE_BUFFER;
-				auto &bound = ctx.boundByBaseId[(u64(resource.localId) << 32) | bindPoint];
+					GLenum bindPoint = resource.type == ResourceType::CBUFFER ? GL_UNIFORM_BUFFER :		GL_SHADER_STORAGE_BUFFER;
+					auto &bound = ctx.boundByBaseId[(u64(resource.localId) << 32) | bindPoint];
 
-				if (bound.id == buffer->getId() && bound.offset == offset && bound.size == size)
-					continue;
+					if (bound.id == buffer->getId() && bound.offset == offset && bound.size == size)
+						continue;
 
-				glBindBufferRange(
-					bindPoint, resource.localId, buffer->getExtendedData()->handle, offset, size
-				);
-
-				bound = { buffer->getId(), offset, size };
-			}
-
-			//Bind sampler range
-
-			else if (Sampler *sampler = dynamic_cast<Sampler*>(res)) {
-
-				auto &bound = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_SAMPLER];
-
-				if (bound.id != sampler->getId()) {
-					glBindSampler(resource.localId, sampler->getData()->handle);
-					bound.id = sampler->getId();
-				}
-
-				tex = subres.samplerData.texture;
-			}
-
-			//Bind texture
-
-			if (tex) {
-
-				auto &textureViews = tex->getData()->textureViews;
-				GLuint textureView{};
-
-				u32 subId{};
-
-				for (auto &view : textureViews)
-					if (view.first == subres.textureRange) {
-						textureView = view.second;
-						break;
-					}
-					else ++subId;
-
-				if (!textureView) {
-
-					glGenTextures(1, &textureView);
-					glTextureView(
-						textureView,
-						glxTextureType(subres.textureRange.subType),
-						tex->getData()->handle,
-						glxColorFormat(tex->getInfo().format),
-						subres.textureRange.minLevel,
-						subres.textureRange.levelCount,
-						subres.textureRange.minLayer,
-						subres.textureRange.layerCount
+					glBindBufferRange(
+						bindPoint, resource.localId, buffer->getExtendedData()->handle, offset, size
 					);
 
-					String name = 
-							tex->getName() + " " + 
-							std::to_string(textureViews.size());
-
-					glObjectLabel(
-						GL_TEXTURE, textureView, GLsizei(name.size()), name.c_str()
-					);
-
-					textureViews.push_back({ subres.textureRange, textureView });
+					bound = { buffer->getId(), offset, size };
 				}
 
-				if (!resource.isWritable) {
+				//Bind sampler range
 
-					auto &boundTex = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_TEXTURE];
+				else if (Sampler *sampler = dynamic_cast<Sampler*>(res)) {
 
-					if (boundTex.id != tex->getId() || boundTex.subId != subId) {
-						glBindTextureUnit(resource.localId, textureView);
-						boundTex.subId = subId;
-						boundTex.id = tex->getId();
+					auto &bound = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_SAMPLER];
+
+					if (bound.id != sampler->getId()) {
+						glBindSampler(resource.localId, sampler->getData()->handle);
+						bound.id = sampler->getId();
 					}
 
-				} else {
+					tex = subres.samplerData.texture;
+				}
 
-					auto &boundImg = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but GL_IMAGE doesn't exist*/];
+				//Bind texture
 
-					if (boundImg.id != tex->getId() || boundImg.subId != subId) {
+				if (tex) {
 
-						glBindImageTexture(
-							resource.localId, textureView, 0,
-							GL_TRUE, 0, GL_WRITE_ONLY,
-							glxColorFormat(tex->getInfo().format)
+					auto &textureViews = tex->getData()->textureViews;
+					GLuint textureView{};
+
+					u32 subId{};
+
+					for (auto &view : textureViews)
+						if (view.first == subres.textureRange) {
+							textureView = view.second;
+							break;
+						}
+						else ++subId;
+
+					if (!textureView) {
+
+						glGenTextures(1, &textureView);
+						glTextureView(
+							textureView,
+							glxTextureType(subres.textureRange.subType),
+							tex->getData()->handle,
+							glxColorFormat(tex->getInfo().format),
+							subres.textureRange.minLevel,
+							subres.textureRange.levelCount,
+							subres.textureRange.minLayer,
+							subres.textureRange.layerCount
 						);
 
-						boundImg.subId = subId;
-						boundImg.id = tex->getId();
+						String name = 
+								tex->getName() + " " + 
+								std::to_string(textureViews.size());
+
+						glObjectLabel(
+							GL_TEXTURE, textureView, GLsizei(name.size()), name.c_str()
+						);
+
+						textureViews.push_back({ subres.textureRange, textureView });
+					}
+
+					if (!resource.isWritable) {
+
+						auto &boundTex = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_TEXTURE];
+
+						if (boundTex.id != tex->getId() || boundTex.subId != subId) {
+							glBindTextureUnit(resource.localId, textureView);
+							boundTex.subId = subId;
+							boundTex.id = tex->getId();
+						}
+
+					} else {
+
+						auto &boundImg = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but	 GL_IMAGE doesn't exist*/];
+
+						if (boundImg.id != tex->getId() || boundImg.subId != subId) {
+
+							glBindImageTexture(
+								resource.localId, textureView, 0,
+								GL_TRUE, 0, GL_WRITE_ONLY,
+								glxColorFormat(tex->getInfo().format)
+							);
+
+							boundImg.subId = subId;
+							boundImg.id = tex->getId();
+						}
 					}
 				}
 			}
 		}
-	}
 }
 
 //Per context
@@ -884,8 +886,8 @@ GLuint glxGenerateVao(PrimitiveBuffer *prim) {
 
 		switch (prim->getIndexFormat().value) {
 
-			case GPUFormat::R16u:
-			case GPUFormat::R32u:
+			case GPUFormat::r16u:
+			case GPUFormat::r32u:
 				break;
 
 			default:

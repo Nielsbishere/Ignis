@@ -70,7 +70,7 @@ namespace ignis {
 		};
 
 		GPUSubresource(): samplerData{} {}
-		GPUSubresource(GPUBuffer *resource, usz offset, usz size = 0);
+		GPUSubresource(GPUBuffer *resource, usz offset = 0, usz size = 0);
 
 		GPUSubresource(
 			Sampler *sampler, TextureObject *texture,
@@ -101,10 +101,12 @@ namespace ignis {
 			const PipelineLayout *pipelineLayout;
 			Subresources resources, flushedResources;
 
+			u16 descriptorSetIndex{};
 			bool shouldFlush{};
 
 			Info(
-				const PipelineLayout *pipelineLayout, 
+				const PipelineLayout *pipelineLayout,
+				u16 descriptorIndex,
 				const Subresources &resources
 			);
 		};
@@ -121,9 +123,6 @@ namespace ignis {
 
 		//Check if descriptor slots are compatible (and exist)
 		bool isResourceCompatible(u32 i, const GPUSubresource &resource) const;
-
-		//Check if pipeline layout is compatible with a shader
-		bool isShaderCompatible(const PipelineLayout *layout) const;
 
 		Data *getData() { return data; }
 		const Info &getInfo() const { return info; }

@@ -89,10 +89,10 @@ namespace ignis {
 
 			switch (info.indexLayout.formats[0].format.value) {
 				
-				case GPUFormat::R32u:
-				case GPUFormat::R32i:
-				case GPUFormat::R16u:
-				case GPUFormat::R16i:
+				case GPUFormat::r32u:
+				case GPUFormat::r32i:
+				case GPUFormat::r16u:
+				case GPUFormat::r16i:
 					break;
 
 				default:

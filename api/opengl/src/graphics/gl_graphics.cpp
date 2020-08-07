@@ -468,11 +468,16 @@ namespace ignis {
 		auto *fb = ctx.framebufferId.get<Framebuffer>();
 		auto *pb = ctx.primitiveBufferId.get<PrimitiveBuffer>();
 		auto *p = ctx.pipelineId.get<Pipeline>();
-		auto *d = ctx.descriptorsId.get<Descriptors>();
 
+		ctx.bound.descriptors.clear();
+		ctx.boundApi.descriptors.clear();
+
+		for (auto &elem : ctx.descriptorsIds) {
+			ctx.bound.descriptors.push_back(elem.get<Descriptors>());
+			ctx.boundApi.descriptors.push_back(elem.get<Descriptors>());
+		}
 
 		ctx.bound.pipeline = ctx.boundApi.pipeline = p;
-		ctx.bound.descriptors = ctx.boundApi.descriptors = d;
 		ctx.bound.framebuffer = ctx.boundApi.framebuffer = fb;
 		ctx.bound.primitiveBuffer = ctx.boundApi.primitiveBuffer = pb;
 
@@ -558,7 +563,11 @@ namespace ignis {
 		ctx.framebufferId = getGPUObjectId(ctx.boundApi.framebuffer);
 		ctx.primitiveBufferId = getGPUObjectId(ctx.boundApi.primitiveBuffer);
 		ctx.pipelineId = getGPUObjectId(ctx.boundApi.pipeline);
-		ctx.descriptorsId = getGPUObjectId(ctx.boundApi.descriptors);
+
+		ctx.descriptorsIds.clear();
+
+		for(auto &elem : ctx.boundApi.descriptors)
+			ctx.descriptorsIds.push_back(getGPUObjectId(elem));
 
 		//Increment refcounters, to ensure they don't disappear during execution
 

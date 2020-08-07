@@ -60,7 +60,7 @@ extern void APIENTRY glxDebugMessage(
 );
 
 extern void glxBindPipeline(ignis::GLContext &data, ignis::Pipeline *pipeline);
-extern void glxBindDescriptors(ignis::GLContext &data, ignis::Descriptors *descriptors);
+extern void glxBindDescriptors(ignis::GLContext &data, const List<ignis::Descriptors*> &descriptors);
 extern bool glxCheckShaderLog(GLuint shader, String &str);
 extern bool glxCheckProgramLog(GLuint program, String &str);
 

@@ -4,6 +4,8 @@
 
 namespace ignis {
 
+	struct GPUSubresource;
+
 	//The layout of a register (texture, buffer or sampler)
 	struct RegisterLayout {
 
@@ -16,7 +18,7 @@ namespace ignis {
 			//(If buffer)
 			//	(If structured) represents stride
 			//	(Else)			represents required buffer size
-			usz	  bufferSize;
+			usz	  bufferSize{};
 
 			//(If texture)
 			GPUFormat::_E textureFormat;
@@ -26,7 +28,10 @@ namespace ignis {
 
 		//Local bind point, increase for every similar type;
 		//(UNIFORM buffer, other buffer, texture, sampler)
-		u32 localId;
+		u16 localId;
+
+		//Index into descriptors passed to SetDescriptors command
+		u16 descriptorSetId;
 
 		ResourceType type;					//The register type (buffer, texture, sampler)
 
@@ -37,34 +42,36 @@ namespace ignis {
 			u8			  subType;			//Type dependent subtype
 		};
 
-		ShaderAccess access;				//By which shaders this can be accessed
-
 		bool isWritable;					//If the register is GPU writable
+
+		u8 pad{};
+
+		ShaderAccess access;				//By which shaders this can be accessed
 
 		//Null register (only valid for use in Lists)
 		RegisterLayout();
 
 		//Construct a buffer register
 		RegisterLayout(
-			const String &name, u32 globalId, GPUBufferType type, u32 localId,
+			const String &name, u32 globalId, GPUBufferType type, u16 localId, u16 descriptorSetId,
 			ShaderAccess access, usz bufferSize, bool isWritable = false
 		);
 
 		//Construct an image register
 		RegisterLayout(
-			const String &name, u32 globalId, TextureType type, u32 localId,
+			const String &name, u32 globalId, TextureType type, u16 localId, u16 descriptorSetId,
 			ShaderAccess access, GPUFormat textureFormat, bool writable = false
 		);
 
 		//Construct a texture register
 		RegisterLayout(
-			const String &name, u32 globalId, TextureType type, u32 localId,
+			const String &name, u32 globalId, TextureType type, u16 localId, u16 descriptorSetId,
 			ShaderAccess access
 		);
 
 		//Construct a sampler register
 		RegisterLayout(
-			const String &name, u32 globalId, SamplerType type, u32 localId,
+			const String &name, u32 globalId, SamplerType type, u16 localId, u16 descriptorSetId,
 			ShaderAccess access
 		);
 
@@ -118,13 +125,18 @@ namespace ignis {
 			//Use HASH("YourVariable") if constructed with it; this will not expose "YourVariable" to the program though.
 			inline auto operator[](const String &str) const { return layoutsByName.find(str); }
 
+			//
+			inline bool operator==(const Info &other) const {
+				return layoutsById == other.layoutsById;
+			}
+
 			//Get hash for local id by using register type
-			inline static constexpr u64 localHash(const ResourceType type, const u32 localId) {
+			inline static constexpr u64 localHash(const ResourceType type, const u16 localId) {
 				return (u64(type) << 32) | localId;
 			}
 
 			//Find by local id and register type
-			inline auto find(const ResourceType type, const u32 localId) const {
+			inline auto find(const ResourceType type, const u16 localId) const {
 				return layoutsByLocalId.find(localHash(type, localId));
 			}
 		};
@@ -136,15 +148,11 @@ namespace ignis {
 
 		apimpl PipelineLayout(Graphics &g, const String &name, const Info &info);
 
-		//Check if this pipeline is compatible with the other
-		//Ex:
-		//Shader: uses 0, 2
-		//Descriptors: 0, 1, 2, 3
-		//If both r0 and r2 are compatible, this passes.
-		//The syntax would be shaderLayout.supportsLayout(descriptorLayout); as it checks if all registers it requires are present
-		bool supportsLayout(const PipelineLayout *other) const;
+		bool isCompatible(const List<Descriptors*> &descriptors) const;
 
 	private:
+
+		static bool isTextureCompatible(const RegisterLayout &layout, const GPUSubresource &res, TextureObject *tex);
 
 		apimpl ~PipelineLayout();
 

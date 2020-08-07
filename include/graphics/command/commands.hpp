@@ -41,14 +41,24 @@ namespace ignis {
 
 		class BindDescriptors : public Command {
 
-			DescriptorsRef descriptors;
+			List<DescriptorsRef> descriptors;
 
 			apimpl void execute(Graphics&, CommandList::Data*) const final override;
 
 		public:
 
-			BindDescriptors(Descriptors *descriptors): descriptors(descriptors) {}
-			List<GPUObject*> getResources() const final override { return { descriptors }; }
+			BindDescriptors(const List<DescriptorsRef> &descriptors): descriptors(descriptors) {}
+			BindDescriptors(const DescriptorsRef &descriptors): descriptors{ descriptors } {}
+
+			List<GPUObject*> getResources() const final override { 
+			
+				List<GPUObject*> res;
+
+				for (auto &desc : descriptors)
+					res.push_back(desc.get());
+			
+				return res;
+			}
 		};
 
 		class BindPrimitiveBuffer : public Command {

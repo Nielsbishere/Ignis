@@ -132,7 +132,6 @@ namespace ignis {
 	};
 
 	enum class ShaderAccess : u32 {
-
 		VERTEX				= 1_u32 << (u8(ShaderStage::VERTEX) & u8(ShaderStage::PROPERTY_TYPE)),
 		GEOMETRY			= 1_u32 << (u8(ShaderStage::GEOMETRY) & u8(ShaderStage::PROPERTY_TYPE)),
 		TESS_CTRL			= 1_u32 << (u8(ShaderStage::TESS_CTRL) & u8(ShaderStage::PROPERTY_TYPE)),

@@ -56,7 +56,7 @@ namespace ignis {
 		if (!SetPixelFormat(data->dc, pixelFormatId, &pfd))
 			oic::System::log()->fatal("The OpenGL Swapchain's context couldn't be set");
 
-		info.format = GPUFormat::RGBA8;
+		info.format = GPUFormat::rgba8;
 
 		#ifndef NO_DEBUG
 			constexpr int enableDebug = WGL_CONTEXT_DEBUG_BIT_ARB;

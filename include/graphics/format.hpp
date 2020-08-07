@@ -45,27 +45,27 @@ namespace ignis {
 	//& 0x200			= isNone
 	oicExposedEnum(GPUFormat, u16,
 
-		R8 = 0x00,		RG8,	RGBA8 = 0x03,
-		R16,			RG16,	RGBA16 = 0x07,
+		r8 = 0x00,		rg8,	rgba8 = 0x03,
+		r16,			rg16,	rgba16 = 0x07,
 
-		R8s = 0x10,		RG8s,	RGBA8s = 0x13,
-		R16s,			RG16s,	RGBA16s = 0x17,
+		r8s = 0x10,		rg8s,	rgba8s = 0x13,
+		r16s,			rg16s,	rgba16s = 0x17,
 
-		R8u = 0x20,		RG8u,	RGBA8u = 0x23,
-		R16u,			RG16u,  RGBA16u = 0x27,
-		R32u,			RG32u,	RGB32u, RGBA32u,
-		R64u,			RG64u,	RGB64u, RGBA64u,
+		r8u = 0x20,		rg8u,	rgba8u = 0x23,
+		r16u,			rg16u,  rgba16u = 0x27,
+		r32u,			rg32u,	rgb32u, rgba32u,
+		r64u,			rg64u,	rgb64u, rgba64u,
 
-		R8i = 0x30,		RG8i,	RGBA8i = 0x33,
-		R16i,			RG16i,  RGBA16i = 0x37,
-		R32i,			RG32i,	RGB32i, RGBA32i,
-		R64i,			RG64i,	RGB64i, RGBA64i,
+		r8i = 0x30,		rg8i,	rgba8i = 0x33,
+		r16i,			rg16i,  rgba16i = 0x37,
+		r32i,			rg32i,	rgb32i, rgba32i,
+		r64i,			rg64i,	rgb64i, rgba64i,
 
-		R16f = 0x74,	RG16f,	RGBA16f = 0x77,
-		R32f,			RG32f,	RGB32f,	RGBA32f,
-		R64f,			RG64f,	RGB64f, RGBA64f,
+		r16f = 0x74,	rg16f,	rgba16f = 0x77,
+		r32f,			rg32f,	rgb32f,	rgba32f,
+		r64f,			rg64f,	rgb64f, rgba64f,
 
-		sRGBA8 = 0x103,
+		srgba8 = 0x103,
 
 		NONE = 0x200
 	);

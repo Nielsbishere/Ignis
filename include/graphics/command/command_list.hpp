@@ -53,11 +53,8 @@ namespace ignis {
 
 		//Add commands to the command list
 
-		template<typename ...args>
-		inline void add(const args &...arg);
-
-		template<typename T>
-		inline void add(const T &t);
+		template<typename T, typename ...args>
+		inline void add(const T &t, const args &...arg);
 
 	protected:
 
@@ -128,13 +125,8 @@ namespace ignis {
 
 	//Implementations
 
-	template<typename ...args>
-	void CommandList::add(const args &...arg) {
-		(add(arg), ...);
-	}
-
-	template<typename T>
-	void CommandList::add(const T &t) {
+	template<typename T, typename ...args>
+	inline void CommandList::add(const T &t, const args &...arg) {
 
 		static_assert(std::is_base_of_v<Command, T>, "CommandList::add requires T to be a command");
 
@@ -148,6 +140,9 @@ namespace ignis {
 		::new(addr) T(t);
 		info.next += size;
 		info.commands.push_back((Command*)addr);
+
+		if constexpr(sizeof...(arg) > 0)
+			(add(arg), ...);
 	}
 
 	using CommandListRef = GraphicsObjectRef<CommandList>;

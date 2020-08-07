@@ -22,15 +22,14 @@ namespace ignis {
 	
 		for (auto &range : ranges)
 
-			if (range.x + range.y > info.resources.size())
-				oic::System::log()->fatal("Descriptors::flush out of bounds");
-
-			else for (auto i = range.x, j = i + range.y; i < j; ++i) {
+			for (auto i = range.x, j = i + range.y; i < j; ++i) {
 
 				auto it = info.resources.find(i);
 
 				if(it != info.resources.end())
 					info.flushedResources[i] = it->second;
+				else 
+					oic::System::log()->fatal("Descriptors::flush out of bounds");
 			}
 
 	}

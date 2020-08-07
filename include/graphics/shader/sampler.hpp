@@ -11,12 +11,15 @@ namespace ignis {
 
 		struct Info {
 
-			f32 anisotropy, minLod, maxLod;
+			f32 anisotropy, minLod;
+			
+			f32 maxLod;
 
 			SamplerMin minFilter;
 			SamplerMag magFilter;
-
-			SamplerMode s, r, t;
+			SamplerMode s, r;
+			
+			SamplerMode t;
 
 			Info(
 				SamplerMin min = SamplerMin::LINEAR_MIPS,
@@ -37,6 +40,13 @@ namespace ignis {
 				f32 minLod = -f32_MAX,
 				f32 maxLod = f32_MAX
 			);
+
+			inline bool operator==(const Info &other) const {
+				return 
+					*(const u64*)&anisotropy == *(const u64*)&other.anisotropy && 
+					*(const u64*)&maxLod == *(const u64*)&other.maxLod && 
+					t == other.t;
+			}
 		};
 
 		apimpl struct Data;

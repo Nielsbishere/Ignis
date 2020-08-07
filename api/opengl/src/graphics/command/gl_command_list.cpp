@@ -93,12 +93,12 @@ namespace ignis {
 
 	bool glxBindDescriptors(GLContext &ctx) {
 
-		auto *descriptors = ctx.bound.descriptors;
+		auto &descriptors = ctx.bound.descriptors;
 
 		if (
 			ctx.bound.pipeline->getInfo().pipelineLayout &&
 			ctx.bound.pipeline->getInfo().pipelineLayout->getInfo().size() && 
-			(!descriptors || !descriptors->isShaderCompatible(ctx.bound.pipeline->getInfo().pipelineLayout))
+			(descriptors.empty() || !ctx.bound.pipeline->getInfo().pipelineLayout->isCompatible(descriptors))
 		) {
 			oic::System::log()->error("Pipeline layout doesn't match descriptors!");
 			return false;
@@ -227,7 +227,14 @@ namespace ignis {
 			oic::System::log()->error("Invalid pipeline. Ignoring dispatch & draw calls");
 	}
 
-	void BindDescriptors::execute(Graphics &g, CommandList::Data*) const { context.bound.descriptors = descriptors; }
+	void BindDescriptors::execute(Graphics &g, CommandList::Data*) const { 
+
+		context.bound.descriptors.clear();
+
+		for (auto &desc : descriptors)
+			context.bound.descriptors.push_back(desc.get());
+	}
+
 	void BindPrimitiveBuffer::execute(Graphics &g, CommandList::Data*) const { context.bound.primitiveBuffer = primitiveBuffer; }
 
 	void SetStencil::execute(Graphics &g, CommandList::Data*) const { context.stencil = stencil; }

@@ -17,10 +17,14 @@ namespace ignis {
 		FillMode fill;
 		CullMode cull;
 		WindMode winding;
+		u8 pad{};
 
 		Rasterizer(CullMode cull = CullMode::BACK, FillMode fill = FillMode::FILL, WindMode wind = WindMode::CCW): 
 			fill(fill), cull(cull), winding(wind) {}
 
+		inline bool operator==(const Rasterizer &other) const {
+			return *(const u32*)&fill == *(const u32*)&other.fill;
+		}
 	};
 
 	enum class CompareOp : u8 {
@@ -35,6 +39,8 @@ namespace ignis {
 
 	struct DepthStencil {
 
+		//Stride of stencil is 4x1, so one stencil fits in an u32
+		//front and back fit into u64
 		struct Stencil {
 
 			StencilOp fail, pass, depthFail;
@@ -51,9 +57,10 @@ namespace ignis {
 		} front{}, back{};
 
 		u8 stencilMask = 0xFF, stencilWriteMask = 0xFF, stencilReference = 0x00;
-
 		CompareOp depthCompare = CompareOp::GR;
+
 		bool enableDepthRead{}, enableDepthWrite{}, enableStencilTest{};
+		u8 pad{};
 
 		//Constructors
 
@@ -89,6 +96,12 @@ namespace ignis {
 				depthCompare, depthRead,
 				depthWrite, true
 			};
+		}
+
+		inline bool operator==(const DepthStencil &other) const {
+			return 
+				*(const u64*)&front == *(const u64*)&other.front &&
+				*(const u64*)&stencilMask == *(const u64*)&other.stencilMask;
 		}
 
 	};
@@ -179,6 +192,13 @@ namespace ignis {
 
 		inline bool logOpEnable() const { return logicOp != LogicOp::NO_OP; }
 
+		inline bool operator==(const BlendState &other) const {
+			return 
+				blendFactor == other.blendFactor &&
+				*(const u64*)logicOp == *(const u64*)&other.logicOp &&
+				blendEnable == other.blendEnable;
+		}
+
 	};
 
 	struct MSAA {
@@ -187,6 +207,10 @@ namespace ignis {
 		f32 minSampleShading;	//How to resolve textures with a MSAA texture (0 = off, closer to one is smoother)
 
 		MSAA(u32 samples = 1, f32 minSampleShading = {}) : samples(samples), minSampleShading(minSampleShading) {}
+
+		inline bool operator==(const MSAA &other) const {
+			return *(const u64*)&samples == *(const u64*)&other.samples;
+		}
 	};
 
 	class Pipeline : public GPUObject {
@@ -211,8 +235,8 @@ namespace ignis {
 
 		struct Info {
 
-			List<Buffer> binaries;
-			HashMap<ShaderStage, Pair<u32, String>> stages;
+			HashMap<String, Buffer> binaries;
+			HashMap<ShaderStage, Pair<String, String>> stages;
 
 			const PipelineLayout *pipelineLayout;
 
@@ -239,8 +263,8 @@ namespace ignis {
 			Info(
 				Flag f, 
 				const List<BufferAttributes> &attributeLayout, 
-				const List<Buffer> &binaries,
-				const HashMap<ShaderStage, Pair<u32, String>> &stages,
+				const HashMap<String, Buffer> &binaries,
+				const HashMap<ShaderStage, Pair<String, String>> &stages,
 				const PipelineLayout *pipelineLayout,
 				MSAA msaa = {},
 				DepthStencil depthStencil = {},
@@ -258,39 +282,14 @@ namespace ignis {
 					if (stage.first > ShaderStage::FRAGMENT)
 						oic::System::log()->fatal("Invalid graphics shaders (only accepting vert, geom, tesc, tese, frag");
 
-					else if(stage.second.first > binaries.size())
-						oic::System::log()->fatal("Stage pointed to an invalid binary id");
+					else if(binaries.find(stage.second.first) == binaries.end() && binaries.size())
+						oic::System::log()->fatal("Stage pointed to an invalid binary");
 			}
 
 			Info(
 				Flag f, 
 				const List<BufferAttributes> &attributeLayout, 
-				const HashMap<ShaderStage, Pair<Buffer, String>> &cstages,
-				const PipelineLayout *pipelineLayout,
-				MSAA msaa = {},
-				DepthStencil depthStencil = {},
-				Rasterizer rasterizer = {},
-				BlendState blendState = {},
-				TopologyMode topology = TopologyMode::TRIANGLE_LIST
-			) : 
-				pipelineLayout(pipelineLayout), flag(f),
-				attributeLayout(attributeLayout), topology(topology), depthStencil(depthStencil),
-				rasterizer(rasterizer), blendState(blendState), msaa(msaa)
-			{ 
-				for (auto &stage : cstages) {
-
-					if (stage.first > ShaderStage::FRAGMENT)
-						oic::System::log()->fatal("Invalid graphics shaders (only accepting vert, geom, tesc, tese, frag");
-
-					u32 curr = u32(binaries.size());
-					binaries.push_back(stage.second.first);
-					stages[stage.first] = { curr, stage.second.second };
-				}
-			}
-
-			Info(
-				Flag f, 
-				const List<BufferAttributes> &attributeLayout, 
+				const String &binaryLocation,
 				const Buffer &binary,
 				const HashMap<ShaderStage, String> &cstages,
 				const PipelineLayout *pipelineLayout,
@@ -300,7 +299,7 @@ namespace ignis {
 				BlendState blendState = {},
 				TopologyMode topology = TopologyMode::TRIANGLE_LIST
 			) : 
-				binaries{ binary }, pipelineLayout(pipelineLayout), flag(f),
+				binaries{ { binaryLocation, binary } }, pipelineLayout(pipelineLayout), flag(f),
 				attributeLayout(attributeLayout), topology(topology), depthStencil(depthStencil),
 				rasterizer(rasterizer), blendState(blendState), msaa(msaa)
 			{ 
@@ -309,7 +308,7 @@ namespace ignis {
 					if (stage.first > ShaderStage::FRAGMENT)
 						oic::System::log()->fatal("Invalid graphics shaders (only accepting vert, geom, tesc, tese, frag");
 
-					stages[stage.first] = { 0, stage.second };
+					stages[stage.first] = { binaryLocation, stage.second };
 				}
 			}
 
@@ -317,15 +316,18 @@ namespace ignis {
 
 			Info(
 				Flag f, 
+				const String &binaryLocation,
 				const Buffer &computeShader,
 				const PipelineLayout *pipelineLayout,
 				const Vec3u32 &groupSize,
 				const String &entryPoint = "main"
 			) : 
-				stages{{ ShaderStage::COMPUTE, { 0, entryPoint } }}, 
-				binaries{ computeShader },
+				stages{{ ShaderStage::COMPUTE, { binaryLocation, entryPoint } }}, 
+				binaries { { binaryLocation, computeShader } },
 				pipelineLayout(pipelineLayout), flag(f),
 				groupSize(groupSize) { }
+
+			//Helpers
 
 			inline bool hasStage(ShaderStage stage) const {
 				return stages.find(stage) != stages.end();
@@ -341,6 +343,46 @@ namespace ignis {
 
 			inline bool isGraphics() const {
 				return !isCompute() && !isRaytracing();
+			}
+
+			inline bool operator==(const Info &other) const {
+
+				if (isCompute() && !other.isCompute())
+					return false;
+
+				if (isGraphics() && !other.isGraphics())
+					return false;
+
+				if (isRaytracing() && !other.isRaytracing())
+					return false;
+
+				if(
+					flag != other.flag || parent != other.parent || 
+					pipelineLayout != other.pipelineLayout || stages != other.stages ||
+					binaries.size() != other.binaries.size()
+				)
+					return false;
+
+				//Cheap compare of binary (not just all bytes)
+				for (auto &bin : binaries) {
+
+					auto it = other.binaries.find(bin.first);
+
+					if (it == other.binaries.end())
+						return false;
+
+					if (bin.second.size() != it->second.size())
+						return false;
+				}
+
+				if(!isGraphics())
+					return groupSize == other.groupSize;
+
+				return 
+					attributeLayout == other.attributeLayout &&
+					topology == other.topology && depthStencil == other.depthStencil &&
+					rasterizer == other.rasterizer && blendState == other.blendState &&
+					msaa == other.msaa;
 			}
 
 		};
