@@ -43,7 +43,7 @@ namespace ignis {
 
 			const Buffer *bin;
 
-			if (it->second.size())
+			if (it != info.binaries.end() && it->second.size())
 				bin = &it->second;
 
 			else if (tempBuff != temporaryBuffers.end())
