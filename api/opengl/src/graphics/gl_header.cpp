@@ -800,17 +800,26 @@ void glxBindDescriptors(GLContext &ctx, const List<Descriptors*> &descriptors) {
 
 						auto &boundTex = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_TEXTURE];
 
-						if (boundTex.id != tex->getId() || boundTex.subId != subId) {
+						if (
+							boundTex.id != tex->getId() || 
+							boundTex.subId != subId ||
+							boundTex.dims != tex->getDimensions(0)
+						) {
 							glBindTextureUnit(resource.localId, textureView);
 							boundTex.subId = subId;
 							boundTex.id = tex->getId();
+							boundTex.dims = tex->getDimensions(0);
 						}
 
 					} else {
 
 						auto &boundImg = ctx.boundByBaseId[(u64(resource.localId) << 32) | GL_IMAGE_2D /* Not 2D but	 GL_IMAGE doesn't exist*/];
 
-						if (boundImg.id != tex->getId() || boundImg.subId != subId) {
+						if (
+							boundImg.id != tex->getId() || 
+							boundImg.subId != subId ||
+							boundImg.dims != tex->getDimensions(0)
+						) {
 
 							glBindImageTexture(
 								resource.localId, textureView, 0,
@@ -820,6 +829,7 @@ void glxBindDescriptors(GLContext &ctx, const List<Descriptors*> &descriptors) {
 
 							boundImg.subId = subId;
 							boundImg.id = tex->getId();
+							boundImg.dims = tex->getDimensions(0);
 						}
 					}
 				}

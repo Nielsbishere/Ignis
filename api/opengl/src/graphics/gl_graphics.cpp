@@ -510,7 +510,7 @@ namespace ignis {
 						break;
 
 					case GL_TEXTURE:
-						glBindTexture(i, 0);
+						glBindTextureUnit(i, 0);
 						break;
 
 					case GL_IMAGE_2D:

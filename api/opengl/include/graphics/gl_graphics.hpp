@@ -44,8 +44,12 @@ namespace ignis {
 	//Graphics data
 
 	struct BoundRange {
+
 		GPUObjectId id;
+
 		usz offset{}, size{};
+		Vec3u16 dims{};		//For textures; since some can resize without changing id
+
 		u32 subId{};
 	};
 

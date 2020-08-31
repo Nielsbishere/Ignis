@@ -65,7 +65,7 @@ namespace ignis {
 
 			Info(
 				TextureType textureType, GPUFormat format, GPUMemoryUsage usage,
-				u8 mipCount, u16 layers, u8 samples, bool useFixedSampleLocations
+				u8 mipCount = 1, u16 layers = 1, u8 samples = 1, bool useFixedSampleLocations = true
 			);
 		};
 

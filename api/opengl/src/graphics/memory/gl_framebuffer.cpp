@@ -86,7 +86,7 @@ namespace ignis {
 		for (auto *target : targets)
 			target->onResize(size.cast<Vec2u32>());
 
-		if (!size.x)
+		if (!size.all())
 			return;
 
 		glCreateFramebuffers(1, &data->handle);
