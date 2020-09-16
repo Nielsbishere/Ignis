@@ -84,7 +84,7 @@ namespace ignis {
 		usz size(u8 mip = 0, u16 layer = 0, u16 depth = 0, bool isStencil = false) const;
 
 		//Gets dimensions of this texture (with the layer in the correct slot)
-		Vec3u16 getDimensions(u8 mip) const;
+		Vec3u16 getDimensions(u8 mip = 0) const;
 
 		//Get the index in the dimension array that MIGHT contain the layer
 		//if HasFlags(info.textureType, TextureType::PROPERTY_IS_ARRAY) is false, it doesn't
