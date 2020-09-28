@@ -65,9 +65,10 @@ namespace ignis {
 		const u32 applicationVersion,
 		const String &engineName,
 		const u32 engineVersion
-	) throw() :
+	):
 		appName(applicationName), appVersion(applicationVersion),
-		engineName(engineName), engineVersion(engineVersion) {
+		engineName(engineName), engineVersion(engineVersion) 
+	{
 		data = new Graphics::Data();
 		init();
 	}

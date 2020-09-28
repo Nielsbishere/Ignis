@@ -72,6 +72,13 @@ namespace ignis {
 		glGetIntegerv(GL_MINOR_VERSION, (GLint*)&data->minor);
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY, &data->maxAnistropy);
 
+		const GLubyte *vendorStr = glGetString(GL_VENDOR);
+
+		if (vendorStr[0] == 'N' && vendorStr[1] == 'V')
+			vendor = Vendor::NVIDIA;
+
+		//TODO: Other vendor detection
+
 		if (!data->version(4, 6))
 			oic::System::log()->fatal("OpenGL version not supported; >= 4.6 required");
 

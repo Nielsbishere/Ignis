@@ -27,6 +27,19 @@ namespace ignis {
 		METAL	= 0b1001
 	};
 
+	//Types of vendors the gpu can have
+	//(Can be used for optimization with shaders)
+	enum class Vendor : u8 {
+
+		OTHER,
+
+		NVIDIA,
+
+		/*AMD,
+		INTEL,
+		ARM,*/
+	};
+
 	//Each type has to be unique, and as such if the last bits are equal, the id would have to increment
 	//& 1 = hasGpuMemory (if it has a considerable potential gpu memory overhead)
 	//& 2 = isTexture
@@ -193,8 +206,9 @@ namespace ignis {
 		Graphics &operator=(const Graphics &) = delete;
 		Graphics &operator=(Graphics &&) = delete;
 
-		const Features &getFeatures() const;
-		const Extensions &getExtensions() const;
+		inline const Features &getFeatures() const { return features; }
+		inline const Extensions &getExtensions() const { return extensions; }
+		inline const Vendor &getVendor() const { return vendor; }
 
 		bool hasFeature(Feature) const;
 		bool hasExtension(Extension) const;
@@ -235,7 +249,7 @@ namespace ignis {
 			const u32 applicationVersion,
 			const String &engineName,
 			const u32 engineVersion
-		) throw();
+		);
 
 		template<typename ...args>
 		inline void present(Texture *intermediate, u16 slice, u16 mip, Swapchain *swapchain, args ...arg) {
@@ -349,6 +363,7 @@ namespace ignis {
 
 		Features features;
 		Extensions extensions;
+		Vendor vendor;
 
 		HashMap<String, GPUObject*> graphicsObjectsByName;
 		HashMap<GPUObjectId, GPUObject*> graphicsObjects;

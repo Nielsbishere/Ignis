@@ -50,7 +50,8 @@ namespace ignis {
 		Data *getExtendedData() { return data; }
 		const Info &getInfo() const { return info; }
 
-		u8 *getBuffer() const { return (u8*) info.initData.data(); }
+		template<typename T = u8>
+		T *getBuffer() const { return (T*) info.initData.data(); }
 
 		void flush(u64 offset, u64 size);
 

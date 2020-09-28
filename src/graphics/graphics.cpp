@@ -16,9 +16,6 @@ namespace ignis {
 		getGraphics().erase(this);
 	}
 
-	const Features &Graphics::getFeatures() const { return features; }
-	const Extensions &Graphics::getExtensions() const { return extensions; }
-
 	bool Graphics::hasFeature(Feature f) const { return features[usz(f)]; }
 	bool Graphics::hasExtension(Extension e) const { return extensions[usz(e)]; }
 
