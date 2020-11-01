@@ -209,24 +209,39 @@ namespace ignis {
 
 			else if (GPUBuffer *b = dynamic_cast<GPUBuffer*>(subres.resource)) {
 
-				if (b->getInfo().type != GPUBufferType::UNIFORM) {
-					if (layout.type != ResourceType::BUFFER) {
-						oic::System::log()->error("Invalid buffer type");
-						return false;
-					}
-				}
-				else if (layout.type != ResourceType::CBUFFER) {
+				if (layout.type != ResourceType::CBUFFER && layout.type != ResourceType::BUFFER) {
 					oic::System::log()->error("Invalid buffer type");
 					return false;
 				}
 
-				if (subres.bufferRange.offset + subres.bufferRange.size > b->size()) {
-					oic::System::log()->error("Buffer out of bounds");
-					return false;
+				switch (layout.bufferType) {
+
+					case GPUBufferType::STORAGE:
+					case GPUBufferType::STRUCTURED:
+
+						if (!(u32(b->getInfo().type) & u32(GPUBufferUsage::STORAGE))) {
+							oic::System::log()->error("Invalid buffer type");
+							return false;
+						}
+
+						break;
+
+					case GPUBufferType::UNIFORM:
+
+						if (!(u32(b->getInfo().type) & u32(GPUBufferUsage::UNIFORM))) {
+							oic::System::log()->error("Invalid buffer type");
+							return false;
+						}
+
+						break;
+
+					default:
+						oic::System::log()->error("Invalid buffer type");
+						return false;
 				}
 
-				if (layout.bufferType != b->getInfo().type) {
-					oic::System::log()->error("Incompatible buffer types");
+				if (subres.bufferRange.offset + subres.bufferRange.size > b->size()) {
+					oic::System::log()->error("Buffer out of bounds");
 					return false;
 				}
 
@@ -241,7 +256,6 @@ namespace ignis {
 						oic::System::log()->error("Incompatible buffer sizes");
 						return false;
 					}
-
 				}
 
 				else if (subres.bufferRange.size % layout.bufferSize) {

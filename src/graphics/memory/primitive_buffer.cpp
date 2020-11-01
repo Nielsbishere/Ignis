@@ -26,9 +26,9 @@ namespace ignis {
 
 				it.buffer = new GPUBuffer(g, NAME(name + " vbo " + std::to_string(i)),
 					GPUBuffer::Info(
-						it.initData,
-						GPUBufferType::VERTEX,
-						info.usage
+						GPUBufferUsage::VERTEX,
+						info.usage,
+						it.initData
 					)
 				);
 
@@ -43,7 +43,7 @@ namespace ignis {
 				else if(elements != it.elements)
 					oic::System::log()->fatal("Invalid primitive buffer size");
 
-			} else if(it.buffer->getInfo().type != GPUBufferType::VERTEX)
+			} else if(it.buffer->getInfo().type != GPUBufferUsage::VERTEX)
 				oic::System::log()->fatal("Invalid predefined vertex buffer");
 
 			else {
@@ -70,15 +70,15 @@ namespace ignis {
 				info.indexLayout.buffer = new GPUBuffer(
 					g, NAME(name + " ibo"),
 					GPUBuffer::Info(
-						info.indexLayout.initData,
-						GPUBufferType::INDEX,
-						info.usage
+						GPUBufferUsage::INDEX,
+						info.usage,
+						info.indexLayout.initData
 					)
 				);
 
 				info.indexLayout.initData.clear();
 
-			} else if (info.indexLayout.buffer->getInfo().type != GPUBufferType::INDEX)
+			} else if (info.indexLayout.buffer->getInfo().type != GPUBufferUsage::INDEX)
 				oic::System::log()->fatal("Invalid predefined index buffer");
 
 			else

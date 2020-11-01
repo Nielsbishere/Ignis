@@ -5,25 +5,42 @@
 
 namespace ignis {
 
-	GPUBuffer::Info::Info(u64 bufferSize, GPUBufferType type, GPUMemoryUsage usage):
+	GPUBuffer::Info::Info(u64 bufferSize, GPUBufferUsage type, GPUMemoryUsage usage):
 		initData(), size(bufferSize), type(type), usage(usage), pending { { 0, bufferSize }  }
 	{
 		if (!HasFlags(usage, GPUMemoryUsage::NO_CPU_MEMORY))
 			initData.resize(bufferSize);
 	}
 
-	GPUBuffer::Info::Info(const Buffer &initData, GPUBufferType type, GPUMemoryUsage usage):
+	GPUBuffer::Info::Info(GPUBufferUsage type, GPUMemoryUsage usage, const Buffer &initData):
 		initData(initData), size(initData.size()), type(type), usage(usage), pending { { 0, initData.size() } } {}
 
-	bool GPUBuffer::isCompatible(
-		const RegisterLayout &reg, const GPUSubresource &resource
-	) const {
-		return
-			reg.type == ResourceType::BUFFER && 
-			(!u8(reg.bufferType) || reg.bufferType == info.type) && 
+	bool GPUBuffer::isCompatible(GPUBufferType type, GPUBufferUsage usage) {
+
+		switch (type) {
+
+			case GPUBufferType::VERTEX:					return u32(usage) & u32(GPUBufferUsage::VERTEX);
+			case GPUBufferType::INDEX:					return u32(usage) & u32(GPUBufferUsage::INDEX);
+			case GPUBufferType::UNIFORM:				return u32(usage) & u32(GPUBufferUsage::UNIFORM);
+
+			case GPUBufferType::STRUCTURED:
+			case GPUBufferType::STORAGE:				return u32(usage) & u32(GPUBufferUsage::STORAGE);
+
+			case GPUBufferType::INDIRECT_DRAW:
+			case GPUBufferType::INDIRECT_DISPATCH:		return u32(usage) & u32(GPUBufferUsage::INDIRECT);
+
+			case GPUBufferType::STAGING:				return u32(usage) & u32(GPUBufferUsage::STAGING);
+
+			default:									return false;
+		}
+	}
+
+	bool GPUBuffer::isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) const {
+
+		return reg.type == ResourceType::BUFFER && isCompatible(reg.bufferType, info.type) && 
 
 			//Validate size
-			(!reg.bufferSize	 || 
+			(!reg.bufferSize || 
 				(
 					reg.bufferType != GPUBufferType::STRUCTURED && 
 					reg.bufferSize == resource.bufferRange.size

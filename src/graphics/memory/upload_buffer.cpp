@@ -9,7 +9,8 @@ namespace ignis {
 
 		info.buffers[0] = new GPUBuffer(
 			g, NAME(name + " buffer 0"), GPUBuffer::Info(
-				inf.startSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED | GPUMemoryUsage::CPU_WRITE | GPUMemoryUsage::CPU_READ
+				inf.startSize, GPUBufferUsage::STAGING, 
+				GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED | GPUMemoryUsage::CPU_WRITE | GPUMemoryUsage::CPU_READ
 			)
 		);
 
@@ -133,7 +134,8 @@ namespace ignis {
 		auto *buf = info.buffers[bufferId] = new GPUBuffer(
 			getGraphics(), NAME(getName() + " buffer " + std::to_string(bufferId)),
 			GPUBuffer::Info(
-				newSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED | GPUMemoryUsage::CPU_READ | GPUMemoryUsage::CPU_WRITE
+				newSize, GPUBufferUsage::STAGING, 
+				GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED | GPUMemoryUsage::CPU_READ | GPUMemoryUsage::CPU_WRITE
 			)
 		);
 
@@ -348,7 +350,8 @@ namespace ignis {
 				info.buffers[bufferId] = new GPUBuffer(
 					getGraphics(), NAME(getName() + " buffer " + std::to_string(bufferId)),
 					GPUBuffer::Info(
-						newSize, GPUBufferType::STAGING, GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED|		GPUMemoryUsage::CPU_WRITE | GPUMemoryUsage::CPU_READ
+						newSize, GPUBufferUsage::STAGING, 
+						GPUMemoryUsage::REQUIRE | GPUMemoryUsage::SHARED|		GPUMemoryUsage::CPU_WRITE | GPUMemoryUsage::CPU_READ
 					)
 				);
 

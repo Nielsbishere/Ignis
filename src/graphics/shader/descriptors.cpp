@@ -44,8 +44,8 @@ namespace ignis {
 		return resource.resource->isCompatible(reg, resource);
 	}
 
-	GPUSubresource::GPUSubresource(GPUBuffer *resource, usz offset, usz size):
-		resource(resource), bufferRange{ offset, size } {
+	GPUSubresource::GPUSubresource(GPUBuffer *resource, GPUBufferType type, usz offset, usz size):
+		resource(resource), bufferRange(type, offset, size) {
 
 		if (!resource || offset >= resource->size() || offset + size >= resource->size())
 			oic::System::log()->fatal("Resource out of bounds");

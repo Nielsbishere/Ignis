@@ -58,9 +58,11 @@ namespace ignis {
 		struct BufferRange {
 
 			usz offset{}, size{};
+			GPUBufferType type{};
 
 			BufferRange() {}
-			BufferRange(usz offset, usz size): offset(offset), size(size) {}
+			BufferRange(GPUBufferType type, usz offset, usz size): 
+				type(type), offset(offset), size(size) {}
 		};
 
 		union {
@@ -70,7 +72,7 @@ namespace ignis {
 		};
 
 		GPUSubresource(): samplerData{} {}
-		GPUSubresource(GPUBuffer *resource, usz offset = 0, usz size = 0);
+		GPUSubresource(GPUBuffer *resource, GPUBufferType type, usz offset = 0, usz size = 0);
 
 		GPUSubresource(
 			Sampler *sampler, TextureObject *texture,

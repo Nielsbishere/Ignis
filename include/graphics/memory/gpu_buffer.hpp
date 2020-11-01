@@ -9,7 +9,7 @@ namespace ignis {
 		class FlushBuffer;
 	}
 
-	enum class GPUBufferType : u8;
+	enum class GPUBufferUsage : u32;
 	enum class GPUMemoryUsage : u8;
 
 	class GPUBuffer : public GPUObject, public GPUResource {
@@ -25,15 +25,14 @@ namespace ignis {
 			Buffer initData;
 			u64 size;
 
-			GPUBufferType type;
+			GPUBufferUsage type;
 			GPUMemoryUsage usage;
 
 			List<Vec2u64> pending;	//offset, size
 			bool markedPending{};
 
-			Info(u64 bufferSize, GPUBufferType type, GPUMemoryUsage usage);
-
-			Info(const Buffer &initData, GPUBufferType type, GPUMemoryUsage usage);
+			Info(u64 bufferSize, GPUBufferUsage type, GPUMemoryUsage usage);
+			Info(GPUBufferUsage type, GPUMemoryUsage usage, const Buffer &initData);
 		};
 
 		apimpl struct Data;
@@ -41,9 +40,9 @@ namespace ignis {
 		GPUBuffer(Graphics &g, const String &name, const Info &info):
 			GPUBuffer(g, name, info, GPUObjectType::BUFFER) {}
 
-		bool isCompatible(
-			const RegisterLayout &reg, const GPUSubresource &resource
-		) const final override;
+		static bool isCompatible(GPUBufferType type, GPUBufferUsage usage);
+
+		bool isCompatible(const RegisterLayout &reg, const GPUSubresource &resource) const final override;
 
 		inline u64 size() const { return info.size; }
 

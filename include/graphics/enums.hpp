@@ -42,6 +42,29 @@ namespace ignis {
 		PROPERTY_TYPE		= 0x1C
 	};
 
+	//
+	enum class GPUBufferUsage : u32 {
+
+		NONE				= 0,
+
+		VERTEX				= 1 << 0,
+		INDEX				= 1 << 1,
+
+		UNIFORM				= 1 << 2,
+		STORAGE				= 1 << 3,
+
+		INDIRECT			= 1 << 4,
+		STAGING				= 1 << 5,
+
+		RAYTRACING			= 1 << 6,				//For raytracing SBT and AS
+
+		STORAGE_INDIRECT	= STORAGE | INDIRECT,
+		STORAGE_UNIFORM		= STORAGE | UNIFORM,
+		STORAGE_VERTEX		= STORAGE | VERTEX,
+		STORAGE_INDEX		= STORAGE | INDEX,
+		STORAGE_RAYTRACING	= STORAGE | RAYTRACING
+	};
+
 	//This is a usage hint to how the GPU memory should behave:
 	//Flags: 
 	//& 1 = isShared		; is CPU accessible (!isShared = device local)
