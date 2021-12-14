@@ -558,7 +558,7 @@ namespace ignis {
 		if (!g)
 			return nullptr;
 
-		if(constexpr(!std::is_same_v<T, GPUObject>))
+		if constexpr(!std::is_same_v<T, GPUObject>)
 			oicAssert("Incompatible resource types", asTypeId<T> == type);
 
 		auto it = g->find(*this);
